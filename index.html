@@ -596,7 +596,7 @@
 
     // Helper untuk mengambil data spesifik dari Database berdasarkan Unit
     async function getStore(key, defaultVal) {
-        const { data, error } = await _supabase.from('app_store').select('value').eq('key', key).single();
+        const { data, error } = await _supabase.from('app_store').select('value').eq('key', key).maybesingle();
         if (data) return data.value;
         return defaultVal;
     }

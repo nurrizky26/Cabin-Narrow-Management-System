@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combined Dashboard - Supabase Integrated</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; background-color: #1e1e2d; }
+        .main-tabs-header { display: flex; background-color: #1e1e2d; border-bottom: 2px solid #2d2d3f; height: 52px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; z-index: 50; }
+        .main-tab-btn { flex: 1; background: none; border: none; color: #a2a3b7; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .main-tab-btn:hover { background-color: rgba(255, 255, 255, 0.03); color: #ffffff; }
+        .main-tab-btn.active { color: #ffffff; background-color: rgba(67, 97, 238, 0.1); border-bottom: 3px solid #4361ee; }
+        .app-container { width: 100%; height: calc(100vh - 52px); border: none; display: none; background-color: #f4f7fa; }
+        .app-container.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="main-tabs-header">
+        <button class="main-tab-btn active" onclick="switchAppTab('app1', this)">🧑‍🔧 MANPOWER PRO - CABIN NARROW</button>
+        <button class="main-tab-btn" onclick="switchAppTab('app2', this)">✈️ MONITORING PPC - CLEAN LIGHT</button>
+    </div>
+
+    <iframe id="app1" class="app-container active"></iframe>
+    <iframe id="app2" class="app-container"></iframe>
+
+    <!-- APP 1: MANPOWER PRO -->
+    <template id="source-app1">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Sama Seperti Sebelumnya */
+        :root { --primary: #4361ee; --success: #2ec4b6; --warning: #ff9f1c; --danger: #e71d36; --dark: #1e1e2d; --bg-body: #f4f7fa; --text-muted: #718096; --border-radius: 8px; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { height: 100vh; margin: 0; background-color: var(--bg-body); color: var(--dark); display: flex; flex-direction: column; overflow: hidden; font-size: 13px; }
+        .sidebar-nav { background-color: var(--dark); padding: 0 20px; height: 48px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 100; color: white; font-weight: bold;}
+        .nav-tabs { display: flex; height: 100%; flex: 1; justify-content: flex-end; }
+        .nav-tab { padding: 0 18px; color: #a2a3b7; border: none; background: none; cursor: pointer; font-weight: 600; font-size: 11px; border-bottom: 2px solid transparent; height: 100%; }
+        .nav-tab.active { color: white; border-bottom-color: var(--primary); background: rgba(255,255,255,0.05); }
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; padding: 10px 15px; overflow: hidden; }
+        .sheet-content { height: 100%; display: none; flex-direction: column; overflow: hidden; }
+        .sheet-content.active { display: flex; }
+        /* Tabel & Tombol Standar */
+        .data-card { background: white; border-radius: var(--border-radius); padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .btn { padding: 4px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 10px; height: 28px; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        thead th { text-align: left; background: #f8fafc; padding: 8px 12px; color: var(--text-muted); font-size: 10px; border-bottom: 1px solid #e2e8f0; }
+        tbody td { padding: 2px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10.5px; height: 24px; white-space: nowrap; overflow: hidden; }
+        /* Sisanya disederhanakan untuk layout responsif */
+        #loadingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 20px;}
+    </style>
+</head>
+<body>
+<div id="loadingOverlay">Mengambil Data dari Supabase...</div>
+<nav class="sidebar-nav">
+    <div>MANPOWER PRO</div>
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab(event, 'distribution')">AVAILABILITY</button>
+    </div>
+</nav>
+
+<div class="main-wrapper">
+    <div id="distribution" class="sheet-content active">
+        <div class="data-card">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
+                <h2>RESOURCE MANAGEMENT</h2>
+                <button class="btn btn-primary" onclick="addDummyData()">+ ADD DUMMY MP (Test Supabase)</button>
+            </div>
+            <div style="overflow-y:auto; flex:1">
+                <table>
+                    <thead><tr><th>ID</th><th>NAME</th><th>ROLE</th><th>STATUS</th></tr></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const supabaseUrl = 'https://gdlnsvbngvndjmrkhknt.supabase.co';
+    const supabaseKey = 'sb_publishable_W2CD0jEZD-7PRCsMXxsVnw_ZNRoAVXY';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let manpowerData = [];
+    
+    async function loadFromSupabase(key, defaultVal) {
+        const { data, error } = await supabase.from('app_storage').select('value').eq('key', key).single();
+        if (error || !data) return defaultVal;
+        return data.value;
+    }
+
+    async function saveToSupabase(key, val) {
+        await supabase.from('app_storage').upsert({ key: key, value: val });
+    }
+
+    async function initApp() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        manpowerData = await loadFromSupabase('manpower_data', []);
+        renderTable();
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        manpowerData.forEach((item) => {
+            tbody.insertAdjacentHTML('beforeend', `<tr><td>${item.empNumber}</td><td>${item.employee}</td><td>${item.role}</td><td>${item.status}</td></tr>`);
+        });
+    }
+
+    async function addDummyData() {
+        manpowerData.push({ empNumber: "MP-" + Math.floor(Math.random()*1000), employee: "USER TEST", role: "TECHNICIAN", status: "Available" });
+        await saveToSupabase('manpower_data', manpowerData);
+        renderTable();
+    }
+
+    initApp();
+<\/script>
+</body>
+</html>
+    </template>
+
+    <!-- APP 2: MONITORING PPC -->
+    <template id="source-app2">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans p-6">
+    
+    <div id="loadingOverlay2" class="fixed inset-0 bg-white/80 z-50 flex justify-center items-center font-bold text-xl">
+        Menyinkronkan PPC ke Supabase...
+    </div>
+
+    <header class="mb-6">
+        <h1 class="text-2xl font-bold">PPC CABIN DASHBOARD</h1>
+    </header>
+
+    <div class="bg-white p-6 rounded-xl shadow-md">
+        <div class="flex justify-between mb-4">
+            <h2 class="text-lg font-bold">A/C Status Monitoring</h2>
+            <button onclick="addDummyPlane()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">+ Tambah Data Test</button>
+        </div>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr><th class="px-3 py-3 text-left">Registration</th><th class="px-3 py-3 text-left">JC (%)</th><th class="px-3 py-3 text-left">MDR (%)</th></tr>
+            </thead>
+            <tbody id="plane-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://gdlnsvbngvndjmrkhknt.supabase.co';
+        const supabaseKey = 'sb_publishable_W2CD0jEZD-7PRCsMXxsVnw_ZNRoAVXY';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let planeData = [];
+
+        async function loadData() {
+            const { data, error } = await supabase.from('app_storage').select('value').eq('key', 'planeData').single();
+            return data ? data.value : [];
+        }
+
+        async function saveData(val) {
+            await supabase.from('app_storage').upsert({ key: 'planeData', value: val });
+        }
+
+        async function initPPC() {
+            planeData = await loadData();
+            if(planeData.length === 0) {
+                planeData = [{ reg: 'PK-GAA', jc: 12.5, mdr: 5.0 }];
+                await saveData(planeData);
+            }
+            renderPPC();
+            document.getElementById('loadingOverlay2').style.display = 'none';
+        }
+
+        function renderPPC() {
+            const tbody = document.getElementById('plane-table-body');
+            tbody.innerHTML = '';
+            planeData.forEach((item) => {
+                tbody.insertAdjacentHTML('beforeend', `<tr><td class="px-3 py-3 font-bold">${item.reg}</td><td class="px-3 py-3">${item.jc}</td><td class="px-3 py-3">${item.mdr}</td></tr>`);
+            });
+        }
+
+        async function addDummyPlane() {
+            planeData.push({ reg: 'PK-TEST' + Math.floor(Math.random()*100), jc: Math.random().toFixed(1), mdr: Math.random().toFixed(1) });
+            await saveData(planeData);
+            renderPPC();
+        }
+
+        initPPC();
+    <\/script>
+</body>
+</html>
+    </template>
+
+    <script>
+        function initializeIframes() {
+            const app1 = document.getElementById('app1');
+            const app2 = document.getElementById('app2');
+            const html1 = document.getElementById('source-app1').innerHTML.replace(/<\\\/script>/g, '<\/script>');
+            const html2 = document.getElementById('source-app2').innerHTML.replace(/<\\\/script>/g, '<\/script>');
+            
+            app1.contentWindow.document.open(); app1.contentWindow.document.write(html1); app1.contentWindow.document.close();
+            app2.contentWindow.document.open(); app2.contentWindow.document.write(html2); app2.contentWindow.document.close();
+        }
+
+        function switchAppTab(appId, btnElement) {
+            document.querySelectorAll('.app-container').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.main-tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(appId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        window.addEventListener('DOMContentLoaded', initializeIframes);
+    </script>
+</body>
+</html>

@@ -1,226 +1,1168 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combined Dashboard - Supabase Integrated</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; background-color: #1e1e2d; }
-        .main-tabs-header { display: flex; background-color: #1e1e2d; border-bottom: 2px solid #2d2d3f; height: 52px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; z-index: 50; }
-        .main-tab-btn { flex: 1; background: none; border: none; color: #a2a3b7; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .main-tab-btn:hover { background-color: rgba(255, 255, 255, 0.03); color: #ffffff; }
-        .main-tab-btn.active { color: #ffffff; background-color: rgba(67, 97, 238, 0.1); border-bottom: 3px solid #4361ee; }
-        .app-container { width: 100%; height: calc(100vh - 52px); border: none; display: none; background-color: #f4f7fa; }
-        .app-container.active { display: block; }
-    </style>
-</head>
-<body>
-    <div class="main-tabs-header">
-        <button class="main-tab-btn active" onclick="switchAppTab('app1', this)">🧑‍🔧 MANPOWER PRO - CABIN NARROW</button>
-        <button class="main-tab-btn" onclick="switchAppTab('app2', this)">✈️ MONITORING PPC - CLEAN LIGHT</button>
-    </div>
-
-    <iframe id="app1" class="app-container active"></iframe>
-    <iframe id="app2" class="app-container"></iframe>
-
-    <!-- APP 1: MANPOWER PRO -->
-    <template id="source-app1">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>ManPower Pro & PPC Dashboard</title>
+    
+    <!-- Libraries for ManPower Pro -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Libraries for PPC Dashboard -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        /* CSS Sama Seperti Sebelumnya */
-        :root { --primary: #4361ee; --success: #2ec4b6; --warning: #ff9f1c; --danger: #e71d36; --dark: #1e1e2d; --bg-body: #f4f7fa; --text-muted: #718096; --border-radius: 8px; }
+        :root {
+            --primary: #4361ee;
+            --primary-light: rgba(67, 97, 238, 0.08);
+            --success: #2ec4b6;
+            --warning: #ff9f1c;
+            --danger: #e71d36;
+            --purple: #9b59b6; 
+            --special: #6366f1;
+            --dark: #1e1e2d;
+            --bg-body: #f4f7fa;
+            --text-muted: #718096;
+            --border-radius: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { height: 100vh; margin: 0; background-color: var(--bg-body); color: var(--dark); display: flex; flex-direction: column; overflow: hidden; font-size: 13px; }
-        .sidebar-nav { background-color: var(--dark); padding: 0 20px; height: 48px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 100; color: white; font-weight: bold;}
+
+        body {
+            height: 100vh; margin: 0;
+            background-color: var(--bg-body); color: var(--dark);
+            display: flex; flex-direction: column; overflow: hidden;
+            font-size: 13px;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .sidebar-nav {
+            background-color: var(--dark); padding: 0 20px;
+            height: 48px; display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .brand { color: white; font-weight: 800; font-size: 0.9rem; letter-spacing: -0.2px; }
+        .brand span { color: var(--primary); }
+        
+        .nav-clock {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; line-height: 1.1;
+        }
+        #clockDate { font-size: 9px; font-weight: 600; text-transform: uppercase; opacity: 0.8; }
+        #clockTime { font-size: 14px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
+
         .nav-tabs { display: flex; height: 100%; flex: 1; justify-content: flex-end; }
-        .nav-tab { padding: 0 18px; color: #a2a3b7; border: none; background: none; cursor: pointer; font-weight: 600; font-size: 11px; border-bottom: 2px solid transparent; height: 100%; }
+        .nav-tab {
+            padding: 0 18px; color: #a2a3b7; border: none; background: none;
+            cursor: pointer; font-weight: 600; font-size: 11px; transition: var(--transition);
+            border-bottom: 2px solid transparent; height: 100%;
+        }
+        .nav-tab:hover { color: white; background: rgba(255,255,255,0.05); }
         .nav-tab.active { color: white; border-bottom-color: var(--primary); background: rgba(255,255,255,0.05); }
+
         .main-wrapper { flex: 1; display: flex; flex-direction: column; padding: 10px 15px; overflow: hidden; }
-        .sheet-content { height: 100%; display: none; flex-direction: column; overflow: hidden; }
-        .sheet-content.active { display: flex; }
-        /* Tabel & Tombol Standar */
-        .data-card { background: white; border-radius: var(--border-radius); padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: none; align-items: center;
+            justify-content: center; z-index: 1000; backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 600px; border-radius: 12px;
+            padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            position: relative; animation: modalSlide 0.3s ease-out;
+        }
+        @keyframes modalSlide {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group.full { grid-column: span 2; }
+        .form-group label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+
+        .summary-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px; margin-bottom: 12px; flex-shrink: 0;
+        }
+        .summary-card {
+            background: white; padding: 8px 12px; border-radius: var(--border-radius);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03); border-left: 3px solid var(--primary);
+        }
+        .summary-card label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.3px; }
+        .summary-card span { font-size: 16px; font-weight: 800; display: block; margin-top: 1px; }
+
+        .distro-layout { display: flex; gap: 10px; height: 100%; overflow: hidden; }
+        
+        .pool-sidebar { 
+            background: #fff; border-radius: var(--border-radius); padding: 8px; 
+            display: flex; flex-direction: column; border: 1px solid #e2e8f0; 
+            width: 120px; min-width: 120px; position: relative; transition: var(--transition);
+        }
+        .pool-sidebar.collapsed { width: 40px; min-width: 40px; padding: 10px 5px; }
+        .pool-sidebar.collapsed h3, .pool-sidebar.collapsed .pool-container, .pool-sidebar.collapsed .pool-summary { display: none; }
+        .collapsed-label {
+            display: none; writing-mode: vertical-rl; text-orientation: mixed;
+            color: var(--text-muted); font-weight: 800; font-size: 10px;
+            margin-top: 30px; text-transform: uppercase; opacity: 0.4;
+        }
+        .pool-sidebar.collapsed .collapsed-label { display: block; }
+
+        .toggle-btn {
+            position: absolute; right: -10px; top: 15px; width: 20px; height: 20px;
+            background: var(--primary); color: white; border: 2px solid white;
+            border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 8px; z-index: 10;
+        }
+
+        .pool-container { flex: 1; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+
+        .pool-summary {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .summary-mini-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 4px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .bg-total { background: rgba(67, 97, 238, 0.1); color: var(--primary); }
+        .bg-avail { background: rgba(46, 196, 182, 0.1); color: var(--success); }
+        .bg-not-avail { background: rgba(231, 29, 54, 0.1); color: var(--danger); }
+
+        .distribution-content {
+            flex: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+        }
+
+        .aircraft-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-auto-rows: min-content;
+            gap: 6px; 
+            max-height: 45%; 
+            overflow-y: auto;
+            padding: 2px;
+        }
+
+        .workload-column {
+            flex: 1; 
+            display: flex; flex-direction: column; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .workload-header { 
+            font-size: 11px; font-weight: 800; color: white; padding: 6px 15px; letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--dark) 0%, #3a3a4f 100%); border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .workload-master-container { 
+            flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: #f1f5f9; overflow: hidden; 
+        }
+
+        .workload-pane { background: white; display: flex; flex-direction: column; overflow: hidden; }
+
+        .pane-title {
+            background: #f8fafc; padding: 4px 12px; font-size: 9px; font-weight: 800; color: var(--primary);
+            border-bottom: 1px solid #f1f5f9; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+
+        .aircraft-card { 
+            background: white; border: 1px solid #e2e8f0; border-radius: 8px; 
+            padding: 6px 8px; position: relative; transition: all 0.2s ease;
+            display: flex; flex-direction: column; height: fit-content;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .aircraft-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.15);
+            background-color: #fcfdfe;
+            transform: translateY(-1px);
+        }
+
+        .ac-card-header {
+            display: flex; flex-direction: column; gap: 3px; align-items: flex-start; margin-bottom: 4px;
+        }
+        .ac-header-top { display: flex; width: 100%; align-items: center; gap: 4px; }
+        
+        .assignment-slots { 
+            display: flex; flex-wrap: wrap; gap: 2px; min-height: 18px; 
+            margin-top: 2px; padding-top: 4px; border-top: 1px solid #f8fafc; 
+        }
+
+        .workload-direct-edit {
+            width: 100%; 
+            border: none; background: transparent; padding: 10px; font-size: 9px; font-weight: 700; 
+            font-family: inherit; resize: none; outline: none; flex: 1; line-height: 1.4; color: #334155;
+            text-align: left;
+        }
+
+        .data-card { 
+            background: white; border-radius: var(--border-radius); padding: 15px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; width: 100%;
+            flex: 1; overflow: hidden;
+        }
+
+        .table-container { overflow-y: auto; border: 1px solid #f1f5f9; border-radius: 6px; flex: 1; }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        thead th { position: sticky; top: 0; z-index: 10; text-align: left; background: #f8fafc; padding: 8px 12px; color: var(--text-muted); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; cursor: pointer; }
+        
+        #tableBody td { padding: 2px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10.5px; height: 24px; line-height: 1; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
         .btn { padding: 4px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 10px; height: 28px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        thead th { text-align: left; background: #f8fafc; padding: 8px 12px; color: var(--text-muted); font-size: 10px; border-bottom: 1px solid #e2e8f0; }
-        tbody td { padding: 2px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10.5px; height: 24px; white-space: nowrap; overflow: hidden; }
-        /* Sisanya disederhanakan untuk layout responsif */
-        #loadingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 20px;}
+        .btn-excel { background: #107c41; color: white; display: flex; align-items: center; gap: 5px; }
+        
+        .filter-select, #searchInput { height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 10px; outline: none; }
+
+        .badge-select { padding: 1px 4px; height: 18px; border-radius: 3px; font-weight: 700; font-size: 8.5px; border: none; cursor: pointer; width: 100%; }
+        
+        .drag-item { 
+            background: white; border: 1px solid #e2e8f0; padding: 2px 4px; border-radius: 3px; 
+            cursor: grab; box-shadow: 0 1px 1px rgba(0,0,0,0.03); display: flex; flex-direction: column;
+        }
+        .drag-item .name { font-weight: 700; font-size: 8px; text-transform: uppercase; }
+        .drag-item .status-info { font-size: 6.5px; font-weight: 600; display: flex; align-items: center; gap: 2px; margin-top: 1px; color: #64748b; }
+        .status-dot { width: 4px; height: 4px; border-radius: 50%; display: inline-block; }
+
+        .drag-item.not-avail { opacity: 0.6; cursor: not-allowed; background: #f8fafc; }
+
+        .ac-actions { position: absolute; right: 4px; top: 4px; display: flex; gap: 2px; }
+        .ac-btn { background: none; border: none; color: #cbd5e0; cursor: pointer; font-size: 8px; }
+        
+        .sheet-content { height: 100%; display: none; flex-direction: column; overflow: hidden; }
+        .sheet-content.active { display: flex; }
+        
+        .add-aircraft-btn { 
+            border: 1.5px dashed #cbd5e0; background: transparent; 
+            display: flex; align-items: center; justify-content: center; 
+            color: var(--text-muted); font-size: 14px; font-weight: bold; 
+            cursor: pointer; width: 32px; height: 32px; min-height: 32px; 
+            border-radius: 6px; transition: 0.2s; align-self: center; 
+        }
+        
+        .phase-input { 
+            width: 100%; 
+            height: 18px; 
+            border: 1px solid #eef2f7; 
+            font-size: 8.5px; 
+            font-weight: 800; 
+            border-radius: 4px; 
+            text-align: center; 
+            padding: 0 4px; 
+            background: #fdfdfd;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .line-mini-select { 
+            font-size: 8px; height: 16px; border-radius: 3px; border: 1px solid #eee; 
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            padding: 0 4px; width: 28px; text-align: center; background: #fff; cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .reg-badge {
+            background: var(--dark); color: white; padding: 2px 6px; border-radius: 3px; 
+            font-weight: 800; min-width: 55px; text-align: center; flex-shrink: 0; font-size: 9px;
+        }
+
+        /* PPC Dashboard Custom Styles overriding Tailwind reset where needed */
+        #ppc-dashboard { overflow-y: auto; background-color: #f9fafb; }
+        #ppc-dashboard.active { display: block; }
+        
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); z-index: 9999; display: flex;
+            align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: var(--primary);
+        }
     </style>
 </head>
 <body>
-<div id="loadingOverlay">Mengambil Data dari Supabase...</div>
+
+<!-- Loading Indicator -->
+<div id="loadingOverlay">SYNCING DENGAN CLOUD DATABASE...</div>
+
 <nav class="sidebar-nav">
-    <div>MANPOWER PRO</div>
+    <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+        <div class="brand">MANPOWER<span>PRO</span> Cabin Narrow 🧑‍🔧</div>
+        
+        <!-- Unit Selector Dropdown (Hanya Tampil di Tab MP) -->
+        <div id="unitSelectorWrapper" style="display: flex; align-items: center; gap: 8px;">
+            <label style="color: #a2a3b7; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">UNIT</label>
+            <select id="globalUnitSelect" onchange="changeUnit(this.value)" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 6px; font-weight: 800; outline: none; font-size: 11px; cursor: pointer;">
+                <option style="color: black;" value="TJN-1">TJN-1</option>
+                <option style="color: black;" value="TJN-2">TJN-2</option>
+                <option style="color: black;" value="TJN-3">TJN-3</option>
+                <option style="color: black;" value="TJN-4">TJN-4</option>
+                <option style="color: black;" value="TJN-5">TJN-5</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="nav-clock"><div id="clockDate">LOADING...</div><div id="clockTime">00:00:00</div></div>
+    
     <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab(event, 'distribution')">AVAILABILITY</button>
+        <button class="nav-tab" onclick="switchTab(event, 'schedule')">DISTRIBUTION MP</button>
+        <button class="nav-tab" onclick="switchTab(event, 'ppc-dashboard')">PPC DASHBOARD</button>
     </div>
 </nav>
 
 <div class="main-wrapper">
+    <!-- Summary Container -->
+    <div id="summaryContainer" class="summary-grid"></div>
+
+    <!-- TAB 1: AVAILABILITY -->
     <div id="distribution" class="sheet-content active">
         <div class="data-card">
-            <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
-                <h2>RESOURCE MANAGEMENT</h2>
-                <button class="btn btn-primary" onclick="addDummyData()">+ ADD DUMMY MP (Test Supabase)</button>
+            <div class="header-action" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h2 style="margin:0; font-size: 14px;">RESOURCE MANAGEMENT</h2>
+                <div style="display:flex; gap: 6px; align-items: center;">
+                    <button class="btn btn-excel" onclick="downloadAllData()">🗒️ DOWNLOAD REPORT</button>
+                    <select id="statusFilter" class="filter-select" onchange="renderTable()">
+                        <option value="ALL">ALL STATUS</option>
+                        <option value="AVAILABLE">AVAILABLE</option>
+                        <option value="NOT_AVAILABLE">NOT AVAILABLE</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="SEARCH..." onkeyup="renderTable()" style="width: 120px; text-transform: uppercase;">
+                    <button class="btn btn-primary" onclick="openStaffModal()">+ ADD MP</button>
+                </div>
             </div>
-            <div style="overflow-y:auto; flex:1">
+            <div class="table-container">
                 <table>
-                    <thead><tr><th>ID</th><th>NAME</th><th>ROLE</th><th>STATUS</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th style="width:80px" onclick="sortTable('empNumber')">ID ↕</th>
+                            <th onclick="sortTable('employee')">NAME ↕</th>
+                            <th onclick="sortTable('surname')">SURNAME (POOL) ↕</th>
+                            <th onclick="sortTable('role')">ROLE ↕</th>
+                            <th style="width:130px" onclick="sortTable('status')">STATUS ↕</th>
+                            <th style="width:60px; text-align:right"></th>
+                        </tr>
+                    </thead>
                     <tbody id="tableBody"></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SCHEDULE (DISTRIBUTION MP) -->
+    <div id="schedule" class="sheet-content">
+        <div class="distro-layout">
+            <div class="pool-sidebar" id="poolSidebar">
+                <button class="toggle-btn" onclick="toggleSidebar()">◀</button>
+                <h3 style="margin:0; font-size:9px; color:var(--text-muted); text-align:center; padding-bottom:5px; border-bottom:1px solid #f1f5f9">MP POOL</h3>
+                <div class="collapsed-label">POOL</div>
+                <div class="pool-container" id="staffPool" ondragover="allowDrop(event)" ondrop="handleUnassignDrop(event)"></div>
+                <div class="pool-summary" id="poolAvailabilitySummary"></div>
+            </div>
+            
+            <div class="distribution-content">
+                <div class="aircraft-grid" id="aircraftGrid"></div>
+                
+                <div class="workload-column">
+                    <div class="workload-header">WORKLOAD </div>
+                    <div class="workload-master-container">
+                        <div class="workload-pane">
+                            <div class="pane-title"></div>
+                            <textarea id="workload_col1" class="workload-direct-edit" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
+                        </div>
+                        <div class="workload-pane">
+                            <div class="pane-title"></div>
+                            <textarea id="workload_col2" class="workload-direct-edit" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
+                        </div>
+                        <div class="workload-pane">
+                            <div class="pane-title"></div>
+                            <textarea id="workload_col3" class="workload-direct-edit" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: PPC DASHBOARD -->
+    <div id="ppc-dashboard" class="sheet-content relative font-sans text-gray-900 tracking-normal selection:bg-blue-500 selection:text-white">
+        <!-- Header / Navbar Terang -->
+        <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+            <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20 text-white">
+                        <span class="text-xl">✈️</span>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-wider text-gray-800 m-0 leading-tight">PPC CABIN DASHBOARD</h1>
+                        <p class="text-xs text-gray-500 m-0">Cabin Status Monitoring</p>
+                    </div>
+                </div>
+                <div id="current-date" class="text-xs font-mono bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-lg shadow-inner"></div>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <main class="container mx-auto px-6 py-8 pb-24">
+            <!-- Grid Layout: Tabel dan Grafik -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Tabel Data -->
+                <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 overflow-x-auto flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-gray-800 tracking-wide flex items-center gap-2 m-0">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+                                A/C Status Monitoring
+                            </h2>
+                        </div>
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr class="text-gray-500 font-mono text-[11px] bg-gray-50">
+                                    <th class="px-3 py-3 text-left uppercase tracking-wider">Registration</th>
+                                    <th class="px-3 py-3 text-left uppercase tracking-wider">JC</th>
+                                    <th class="px-3 py-3 text-left uppercase tracking-wider">MDR</th>
+                                    <th class="px-3 py-3 text-left uppercase tracking-wider">Plan RTS</th>
+                                    <th class="px-3 py-3 text-left uppercase tracking-wider">H- RTS</th>
+                                    <th class="px-3 py-3 text-left uppercase tracking-wider">Hilite</th>
+                                    <th class="px-3 py-3 text-center uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="plane-table-body" class="divide-y divide-gray-100 text-sm">
+                                <!-- Data dimuat lewat JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Grafik Gabungan JC & MDR -->
+                <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 flex flex-col justify-between">
+                    <h2 class="text-lg font-bold mb-4 text-gray-800 tracking-wide m-0">Grafik JC & MDR per Registrasi</h2>
+                    <div class="w-full h-80 relative">
+                        <canvas id="planeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Action Button (+) -->
+        <div class="absolute bottom-6 left-6 z-40">
+            <button onclick="toggleAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center text-3xl font-bold transition-all transform hover:scale-110 focus:outline-none">
+                +
+            </button>
+        </div>
+
+        <!-- Modal Pop-out Tambah Data -->
+        <div id="add-modal" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                    <h3 class="text-lg font-bold text-blue-600 m-0">Tambah Data Registrasi Baru</h3>
+                    <button onclick="toggleAddModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+                </div>
+                <form id="plane-form">
+                    <div class="mb-4">
+                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">A/C Reg.</label>
+                        <input type="text" id="reg" placeholder="Contoh: PK-ABC" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase font-mono">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC (%)</label>
+                            <input type="number" step="0.1" id="jc" placeholder="0 - 100" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR (%)</label>
+                            <input type="number" step="0.1" id="mdr" placeholder="0 - 100" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Plan RTS</label>
+                        <input type="date" id="rts" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Hilite Notes</label>
+                        <textarea id="hilite" rows="3" placeholder="Tulis catatan atau keterangan..." required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="toggleAddModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm transition">Batal</button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg text-sm transition shadow-md shadow-blue-500/20 border-none cursor-pointer">Simpan Data</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Pop-out Edit Data -->
+        <div id="edit-modal" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                    <h3 class="text-lg font-bold text-blue-600 m-0">Edit Data Pesawat</h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+                </div>
+                <form id="edit-form">
+                    <input type="hidden" id="edit-index">
+                    <div class="mb-4">
+                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">A/C Reg.</label>
+                        <input type="text" id="edit-reg" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-400 cursor-not-allowed uppercase font-mono">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC (%)</label>
+                            <input type="number" step="0.1" id="edit-jc" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR (%)</label>
+                            <input type="number" step="0.1" id="edit-mdr" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Plan RTS</label>
+                        <input type="date" id="edit-rts" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Hilite Notes</label>
+                        <textarea id="edit-hilite" rows="3" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeEditModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm transition">Batal</button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg text-sm transition shadow-md shadow-blue-500/20 border-none cursor-pointer">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals for ManPower Pro -->
+    <div id="staffModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 style="margin:0">MP INFORMATION</h3><button style="background:none; border:none; cursor:pointer; font-size:16px" onclick="closeStaffModal()">✕</button></div>
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="form-grid">
+                <div class="form-group"><label>EMPLOYEE ID</label><input type="text" id="empNumber" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></div>
+                <div class="form-group"><label>FULL NAME</label><input type="text" id="employee" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></div>
+                <div class="form-group"><label>SURNAME (POOL NAME)</label><input type="text" id="surname" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></div>
+                <div class="form-group"><label>ROLE</label>
+                    <select id="role" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                        <option>MANAGER</option>
+                        <option>AIRCRAFT CABIN TECHNICIAN</option>
+                        <option>SENIOR AIRCRAFT CABIN TECHNICIAN</option>
+                        <option>AIRCRAFT CABIN ENGINEER</option>
+                        <option>SENIOR AIRCRAFT CABIN ENGINEER</option>
+                        <option>TECHNICIAN ASSISTANCE</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="background:#eee" onclick="closeStaffModal()">CANCEL</button>
+                <button class="btn btn-primary" onclick="saveEmployee()">SAVE DATA</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+    // ==========================================
+    // INISIALISASI SUPABASE CLIENT
+    // ==========================================
+    const { createClient } = supabase;
     const supabaseUrl = 'https://gdlnsvbngvndjmrkhknt.supabase.co';
     const supabaseKey = 'sb_publishable_W2CD0jEZD-7PRCsMXxsVnw_ZNRoAVXY';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const _supabase = createClient(supabaseUrl, supabaseKey);
 
-    let manpowerData = [];
+    // ==========================================
+    // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT & SUPABASE)
+    // ==========================================
     
-    async function loadFromSupabase(key, defaultVal) {
-        const { data, error } = await supabase.from('app_storage').select('value').eq('key', key).single();
-        if (error || !data) return defaultVal;
-        return data.value;
+    // Set active unit default (masih disimpan di local agar tidak ter-reset ke TJN-1 setiap di-refresh)
+    let currentUnit = localStorage.getItem('active_unit') || 'TJN-4';
+    let manpowerData = [], aircraftRegs = [], assignments = {}, aircraftPhases = {}, aircraftLines = {}, generalWorkload = {};
+    let currentSort = { column: null, direction: 'asc' };
+
+    // Helper untuk mengambil data spesifik dari Database berdasarkan Unit
+    async function getStore(key, defaultVal) {
+        const { data, error } = await _supabase.from('app_store').select('value').eq('key', key).single();
+        if (data) return data.value;
+        return defaultVal;
     }
 
-    async function saveToSupabase(key, val) {
-        await supabase.from('app_storage').upsert({ key: key, value: val });
+    // Helper untuk Push data ke Database
+    function saveDataToDB() {
+        const updates = [
+            { key: `${currentUnit}_manpower_data`, value: manpowerData },
+            { key: `${currentUnit}_aircraft_regs`, value: aircraftRegs },
+            { key: `${currentUnit}_assignments`, value: assignments },
+            { key: `${currentUnit}_aircraft_phases`, value: aircraftPhases },
+            { key: `${currentUnit}_aircraft_lines`, value: aircraftLines }
+        ];
+        _supabase.from('app_store').upsert(updates).then(({error}) => {
+            if(error) console.error("Error saving data:", error);
+        });
     }
 
-    async function initApp() {
+    async function loadData() {
         document.getElementById('loadingOverlay').style.display = 'flex';
-        manpowerData = await loadFromSupabase('manpower_data', []);
-        renderTable();
+        
+        [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload] = await Promise.all([
+            getStore(`${currentUnit}_manpower_data`, []),
+            getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
+            getStore(`${currentUnit}_assignments`, {}),
+            getStore(`${currentUnit}_aircraft_phases`, {}),
+            getStore(`${currentUnit}_aircraft_lines`, {}),
+            getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" })
+        ]);
+
+        document.getElementById('globalUnitSelect').value = currentUnit;
+        
+        // Render current active tab
+        if (document.getElementById('distribution').classList.contains('active')) renderTable();
+        if (document.getElementById('schedule').classList.contains('active')) renderDistro();
+        
         document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    async function changeUnit(newUnit) {
+        currentUnit = newUnit;
+        localStorage.setItem('active_unit', currentUnit);
+        await loadData();
+    }
+
+    function saveGeneralWorkload() {
+        generalWorkload.col1 = document.getElementById('workload_col1').value.toUpperCase();
+        generalWorkload.col2 = document.getElementById('workload_col2').value.toUpperCase();
+        generalWorkload.col3 = document.getElementById('workload_col3').value.toUpperCase();
+        _supabase.from('app_store').upsert([{ key: `${currentUnit}_general_workload`, value: generalWorkload }]).then();
+    }
+
+    const statuses = {
+        "Available": { color: "#2ec4b6" }, 
+        "Annual Leave": { color: "#ff9f1c" },
+        "Change Shift": { color: "#9b59b6" }, 
+        "Sick Leave": { color: "#e71d36" },
+        "Training": { color: "#4361ee" }, 
+        "Extra Leave/Special Leave": { color: "#6366f1" },
+        "OFF": { color: "#718096" },
+        "TANPA KETERANGAN": { color: "#000000" }
+    };
+
+    function updateClock() {
+        const now = new Date();
+        const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+        const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+        const clockDate = document.getElementById('clockDate');
+        const clockTime = document.getElementById('clockTime');
+        if (clockDate) clockDate.innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        if (clockTime) clockTime.innerText = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function switchTab(e, id) {
+        document.querySelectorAll('.sheet-content').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        
+        document.getElementById(id).classList.add('active');
+        e.currentTarget.classList.add('active');
+        
+        const unitSelector = document.getElementById('unitSelectorWrapper');
+        if (id === 'ppc-dashboard') {
+            unitSelector.style.display = 'none'; 
+        } else {
+            unitSelector.style.display = 'flex'; 
+        }
+
+        document.getElementById('summaryContainer').style.display = (id === 'distribution') ? 'grid' : 'none';
+        
+        if(id === 'schedule') renderDistro();
+        if(id === 'distribution') renderTable();
+        if(id === 'ppc-dashboard') {
+            if(planeChartInstance) planeChartInstance.resize();
+        }
+    }
+
+    function sortTable(column) {
+        if (currentSort.column === column) { currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc'; } 
+        else { currentSort.column = column; currentSort.direction = 'asc'; }
+        renderTable();
     }
 
     function renderTable() {
         const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        manpowerData.forEach((item) => {
-            tbody.insertAdjacentHTML('beforeend', `<tr><td>${item.empNumber}</td><td>${item.employee}</td><td>${item.role}</td><td>${item.status}</td></tr>`);
+        if (!tbody) return;
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const filter = document.getElementById('statusFilter').value;
+        
+        let filteredData = manpowerData.map((item, index) => ({...item, originalIdx: index})).filter(item => {
+            const matchesSearch = item.employee.toLowerCase().includes(search) || item.empNumber.toLowerCase().includes(search);
+            const matchesStatus = filter === 'ALL' || (filter === 'AVAILABLE' ? item.status === 'Available' : item.status !== 'Available');
+            return matchesSearch && matchesStatus;
         });
-    }
 
-    async function addDummyData() {
-        manpowerData.push({ empNumber: "MP-" + Math.floor(Math.random()*1000), employee: "USER TEST", role: "TECHNICIAN", status: "Available" });
-        await saveToSupabase('manpower_data', manpowerData);
-        renderTable();
-    }
-
-    initApp();
-<\/script>
-</body>
-</html>
-    </template>
-
-    <!-- APP 2: MONITORING PPC -->
-    <template id="source-app2">
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <script src="https://cdn.tailwindcss.com"><\/script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
-</head>
-<body class="bg-gray-50 text-gray-900 font-sans p-6">
-    
-    <div id="loadingOverlay2" class="fixed inset-0 bg-white/80 z-50 flex justify-center items-center font-bold text-xl">
-        Menyinkronkan PPC ke Supabase...
-    </div>
-
-    <header class="mb-6">
-        <h1 class="text-2xl font-bold">PPC CABIN DASHBOARD</h1>
-    </header>
-
-    <div class="bg-white p-6 rounded-xl shadow-md">
-        <div class="flex justify-between mb-4">
-            <h2 class="text-lg font-bold">A/C Status Monitoring</h2>
-            <button onclick="addDummyPlane()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">+ Tambah Data Test</button>
-        </div>
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr><th class="px-3 py-3 text-left">Registration</th><th class="px-3 py-3 text-left">JC (%)</th><th class="px-3 py-3 text-left">MDR (%)</th></tr>
-            </thead>
-            <tbody id="plane-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
-        </table>
-    </div>
-
-    <script>
-        const supabaseUrl = 'https://gdlnsvbngvndjmrkhknt.supabase.co';
-        const supabaseKey = 'sb_publishable_W2CD0jEZD-7PRCsMXxsVnw_ZNRoAVXY';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-        let planeData = [];
-
-        async function loadData() {
-            const { data, error } = await supabase.from('app_storage').select('value').eq('key', 'planeData').single();
-            return data ? data.value : [];
-        }
-
-        async function saveData(val) {
-            await supabase.from('app_storage').upsert({ key: 'planeData', value: val });
-        }
-
-        async function initPPC() {
-            planeData = await loadData();
-            if(planeData.length === 0) {
-                planeData = [{ reg: 'PK-GAA', jc: 12.5, mdr: 5.0 }];
-                await saveData(planeData);
-            }
-            renderPPC();
-            document.getElementById('loadingOverlay2').style.display = 'none';
-        }
-
-        function renderPPC() {
-            const tbody = document.getElementById('plane-table-body');
-            tbody.innerHTML = '';
-            planeData.forEach((item) => {
-                tbody.insertAdjacentHTML('beforeend', `<tr><td class="px-3 py-3 font-bold">${item.reg}</td><td class="px-3 py-3">${item.jc}</td><td class="px-3 py-3">${item.mdr}</td></tr>`);
+        if (currentSort.column) {
+            filteredData.sort((a, b) => {
+                let valA = (a[currentSort.column] || "").toString().toLowerCase();
+                let valB = (b[currentSort.column] || "").toString().toLowerCase();
+                if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
             });
         }
 
-        async function addDummyPlane() {
-            planeData.push({ reg: 'PK-TEST' + Math.floor(Math.random()*100), jc: Math.random().toFixed(1), mdr: Math.random().toFixed(1) });
-            await saveData(planeData);
-            renderPPC();
+        tbody.innerHTML = '';
+        filteredData.forEach((item) => {
+            const masterIdx = item.originalIdx;
+            const displaySurname = item.surname ? item.surname : (item.employee.split(' ').length > 1 ? `${item.employee.split(' ')[0]} ${item.employee.split(' ').slice(-1)}` : item.employee);
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr>
+                    <td style="width:80px"><b>${item.empNumber}</b></td>
+                    <td>${item.employee}</td>
+                    <td style="color:var(--primary); font-weight:700">${displaySurname}</td>
+                    <td style="color:var(--text-muted)">${item.role}</td>
+                    <td style="width:130px">
+                        <select class="badge-select" style="background:${statuses[item.status]?.color}; color:white" onchange="updateStatus(${masterIdx}, this.value)">
+                            ${Object.keys(statuses).map(s => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td style="text-align:right; width:60px">
+                        <button style="border:none; background:none; color:var(--primary); cursor:pointer; padding:0 4px; font-size:12px" onclick="openStaffModal(${masterIdx})">✎</button>
+                        <button style="border:none; background:none; color:#ccc; cursor:pointer; padding:0 4px; font-size:12px" onclick="deleteStaff(${masterIdx})">✕</button>
+                    </td>
+                </tr>`);
+        });
+        updateDashboard();
+    }
+
+    function openStaffModal(idx = -1) {
+        document.getElementById('staffModal').style.display = 'flex';
+        if(idx > -1) {
+            const item = manpowerData[idx];
+            document.getElementById('empNumber').value = item.empNumber;
+            document.getElementById('employee').value = item.employee;
+            document.getElementById('surname').value = item.surname || '';
+            document.getElementById('role').value = item.role;
+            document.getElementById('editIndex').value = idx;
+        } else { resetStaffInputs(); }
+    }
+    function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
+    function resetStaffInputs() { document.getElementById('empNumber').value = ''; document.getElementById('employee').value = ''; document.getElementById('surname').value = ''; document.getElementById('editIndex').value = '-1'; }
+    
+    function saveEmployee() {
+        const empNumber = document.getElementById('empNumber').value.trim().toUpperCase();
+        const employee = document.getElementById('employee').value.trim().toUpperCase();
+        const surname = document.getElementById('surname').value.trim().toUpperCase();
+        const role = document.getElementById('role').value;
+        const editIdx = parseInt(document.getElementById('editIndex').value);
+        if(empNumber && employee) {
+            if (editIdx > -1) manpowerData[editIdx] = {...manpowerData[editIdx], empNumber, employee, surname, role};
+            else manpowerData.push({ empNumber, employee, surname, role, status: "Available" });
+            saveDataToDB(); closeStaffModal(); renderTable();
         }
+    }
+    function updateStatus(idx, val) { 
+        const id = manpowerData[idx].empNumber; 
+        manpowerData[idx].status = val; 
+        if(val !== "Available") Object.keys(assignments).forEach(r => assignments[r] = (assignments[r] || []).filter(e => e !== id));
+        saveDataToDB(); renderTable(); 
+    }
+    function deleteStaff(idx) { if(confirm("Delete this MP?")) { manpowerData.splice(idx, 1); saveDataToDB(); renderTable(); } }
 
-        initPPC();
-    <\/script>
-</body>
-</html>
-    </template>
+    function renderDistro() {
+        const pool = document.getElementById('staffPool');
+        const grid = document.getElementById('aircraftGrid');
+        const summaryPanel = document.getElementById('poolAvailabilitySummary'); 
+        const assignedIds = Object.values(assignments).flat();
 
-    <script>
-        function initializeIframes() {
-            const app1 = document.getElementById('app1');
-            const app2 = document.getElementById('app2');
-            const html1 = document.getElementById('source-app1').innerHTML.replace(/<\\\/script>/g, '<\/script>');
-            const html2 = document.getElementById('source-app2').innerHTML.replace(/<\\\/script>/g, '<\/script>');
+        let totalMp = manpowerData.length;
+        let availCount = 0;
+        let notAvailCount = 0;
+
+        document.getElementById('workload_col1').value = generalWorkload.col1 || "";
+        document.getElementById('workload_col2').value = generalWorkload.col2 || "";
+        document.getElementById('workload_col3').value = generalWorkload.col3 || "";
+
+        let poolHtml = '';
+        manpowerData.forEach(m => {
+            const isAssigned = assignedIds.includes(m.empNumber);
+            const displayName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
+            const statusColor = statuses[m.status]?.color || "#ccc";
+            const statusLabel = m.status.toUpperCase();
             
-            app1.contentWindow.document.open(); app1.contentWindow.document.write(html1); app1.contentWindow.document.close();
-            app2.contentWindow.document.open(); app2.contentWindow.document.write(html2); app2.contentWindow.document.close();
+            if (m.status === "Available") {
+                availCount++; 
+                if (!isAssigned) {
+                    poolHtml += `
+                    <div class="drag-item" draggable="true" ondragstart="dragMP(event, '${m.empNumber}', 'pool')">
+                        <span class="name">${displayName}</span>
+                        <div class="status-info"><span class="status-dot" style="background:${statusColor}"></span>AVAILABLE</div>
+                    </div>`;
+                }
+            } else {
+                notAvailCount++; 
+                poolHtml += `
+                <div class="drag-item not-avail">
+                    <span class="name">${displayName}</span>
+                    <div class="status-info"><span class="status-dot" style="background:${statusColor}"></span>${statusLabel}</div>
+                </div>`;
+            }
+        });
+        pool.innerHTML = poolHtml;
+
+        summaryPanel.innerHTML = `
+            <div class="summary-mini-item bg-total">
+                <span>TOTAL MP</span><span>${totalMp}</span>
+            </div>
+            <div class="summary-mini-item bg-avail">
+                <span>AVAIL</span><span>${availCount}</span>
+            </div>
+            <div class="summary-mini-item bg-not-avail">
+                <span>NOT AVAIL</span><span>${notAvailCount}</span>
+            </div>
+        `;
+
+        grid.innerHTML = '';
+        aircraftRegs.forEach((reg) => {
+            let lineOptions = '<option value="">L?</option>';
+            for(let i=1; i<=15; i++) {
+                const lVal = `L${i}`;
+                lineOptions += `<option value="${lVal}" ${aircraftLines[reg] === lVal ? 'selected' : ''}>${lVal}</option>`;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'aircraft-card';
+            card.draggable = true;
+            card.dataset.reg = reg;
+
+            card.addEventListener('dragstart', handleAcDragStart);
+            card.addEventListener('dragover', handleAcDragOver);
+            card.addEventListener('dragleave', handleAcDragLeave);
+            card.addEventListener('drop', handleAcDrop);
+            card.addEventListener('dragend', handleAcDragEnd);
+
+            card.innerHTML = `
+                <div class="ac-actions">
+                    <button class="ac-btn edit" onclick="editAcReg('${reg}')">✎</button>
+                    <button class="ac-btn del" onclick="deleteAcDistro('${reg}')">✕</button>
+                </div>
+                <div class="ac-card-header">
+                    <div class="ac-header-top">
+                        <span class="reg-badge">${reg}</span>
+                        <select class="line-mini-select" onchange="directUpdateLine('${reg}', this.value)">${lineOptions}</select>
+                    </div>
+                    <input type="text" class="phase-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="PHASE">
+                </div>
+                <div class="assignment-slots" ondragover="allowDrop(event)" ondrop="handleMPDrop(event, '${reg}')">
+                    ${(assignments[reg] || []).map(id => {
+                        const m = manpowerData.find(p => p.empNumber === id);
+                        if(!m) return '';
+                        const dName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
+                        return `<div class="drag-item" draggable="true" ondragstart="dragMP(event, '${m.empNumber}', '${reg}')"><span class="name">${dName}</span></div>`;
+                    }).join('')}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        
+        const addBtn = document.createElement('div');
+        addBtn.className = 'add-aircraft-btn';
+        addBtn.innerText = '+'; 
+        addBtn.onclick = addNewAcDistro;
+        grid.appendChild(addBtn);
+    }
+
+    function editAcReg(oldReg) {
+        const newReg = prompt("Edit A/C Reg:", oldReg);
+        if (newReg && newReg.toUpperCase() !== oldReg) {
+            const up = newReg.toUpperCase();
+            const idx = aircraftRegs.indexOf(oldReg);
+            if (idx !== -1) {
+                aircraftRegs[idx] = up;
+                if (assignments[oldReg]) { assignments[up] = assignments[oldReg]; delete assignments[oldReg]; }
+                if (aircraftPhases[oldReg]) { aircraftPhases[up] = aircraftPhases[oldReg]; delete aircraftPhases[oldReg]; }
+                if (aircraftLines[oldReg]) { aircraftLines[up] = aircraftLines[oldReg]; delete aircraftLines[oldReg]; }
+                saveDataToDB(); renderDistro();
+            }
+        }
+    }
+
+    let draggedCard = null;
+    function handleAcDragStart(e) { if (e.target.classList.contains('drag-item')) return; draggedCard = this; this.style.opacity = '0.4'; e.dataTransfer.setData('text/plain', this.dataset.reg); }
+    function handleAcDragOver(e) { e.preventDefault(); return false; }
+    function handleAcDragLeave(e) {}
+    function handleAcDrop(e) { e.stopPropagation(); const sourceReg = e.dataTransfer.getData('text/plain'); const targetReg = this.dataset.reg; if (sourceReg && sourceReg !== targetReg && sourceReg.length < 10) { const fromIdx = aircraftRegs.indexOf(sourceReg); const toIdx = aircraftRegs.indexOf(targetReg); if (fromIdx !== -1 && toIdx !== -1) { aircraftRegs.splice(fromIdx, 1); aircraftRegs.splice(toIdx, 0, sourceReg); saveDataToDB(); renderDistro(); } } }
+    function handleAcDragEnd(e) { this.style.opacity = '1'; draggedCard = null; }
+
+    function dragMP(ev, id, origin) { ev.stopPropagation(); ev.dataTransfer.setData("mp_id", id); ev.dataTransfer.setData("origin", origin); }
+    function allowDrop(ev) { ev.preventDefault(); }
+    function handleMPDrop(ev, reg) { ev.preventDefault(); const id = ev.dataTransfer.getData("mp_id"); const origin = ev.dataTransfer.getData("origin"); if (!id) return; if (origin !== 'pool' && origin !== reg) { assignments[origin] = (assignments[origin] || []).filter(i => i !== id); } if(!assignments[reg]) assignments[reg] = []; if(!assignments[reg].includes(id)) { assignments[reg].push(id); saveDataToDB(); renderDistro(); } }
+    function handleUnassignDrop(ev) { ev.preventDefault(); const id = ev.dataTransfer.getData("mp_id"); const origin = ev.dataTransfer.getData("origin"); if (id && origin !== 'pool') { assignments[origin] = assignments[origin].filter(i => i !== id); saveDataToDB(); renderDistro(); } }
+
+    function deleteAcDistro(reg) { if(confirm(`Remove ${reg}?`)) { aircraftRegs = aircraftRegs.filter(r => r !== reg); delete assignments[reg]; delete aircraftPhases[reg]; delete aircraftLines[reg]; saveDataToDB(); renderDistro(); } }
+    function toggleSidebar() { document.getElementById('poolSidebar').classList.toggle('collapsed'); }
+    function directUpdatePhase(reg, val) { aircraftPhases[reg] = val.toUpperCase(); saveDataToDB(); }
+    function directUpdateLine(reg, val) { aircraftLines[reg] = val; saveDataToDB(); }
+    function addNewAcDistro() { const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
+
+    function updateDashboard() {
+        const container = document.getElementById('summaryContainer');
+        if (!container) return; container.innerHTML = '';
+        const counts = { "TOTAL MP": manpowerData.length };
+        Object.keys(statuses).forEach(s => counts[s.toUpperCase()] = 0);
+        manpowerData.forEach(m => counts[m.status.toUpperCase()]++);
+        Object.entries(counts).forEach(([label, count]) => {
+            const color = label === "TOTAL MP" ? "var(--dark)" : (statuses[Object.keys(statuses).find(k => k.toUpperCase() === label)]?.color || "#6c757d");
+            container.insertAdjacentHTML('beforeend', `<div class="summary-card" style="border-left-color:${color}"><label>${label}</label><span>${count}</span></div>`);
+        });
+    }
+    
+    function downloadAllData() {
+        const wb = XLSX.utils.book_new();
+        const summaryData = [["MP AVAILABILITY SUMMARY"]];
+        const counts = { "TOTAL MP": manpowerData.length };
+        Object.keys(statuses).forEach(s => counts[s.toUpperCase()] = 0);
+        manpowerData.forEach(m => counts[m.status.toUpperCase()]++);
+        Object.entries(counts).forEach(([k, v]) => summaryData.push([k, v]));
+        summaryData.push([], ["ID", "NAME", "SURNAME", "ROLE", "STATUS"]);
+        manpowerData.forEach(m => summaryData.push([m.empNumber, m.employee, m.surname || "", m.role, m.status]));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), "Availability");
+
+        const distData = [["UNIT", currentUnit], [], ["AIRCRAFT REG", "LINE", "PHASE", "ASSIGNED MP"]];
+        aircraftRegs.forEach(reg => {
+            const names = (assignments[reg] || []).map(id => { const m = manpowerData.find(x => x.empNumber === id); return m ? (m.surname || m.employee) : id; }).join(", ");
+            distData.push([reg, aircraftLines[reg] || "", aircraftPhases[reg] || "", names]);
+        });
+        distData.push([], ["GENERAL WORKLOAD COL 1"], [generalWorkload.col1], [], ["GENERAL WORKLOAD COL 2"], [generalWorkload.col2], [], ["GENERAL WORKLOAD COL 3"], [generalWorkload.col3]);
+        
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(distData), "Distribution");
+        XLSX.writeFile(wb, `MANPOWERPRO_CABIN_${currentUnit}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // ==========================================
+    // SCRIPTS FOR PPC DASHBOARD (SUPABASE)
+    // ==========================================
+    function updateDate() {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const today = new Date();
+        document.getElementById('current-date').innerText = "Updated On: " + today.toLocaleDateString('id-ID', options).toUpperCase();
+    }
+    updateDate();
+
+    let planeData = [];
+    let planeChartInstance = null;
+
+    async function loadPlaneData() {
+        const defaultPlaneData = [
+            { reg: 'PK-GAA', jc: 12.5, mdr: 5.0, rts: '2026-06-15', hilite: 'Normal\nCheck Cabin A' },
+            { reg: 'PK-GAB', jc: 3.2, mdr: 10.1, rts: '2026-06-20', hilite: 'Check Engine\nPending Part' }
+        ];
+        planeData = await getStore('ppc_plane_data', defaultPlaneData);
+        renderApp();
+    }
+
+    function savePlaneDataToDB() {
+        _supabase.from('app_store').upsert([{ key: 'ppc_plane_data', value: planeData }]).then();
+    }
+
+    function calculateHCountdown(rtsDateStr) {
+        if (!rtsDateStr) return '-';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const rtsDate = new Date(rtsDateStr);
+        rtsDate.setHours(0, 0, 0, 0);
+        
+        const diffTime = rtsDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 0) {
+            return `<span class="bg-blue-50 border border-blue-200 text-blue-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">H-${diffDays}</span>`;
+        } else if (diffDays === 0) {
+            return `<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">H-0 (TODAY)</span>`;
+        } else {
+            return `<span class="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">OVERDUE</span>`;
+        }
+    }
+
+    function formatDateDisplay(dateStr) {
+        if (!dateStr) return '-';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
+
+    function renderApp() {
+        const tbody = document.getElementById('plane-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const regs = [];
+        const jcData = [];
+        const mdrData = [];
+
+        planeData.forEach((item, index) => {
+            regs.push(item.reg);
+            jcData.push(item.jc);
+            mdrData.push(item.mdr);
+
+            const hCountdown = calculateHCountdown(item.rts);
+            const displayRts = formatDateDisplay(item.rts);
+
+            const row = document.createElement('tr');
+            row.className = "hover:bg-blue-50/40 transition-colors";
+            row.innerHTML = `
+                <td class="px-3 py-3.5 whitespace-nowrap font-mono font-bold text-blue-600">${item.reg}</td>
+                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${item.jc}%</td>
+                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${item.mdr}%</td>
+                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono text-xs">${displayRts}</td>
+                <td class="px-3 py-3.5 whitespace-nowrap">${hCountdown}</td>
+                <td class="px-3 py-3.5 text-gray-600 text-xs max-w-xs" style="white-space: pre-line;">${item.hilite}</td>
+                <td class="px-3 py-3.5 whitespace-nowrap text-center space-x-2">
+                    <button onclick="openEditModal(${index})" title="Edit" class="text-blue-600 hover:text-blue-800 p-1 rounded transition">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </button>
+                    <button onclick="deleteData(${index})" title="Hapus" class="text-rose-600 hover:text-rose-800 p-1 rounded transition">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        savePlaneDataToDB();
+        updateChart(regs, jcData, mdrData);
+    }
+
+    function updateChart(regs, jc, mdr) {
+        const canvas = document.getElementById('planeChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (planeChartInstance) planeChartInstance.destroy();
+
+        planeChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: regs,
+                datasets: [
+                    {
+                        label: 'JC (%)',
+                        data: jc,
+                        backgroundColor: 'rgba(37, 99, 235, 0.8)',
+                        borderColor: 'rgba(37, 99, 235, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'MDR (%)',
+                        data: mdr,
+                        backgroundColor: 'rgba(225, 29, 72, 0.8)',
+                        borderColor: 'rgba(225, 29, 72, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#374151',
+                            font: { family: 'ui-sans-serif, system-ui', size: 11 }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(229, 231, 235, 1)' },
+                        ticks: { color: '#4b5563', font: { family: 'monospace' } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: 'rgba(229, 231, 235, 1)' },
+                        ticks: { color: '#4b5563' }
+                    }
+                }
+            }
+        });
+    }
+
+    function toggleAddModal() { document.getElementById('add-modal').classList.toggle('hidden'); }
+
+    document.getElementById('plane-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const reg = document.getElementById('reg').value.toUpperCase().trim();
+        const jc = parseFloat(document.getElementById('jc').value);
+        const mdr = parseFloat(document.getElementById('mdr').value);
+        const rts = document.getElementById('rts').value;
+        const hilite = document.getElementById('hilite').value.trim();
+
+        if (planeData.some(item => item.reg === reg)) {
+            alert('Registrasi pesawat sudah ada dalam sistem!');
+            return;
         }
 
-        function switchAppTab(appId, btnElement) {
-            document.querySelectorAll('.app-container').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.main-tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(appId).classList.add('active');
-            btnElement.classList.add('active');
-        }
+        planeData.push({ reg, jc, mdr, rts, hilite });
+        document.getElementById('plane-form').reset();
+        toggleAddModal();
+        renderApp();
+    });
 
-        window.addEventListener('DOMContentLoaded', initializeIframes);
-    </script>
+    function openEditModal(index) {
+        const data = planeData[index];
+        document.getElementById('edit-index').value = index;
+        document.getElementById('edit-reg').value = data.reg;
+        document.getElementById('edit-jc').value = data.jc;
+        document.getElementById('edit-mdr').value = data.mdr;
+        document.getElementById('edit-rts').value = data.rts || '';
+        document.getElementById('edit-hilite').value = data.hilite;
+        document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    document.getElementById('edit-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const index = document.getElementById('edit-index').value;
+        planeData[index].jc = parseFloat(document.getElementById('edit-jc').value);
+        planeData[index].mdr = parseFloat(document.getElementById('edit-mdr').value);
+        planeData[index].rts = document.getElementById('edit-rts').value;
+        planeData[index].hilite = document.getElementById('edit-hilite').value.trim();
+
+        closeEditModal();
+        renderApp();
+    });
+
+    function deleteData(index) {
+        if (confirm('Konfirmasi penghapusan data telemetri pesawat ini?')) {
+            planeData.splice(index, 1);
+            renderApp();
+        }
+    }
+
+    // ==========================================
+    // INITIALIZATION RUN (Mulai narik dari database saat web dibuka)
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', async () => {
+        await Promise.all([loadData(), loadPlaneData()]);
+    });
+
+</script>
 </body>
 </html>

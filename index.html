@@ -383,8 +383,8 @@
                     <thead>
                         <tr>
                             <th style="width:80px" onclick="sortTable('empNumber')">ID ↕</th>
-                            <th onclick="sortTable('employee')">NAME ↕</th>
-                            <th onclick="sortTable('surname')">SURNAME (POOL) ↕</th>
+                            <th onclick="sortTable('employee')">FULL NAME ↕</th>
+                            <th onclick="sortTable('surname')">NICKNAME (POOL) ↕</th>
                             <th onclick="sortTable('role')">ROLE ↕</th>
                             <th style="width:130px" onclick="sortTable('status')">STATUS ↕</th>
                             <th style="width:60px; text-align:right" class="mp-cud-control"></th>
@@ -458,7 +458,7 @@
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-lg font-bold text-gray-800 tracking-wide flex items-center gap-2 m-0">
                                 <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-                                A/C Status Monitoring
+                                A/C Status Monitoring 
                             </h2>
                         </div>
                         <table class="min-w-full divide-y divide-gray-200">
@@ -1021,7 +1021,7 @@
                         <span class="reg-badge cursor-grab" draggable="true" ondragstart="handleAcDragStart(event, '${reg}')" ondragend="handleAcDragEnd(event)">${reg} ↕</span>
                         <select class="line-mini-select mp-cud-input" onchange="directUpdateLine('${reg}', this.value)">${lineOptions}</select>
                     </div>
-                    <input type="text" class="phase-input mp-cud-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="PHASE">
+                    <input type="text" class="phase-input mp-cud-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="Maint. Type">
                 </div>
                 <div class="assignment-slots" ondragover="allowDrop(event)" ondrop="handleMPDrop(event, '${reg}')">
                     ${(assignments[reg] || []).map(id => {

@@ -233,6 +233,7 @@
 
         .btn { padding: 4px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 10px; height: 28px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
+        .btn-excel { background: #107c41; color: white; display: flex; align-items: center; gap: 5px; }
         
         .filter-select, #searchInput { height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 10px; outline: none; }
 
@@ -317,14 +318,12 @@
 </head>
 <body>
 
-<!-- Loading Indicator -->
 <div id="loadingOverlay">SYNCING DENGAN CLOUD DATABASE...</div>
 
 <nav class="sidebar-nav">
     <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
         <div class="brand">MANPOWER<span>PRO</span> Cabin Narrow 🧑‍🔧</div>
         
-        <!-- Unit Selector Dropdown -->
         <div id="unitSelectorWrapper" style="display: flex; align-items: center; gap: 8px;">
             <label style="color: #a2a3b7; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">UNIT</label>
             <select id="globalUnitSelect" onchange="changeUnit(this.value)" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 6px; font-weight: 800; outline: none; font-size: 11px; cursor: pointer;">
@@ -336,7 +335,6 @@
             </select>
         </div>
 
-        <!-- Auth UI -->
         <div style="display: flex; align-items: center; gap: 10px; margin-left: 15px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px;">
             <span id="roleDisplay" class="auth-badge">ROLE: VIEWER</span>
             <button id="loginBtn" class="auth-btn btn-login" onclick="document.getElementById('loginModalOverlay').style.display='flex'">LOGIN</button>
@@ -359,14 +357,14 @@
     <!-- TAB 1: AVAILABILITY -->
     <div id="distribution" class="sheet-content active">
         <div class="data-card">
+            <!-- Header/Kotak Dipertahankan Persis Seperti Sebelumnya -->
             <div class="header-action" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <h2 style="margin:0; font-size: 14px;">RESOURCE MANAGEMENT</h2>
                 <div style="display:flex; gap: 6px; align-items: center;">
-                    <!-- Input file (hidden) untuk upload MP -->
                     <input type="file" id="uploadMpFile" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
                     
-                    <button class="btn mp-cud-control" style="background:#107c41; color:white; display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
-                    <button class="btn mp-cud-control" style="background:#107c41; color:white; display:none;" onclick="document.getElementById('uploadMpFile').click()">📤 UPLOAD MP</button>
+                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
+                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="document.getElementById('uploadMpFile').click()">📤 UPLOAD MP</button>
                     
                     <select id="statusFilter" class="filter-select" onchange="renderTable()">
                         <option value="ALL">ALL STATUS</option>
@@ -674,7 +672,7 @@
 
         // Manpower Pro (Tabs 1 & 2)
         document.querySelectorAll('.mp-cud-control').forEach(el => {
-            el.style.display = canEditMP ? 'inline-block' : 'none';
+            el.style.display = canEditMP ? 'flex' : 'none';
         });
         document.querySelectorAll('.mp-cud-input').forEach(el => {
             el.disabled = !canEditMP;
@@ -940,7 +938,6 @@
                 const role = String(row[3] || "TECHNICIAN ASSISTANCE").toUpperCase();
                 let rawStatus = String(row[4] || "Available").trim();
                 
-                // Coba cocokkan status, jika salah penulisan set default ke Available
                 const matchedStatus = Object.keys(statuses).find(s => s.toLowerCase() === rawStatus.toLowerCase()) || "Available";
 
                 const existingIdx = manpowerData.findIndex(m => m.empNumber === empNumber);

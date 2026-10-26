@@ -216,6 +216,7 @@
             font-family: inherit; resize: none; outline: none; flex: 1; line-height: 1.4; color: #334155;
             text-align: left;
         }
+        .workload-direct-edit:disabled { background: #f8fafc; cursor: not-allowed; }
 
         .data-card { 
             background: white; border-radius: var(--border-radius); padding: 15px; 
@@ -237,11 +238,14 @@
         .filter-select, #searchInput { height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 10px; outline: none; }
 
         .badge-select { padding: 1px 4px; height: 18px; border-radius: 3px; font-weight: 700; font-size: 8.5px; border: none; cursor: pointer; width: 100%; }
+        .badge-select:disabled { cursor: not-allowed; opacity: 0.8; }
         
         .drag-item { 
             background: white; border: 1px solid #e2e8f0; padding: 2px 4px; border-radius: 3px; 
             cursor: grab; box-shadow: 0 1px 1px rgba(0,0,0,0.03); display: flex; flex-direction: column;
         }
+        .drag-item[draggable="false"] { cursor: default; }
+
         .drag-item .name { font-weight: 700; font-size: 8px; text-transform: uppercase; }
         .drag-item .status-info { font-size: 6.5px; font-weight: 600; display: flex; align-items: center; gap: 2px; margin-top: 1px; color: #64748b; }
         .status-dot { width: 4px; height: 4px; border-radius: 50%; display: inline-block; }
@@ -262,6 +266,12 @@
             border-radius: 6px; transition: 0.2s; align-self: center; 
         }
         
+        .unit-input {
+            border: 2px solid var(--dark); border-radius: 6px; padding: 4px 10px; font-weight: 900;
+            text-align: center; width: 160px; text-transform: uppercase; font-size: 11px; outline: none;
+        }
+        .unit-input:disabled { background: #eee; cursor: not-allowed; }
+
         .phase-input { 
             width: 100%; 
             height: 18px; 
@@ -275,6 +285,7 @@
             color: var(--primary);
             text-transform: uppercase;
         }
+        .phase-input:disabled { background: #f1f5f9; cursor: not-allowed; }
 
         .line-mini-select { 
             font-size: 8px; height: 16px; border-radius: 3px; border: 1px solid #eee; 
@@ -282,6 +293,7 @@
             padding: 0 4px; width: 28px; text-align: center; background: #fff; cursor: pointer;
             flex-shrink: 0;
         }
+        .line-mini-select:disabled { background: #f1f5f9; cursor: not-allowed; }
         
         .reg-badge {
             background: var(--dark); color: white; padding: 2px 6px; border-radius: 3px; 
@@ -297,6 +309,17 @@
             background: rgba(255,255,255,0.8); z-index: 9999; display: flex;
             align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: var(--primary);
         }
+
+        /* Authentication UI */
+        .auth-badge {
+            font-size: 9px; padding: 4px 8px; border-radius: 4px; font-weight: 800;
+            background: rgba(255,255,255,0.15); color: white; letter-spacing: 0.5px;
+        }
+        .auth-btn {
+            font-size: 10px; padding: 4px 10px; border-radius: 4px; font-weight: 700; border: none; cursor: pointer;
+        }
+        .btn-login { background: var(--success); color: white; }
+        .btn-logout { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
@@ -318,6 +341,13 @@
                 <option style="color: black;" value="TJN-4">TJN-4</option>
                 <option style="color: black;" value="TJN-5">TJN-5</option>
             </select>
+        </div>
+
+        <!-- Auth UI -->
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: 15px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px;">
+            <span id="roleDisplay" class="auth-badge">ROLE: VIEWER</span>
+            <button id="loginBtn" class="auth-btn btn-login" onclick="document.getElementById('loginModalOverlay').style.display='flex'">LOGIN</button>
+            <button id="logoutBtn" class="auth-btn btn-logout" onclick="handleLogout()" style="display:none;">LOGOUT</button>
         </div>
     </div>
 
@@ -347,7 +377,7 @@
                         <option value="NOT_AVAILABLE">NOT AVAILABLE</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="SEARCH..." onkeyup="renderTable()" style="width: 120px; text-transform: uppercase;">
-                    <button class="btn btn-primary" onclick="openStaffModal()">+ ADD MP</button>
+                    <button class="btn btn-primary mp-cud-control" onclick="openStaffModal()">+ ADD MP</button>
                 </div>
             </div>
             <div class="table-container">
@@ -359,7 +389,7 @@
                             <th onclick="sortTable('surname')">SURNAME (POOL) ↕</th>
                             <th onclick="sortTable('role')">ROLE ↕</th>
                             <th style="width:130px" onclick="sortTable('status')">STATUS ↕</th>
-                            <th style="width:60px; text-align:right"></th>
+                            <th style="width:60px; text-align:right" class="mp-cud-control"></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -370,6 +400,10 @@
 
     <!-- TAB 2: SCHEDULE (DISTRIBUTION MP) -->
     <div id="schedule" class="sheet-content">
+        <div class="unit-container">
+            <input type="text" id="unitName" class="unit-input mp-cud-input" placeholder="INPUT UNIT" oninput="saveUnitName()">
+        </div>
+
         <div class="distro-layout">
             <div class="pool-sidebar" id="poolSidebar">
                 <button class="toggle-btn" onclick="toggleSidebar()">◀</button>
@@ -387,15 +421,15 @@
                     <div class="workload-master-container">
                         <div class="workload-pane">
                             <div class="pane-title"></div>
-                            <textarea id="workload_col1" class="workload-direct-edit" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
+                            <textarea id="workload_col1" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
                         </div>
                         <div class="workload-pane">
                             <div class="pane-title"></div>
-                            <textarea id="workload_col2" class="workload-direct-edit" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
+                            <textarea id="workload_col2" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
                         </div>
                         <div class="workload-pane">
                             <div class="pane-title"></div>
-                            <textarea id="workload_col3" class="workload-direct-edit" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
+                            <textarea id="workload_col3" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
                         </div>
                     </div>
                 </div>
@@ -405,7 +439,6 @@
 
     <!-- TAB 3: PPC DASHBOARD -->
     <div id="ppc-dashboard" class="sheet-content relative font-sans text-gray-900 tracking-normal selection:bg-blue-500 selection:text-white">
-        <!-- Header / Navbar Terang -->
         <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40 shadow-sm">
             <div class="container mx-auto px-6 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
@@ -421,12 +454,9 @@
             </div>
         </header>
 
-        <!-- Main Container -->
         <main class="container mx-auto px-6 py-8 pb-24">
-            <!-- Grid Layout: Tabel dan Grafik -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
-                <!-- Tabel Data -->
                 <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 overflow-x-auto flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center mb-6">
@@ -444,17 +474,14 @@
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">Plan RTS</th>
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">H- RTS</th>
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">Hilite</th>
-                                    <th class="px-3 py-3 text-center uppercase tracking-wider">Actions</th>
+                                    <th class="px-3 py-3 text-center uppercase tracking-wider ppc-cud-control">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="plane-table-body" class="divide-y divide-gray-100 text-sm">
-                                <!-- Data dimuat lewat JS -->
-                            </tbody>
+                            <tbody id="plane-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Grafik Gabungan JC & MDR -->
                 <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 flex flex-col justify-between">
                     <h2 class="text-lg font-bold mb-4 text-gray-800 tracking-wide m-0">Grafik JC & MDR per Registrasi</h2>
                     <div class="w-full h-80 relative">
@@ -464,19 +491,18 @@
             </div>
         </main>
 
-        <!-- Floating Action Button (+) -->
-        <div class="absolute bottom-6 left-6 z-40">
+        <div class="absolute bottom-6 left-6 z-40 ppc-cud-control">
             <button onclick="toggleAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center text-3xl font-bold transition-all transform hover:scale-110 focus:outline-none">
                 +
             </button>
         </div>
 
-        <!-- Modal Pop-out Tambah Data -->
+        <!-- Modals for PPC -->
         <div id="add-modal" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
             <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
                     <h3 class="text-lg font-bold text-blue-600 m-0">Tambah Data Registrasi Baru</h3>
-                    <button onclick="toggleAddModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+                    <button type="button" onclick="toggleAddModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
                 </div>
                 <form id="plane-form">
                     <div class="mb-4">
@@ -509,12 +535,11 @@
             </div>
         </div>
 
-        <!-- Modal Pop-out Edit Data -->
         <div id="edit-modal" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
             <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
                     <h3 class="text-lg font-bold text-blue-600 m-0">Edit Data Pesawat</h3>
-                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+                    <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
                 </div>
                 <form id="edit-form">
                     <input type="hidden" id="edit-index">
@@ -549,10 +574,31 @@
         </div>
     </div>
 
-    <!-- Modals for ManPower Pro -->
+    <!-- Modal Login -->
+    <div id="loginModalOverlay" class="modal-overlay">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header"><h3 style="margin:0; font-size: 15px; color: var(--primary)">LOGIN OTORISASI</h3></div>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>USERNAME</label>
+                    <input type="text" id="loginUser" required style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label>PASSWORD</label>
+                    <input type="password" id="loginPass" required style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px;">
+                </div>
+                <div class="modal-footer" style="margin-top:0">
+                    <button type="button" class="btn" style="background:#eee" onclick="document.getElementById('loginModalOverlay').style.display='none'">BATAL</button>
+                    <button type="submit" class="btn btn-primary">MASUK</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for ManPower Pro -->
     <div id="staffModal" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-header"><h3 style="margin:0">MP INFORMATION</h3><button style="background:none; border:none; cursor:pointer; font-size:16px" onclick="closeStaffModal()">✕</button></div>
+            <div class="modal-header"><h3 style="margin:0">MP INFORMATION</h3><button type="button" style="background:none; border:none; cursor:pointer; font-size:16px" onclick="closeStaffModal()">✕</button></div>
             <input type="hidden" id="editIndex" value="-1">
             <div class="form-grid">
                 <div class="form-group"><label>EMPLOYEE ID</label><input type="text" id="empNumber" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></div>
@@ -570,14 +616,93 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn" style="background:#eee" onclick="closeStaffModal()">CANCEL</button>
-                <button class="btn btn-primary" onclick="saveEmployee()">SAVE DATA</button>
+                <button type="button" class="btn" style="background:#eee" onclick="closeStaffModal()">CANCEL</button>
+                <button type="button" class="btn btn-primary" onclick="saveEmployee()">SAVE DATA</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+    // ==========================================
+    // SISTEM OTORISASI / LOGIN (CLIENT-SIDE)
+    // ==========================================
+    let currentUserRole = localStorage.getItem('currentUserRole') || 'viewer';
+
+    function updateAuthUI() {
+        const roleDisplay = document.getElementById('roleDisplay');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        roleDisplay.innerText = `ROLE: ${currentUserRole.toUpperCase()}`;
+        if (currentUserRole === 'viewer') {
+            loginBtn.style.display = 'inline-block';
+            logoutBtn.style.display = 'none';
+        } else {
+            loginBtn.style.display = 'none';
+            logoutBtn.style.display = 'inline-block';
+        }
+    }
+
+    function handleLogin(e) {
+        e.preventDefault();
+        const u = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value.trim();
+
+        if (u === 'admin' && p === 'papagolda76') currentUserRole = 'admin';
+        else if (u === 'manager' && p === 'captain76') currentUserRole = 'manager';
+        else if (u === 'ppc' && p === 'capt76') currentUserRole = 'ppc';
+        else {
+            alert('Username atau Password salah!');
+            return;
+        }
+
+        localStorage.setItem('currentUserRole', currentUserRole);
+        document.getElementById('loginUser').value = '';
+        document.getElementById('loginPass').value = '';
+        document.getElementById('loginModalOverlay').style.display = 'none';
+        
+        updateAuthUI();
+        applyPermissions();
+    }
+
+    function handleLogout() {
+        if(confirm('Anda yakin ingin Logout?')) {
+            currentUserRole = 'viewer';
+            localStorage.setItem('currentUserRole', currentUserRole);
+            updateAuthUI();
+            applyPermissions();
+        }
+    }
+
+    function applyPermissions() {
+        const canEditMP = ['admin', 'manager'].includes(currentUserRole);
+        const canEditPPC = ['admin', 'ppc'].includes(currentUserRole);
+
+        // Manpower Pro (Tabs 1 & 2)
+        document.querySelectorAll('.mp-cud-control').forEach(el => {
+            el.style.display = canEditMP ? '' : 'none';
+        });
+        document.querySelectorAll('.mp-cud-input').forEach(el => {
+            el.disabled = !canEditMP;
+        });
+
+        // Toggle drag and drop capability
+        document.querySelectorAll('.drag-item').forEach(el => {
+            if (!el.classList.contains('not-avail')) {
+                el.setAttribute('draggable', canEditMP ? 'true' : 'false');
+            }
+        });
+
+        // PPC Dashboard (Tab 3)
+        document.querySelectorAll('.ppc-cud-control').forEach(el => {
+            el.style.display = canEditPPC ? '' : 'none';
+        });
+    }
+
+    // Eksekusi auth UI awal
+    updateAuthUI();
+
     // ==========================================
     // INISIALISASI SUPABASE CLIENT
     // ==========================================
@@ -587,54 +712,59 @@
     const _supabase = createClient(supabaseUrl, supabaseKey);
 
     // ==========================================
-    // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT & SUPABASE)
+    // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT)
     // ==========================================
-    
-    // Set active unit default (masih disimpan di local agar tidak ter-reset ke TJN-1 setiap di-refresh)
     let currentUnit = localStorage.getItem('active_unit') || 'TJN-4';
     let manpowerData = [], aircraftRegs = [], assignments = {}, aircraftPhases = {}, aircraftLines = {}, generalWorkload = {};
     let currentSort = { column: null, direction: 'asc' };
 
-    // Helper untuk mengambil data spesifik dari Database berdasarkan Unit
     async function getStore(key, defaultVal) {
-        const { data, error } = await _supabase.from('app_store').select('value').eq('key', key).maybeSingle();
-        if (data) return data.value;
-        return defaultVal;
+        try {
+            const { data, error } = await _supabase.from('app_store').select('value').eq('key', key).maybeSingle();
+            if (error) console.warn(`Peringatan DB [${key}]:`, error.message);
+            if (data && data.value !== null) return data.value;
+            return defaultVal;
+        } catch (err) {
+            console.error("Gagal koneksi DB:", err);
+            return defaultVal;
+        }
     }
 
-    // Helper untuk Push data ke Database
-    function saveDataToDB() {
-        const updates = [
-            { key: `${currentUnit}_manpower_data`, value: manpowerData },
-            { key: `${currentUnit}_aircraft_regs`, value: aircraftRegs },
-            { key: `${currentUnit}_assignments`, value: assignments },
-            { key: `${currentUnit}_aircraft_phases`, value: aircraftPhases },
-            { key: `${currentUnit}_aircraft_lines`, value: aircraftLines }
-        ];
-        _supabase.from('app_store').upsert(updates).then(({error}) => {
-            if(error) console.error("Error saving data:", error);
-        });
+    async function saveDataToDB() {
+        if (!['admin', 'manager'].includes(currentUserRole)) return; // Double check access
+        try {
+            const updates = [
+                { key: `${currentUnit}_manpower_data`, value: manpowerData },
+                { key: `${currentUnit}_aircraft_regs`, value: aircraftRegs },
+                { key: `${currentUnit}_assignments`, value: assignments },
+                { key: `${currentUnit}_aircraft_phases`, value: aircraftPhases },
+                { key: `${currentUnit}_aircraft_lines`, value: aircraftLines }
+            ];
+            await _supabase.from('app_store').upsert(updates);
+        } catch (err) { console.error("Error simpan data:", err); }
     }
 
     async function loadData() {
-        document.getElementById('loadingOverlay').style.display = 'flex';
+        const overlay = document.getElementById('loadingOverlay');
+        if(overlay) overlay.style.display = 'flex';
         
-        [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload] = await Promise.all([
-            getStore(`${currentUnit}_manpower_data`, []),
-            getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
-            getStore(`${currentUnit}_assignments`, {}),
-            getStore(`${currentUnit}_aircraft_phases`, {}),
-            getStore(`${currentUnit}_aircraft_lines`, {}),
-            getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" })
-        ]);
+        try {
+            [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload] = await Promise.all([
+                getStore(`${currentUnit}_manpower_data`, []),
+                getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
+                getStore(`${currentUnit}_assignments`, {}),
+                getStore(`${currentUnit}_aircraft_phases`, {}),
+                getStore(`${currentUnit}_aircraft_lines`, {}),
+                getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" })
+            ]);
 
-        document.getElementById('globalUnitSelect').value = currentUnit;
-        
-        // Render current active tab
-        if (document.getElementById('distribution').classList.contains('active')) renderTable();
-        if (document.getElementById('schedule').classList.contains('active')) renderDistro();
-        
-        document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('globalUnitSelect').value = currentUnit;
+            document.getElementById('unitName').value = await getStore(`${currentUnit}_unit_name`, '');
+            
+            if (document.getElementById('distribution').classList.contains('active')) renderTable();
+            if (document.getElementById('schedule').classList.contains('active')) renderDistro();
+        } catch(err) { console.error("Load MP err:", err); } 
+        finally { if(overlay) overlay.style.display = 'none'; }
     }
 
     async function changeUnit(newUnit) {
@@ -644,34 +774,33 @@
     }
 
     function saveGeneralWorkload() {
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
         generalWorkload.col1 = document.getElementById('workload_col1').value.toUpperCase();
         generalWorkload.col2 = document.getElementById('workload_col2').value.toUpperCase();
         generalWorkload.col3 = document.getElementById('workload_col3').value.toUpperCase();
         _supabase.from('app_store').upsert([{ key: `${currentUnit}_general_workload`, value: generalWorkload }]).then();
     }
 
+    function saveUnitName() {
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        const val = document.getElementById('unitName').value.toUpperCase();
+        _supabase.from('app_store').upsert([{ key: `${currentUnit}_unit_name`, value: val }]).then();
+    }
+
     const statuses = {
-        "Available": { color: "#2ec4b6" }, 
-        "Annual Leave": { color: "#ff9f1c" },
-        "Change Shift": { color: "#9b59b6" }, 
-        "Sick Leave": { color: "#e71d36" },
-        "Training": { color: "#4361ee" }, 
-        "Extra Leave/Special Leave": { color: "#6366f1" },
-        "OFF": { color: "#718096" },
-        "TANPA KETERANGAN": { color: "#000000" }
+        "Available": { color: "#2ec4b6" }, "Annual Leave": { color: "#ff9f1c" }, "Change Shift": { color: "#9b59b6" }, 
+        "Sick Leave": { color: "#e71d36" }, "Training": { color: "#4361ee" }, "Extra Leave/Special Leave": { color: "#6366f1" },
+        "OFF": { color: "#718096" }, "TANPA KETERANGAN": { color: "#000000" }
     };
 
     function updateClock() {
         const now = new Date();
         const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
         const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
-        const clockDate = document.getElementById('clockDate');
-        const clockTime = document.getElementById('clockTime');
-        if (clockDate) clockDate.innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-        if (clockTime) clockTime.innerText = now.toTimeString().split(' ')[0];
+        if (document.getElementById('clockDate')) document.getElementById('clockDate').innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+        if (document.getElementById('clockTime')) document.getElementById('clockTime').innerText = now.toTimeString().split(' ')[0];
     }
-    setInterval(updateClock, 1000);
-    updateClock();
+    setInterval(updateClock, 1000); updateClock();
 
     function switchTab(e, id) {
         document.querySelectorAll('.sheet-content').forEach(s => s.classList.remove('active'));
@@ -680,25 +809,18 @@
         document.getElementById(id).classList.add('active');
         e.currentTarget.classList.add('active');
         
-        const unitSelector = document.getElementById('unitSelectorWrapper');
-        if (id === 'ppc-dashboard') {
-            unitSelector.style.display = 'none'; 
-        } else {
-            unitSelector.style.display = 'flex'; 
-        }
-
+        const unitSel = document.getElementById('unitSelectorWrapper');
+        unitSel.style.display = (id === 'ppc-dashboard') ? 'none' : 'flex';
         document.getElementById('summaryContainer').style.display = (id === 'distribution') ? 'grid' : 'none';
         
         if(id === 'schedule') renderDistro();
         if(id === 'distribution') renderTable();
-        if(id === 'ppc-dashboard') {
-            if(planeChartInstance) planeChartInstance.resize();
-        }
+        if(id === 'ppc-dashboard') { if(planeChartInstance) planeChartInstance.resize(); }
     }
 
-    function sortTable(column) {
-        if (currentSort.column === column) { currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc'; } 
-        else { currentSort.column = column; currentSort.direction = 'asc'; }
+    function sortTable(col) {
+        if (currentSort.column === col) { currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc'; } 
+        else { currentSort.column = col; currentSort.direction = 'asc'; }
         renderTable();
     }
 
@@ -708,14 +830,14 @@
         const search = document.getElementById('searchInput').value.toLowerCase();
         const filter = document.getElementById('statusFilter').value;
         
-        let filteredData = manpowerData.map((item, index) => ({...item, originalIdx: index})).filter(item => {
+        let filtered = manpowerData.map((item, index) => ({...item, originalIdx: index})).filter(item => {
             const matchesSearch = item.employee.toLowerCase().includes(search) || item.empNumber.toLowerCase().includes(search);
             const matchesStatus = filter === 'ALL' || (filter === 'AVAILABLE' ? item.status === 'Available' : item.status !== 'Available');
             return matchesSearch && matchesStatus;
         });
 
         if (currentSort.column) {
-            filteredData.sort((a, b) => {
+            filtered.sort((a, b) => {
                 let valA = (a[currentSort.column] || "").toString().toLowerCase();
                 let valB = (b[currentSort.column] || "").toString().toLowerCase();
                 if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
@@ -725,30 +847,32 @@
         }
 
         tbody.innerHTML = '';
-        filteredData.forEach((item) => {
-            const masterIdx = item.originalIdx;
-            const displaySurname = item.surname ? item.surname : (item.employee.split(' ').length > 1 ? `${item.employee.split(' ')[0]} ${item.employee.split(' ').slice(-1)}` : item.employee);
+        filtered.forEach((item) => {
+            const idx = item.originalIdx;
+            const sur = item.surname ? item.surname : (item.employee.split(' ').length > 1 ? `${item.employee.split(' ')[0]} ${item.employee.split(' ').slice(-1)}` : item.employee);
             tbody.insertAdjacentHTML('beforeend', `
                 <tr>
                     <td style="width:80px"><b>${item.empNumber}</b></td>
                     <td>${item.employee}</td>
-                    <td style="color:var(--primary); font-weight:700">${displaySurname}</td>
+                    <td style="color:var(--primary); font-weight:700">${sur}</td>
                     <td style="color:var(--text-muted)">${item.role}</td>
                     <td style="width:130px">
-                        <select class="badge-select" style="background:${statuses[item.status]?.color}; color:white" onchange="updateStatus(${masterIdx}, this.value)">
+                        <select class="badge-select mp-cud-input" style="background:${statuses[item.status]?.color}; color:white" onchange="updateStatus(${idx}, this.value)">
                             ${Object.keys(statuses).map(s => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
                         </select>
                     </td>
-                    <td style="text-align:right; width:60px">
-                        <button style="border:none; background:none; color:var(--primary); cursor:pointer; padding:0 4px; font-size:12px" onclick="openStaffModal(${masterIdx})">✎</button>
-                        <button style="border:none; background:none; color:#ccc; cursor:pointer; padding:0 4px; font-size:12px" onclick="deleteStaff(${masterIdx})">✕</button>
+                    <td style="text-align:right; width:60px" class="mp-cud-control">
+                        <button style="border:none; background:none; color:var(--primary); cursor:pointer; padding:0 4px; font-size:12px" onclick="openStaffModal(${idx})">✎</button>
+                        <button style="border:none; background:none; color:#ccc; cursor:pointer; padding:0 4px; font-size:12px" onclick="deleteStaff(${idx})">✕</button>
                     </td>
                 </tr>`);
         });
         updateDashboard();
+        applyPermissions();
     }
 
     function openStaffModal(idx = -1) {
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
         document.getElementById('staffModal').style.display = 'flex';
         if(idx > -1) {
             const item = manpowerData[idx];
@@ -763,6 +887,7 @@
     function resetStaffInputs() { document.getElementById('empNumber').value = ''; document.getElementById('employee').value = ''; document.getElementById('surname').value = ''; document.getElementById('editIndex').value = '-1'; }
     
     function saveEmployee() {
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
         const empNumber = document.getElementById('empNumber').value.trim().toUpperCase();
         const employee = document.getElementById('employee').value.trim().toUpperCase();
         const surname = document.getElementById('surname').value.trim().toUpperCase();
@@ -775,22 +900,22 @@
         }
     }
     function updateStatus(idx, val) { 
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
         const id = manpowerData[idx].empNumber; 
         manpowerData[idx].status = val; 
         if(val !== "Available") Object.keys(assignments).forEach(r => assignments[r] = (assignments[r] || []).filter(e => e !== id));
         saveDataToDB(); renderTable(); 
     }
-    function deleteStaff(idx) { if(confirm("Delete this MP?")) { manpowerData.splice(idx, 1); saveDataToDB(); renderTable(); } }
+    function deleteStaff(idx) { 
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if(confirm("Delete this MP?")) { manpowerData.splice(idx, 1); saveDataToDB(); renderTable(); } 
+    }
 
     function renderDistro() {
         const pool = document.getElementById('staffPool');
         const grid = document.getElementById('aircraftGrid');
-        const summaryPanel = document.getElementById('poolAvailabilitySummary'); 
         const assignedIds = Object.values(assignments).flat();
-
-        let totalMp = manpowerData.length;
-        let availCount = 0;
-        let notAvailCount = 0;
+        let availCount = 0, notAvailCount = 0;
 
         document.getElementById('workload_col1').value = generalWorkload.col1 || "";
         document.getElementById('workload_col2').value = generalWorkload.col2 || "";
@@ -799,79 +924,60 @@
         let poolHtml = '';
         manpowerData.forEach(m => {
             const isAssigned = assignedIds.includes(m.empNumber);
-            const displayName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
-            const statusColor = statuses[m.status]?.color || "#ccc";
-            const statusLabel = m.status.toUpperCase();
+            const dName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
+            const sc = statuses[m.status]?.color || "#ccc";
+            const sl = m.status.toUpperCase();
             
             if (m.status === "Available") {
                 availCount++; 
                 if (!isAssigned) {
-                    poolHtml += `
-                    <div class="drag-item" draggable="true" ondragstart="dragMP(event, '${m.empNumber}', 'pool')">
-                        <span class="name">${displayName}</span>
-                        <div class="status-info"><span class="status-dot" style="background:${statusColor}"></span>AVAILABLE</div>
-                    </div>`;
+                    poolHtml += `<div class="drag-item" ondragstart="dragMP(event, '${m.empNumber}', 'pool')"><span class="name">${dName}</span><div class="status-info"><span class="status-dot" style="background:${sc}"></span>AVAILABLE</div></div>`;
                 }
             } else {
                 notAvailCount++; 
-                poolHtml += `
-                <div class="drag-item not-avail">
-                    <span class="name">${displayName}</span>
-                    <div class="status-info"><span class="status-dot" style="background:${statusColor}"></span>${statusLabel}</div>
-                </div>`;
+                poolHtml += `<div class="drag-item not-avail"><span class="name">${dName}</span><div class="status-info"><span class="status-dot" style="background:${sc}"></span>${sl}</div></div>`;
             }
         });
         pool.innerHTML = poolHtml;
 
-        summaryPanel.innerHTML = `
-            <div class="summary-mini-item bg-total">
-                <span>TOTAL MP</span><span>${totalMp}</span>
-            </div>
-            <div class="summary-mini-item bg-avail">
-                <span>AVAIL</span><span>${availCount}</span>
-            </div>
-            <div class="summary-mini-item bg-not-avail">
-                <span>NOT AVAIL</span><span>${notAvailCount}</span>
-            </div>
+        document.getElementById('poolAvailabilitySummary').innerHTML = `
+            <div class="summary-mini-item bg-total"><span>TOTAL MP</span><span>${manpowerData.length}</span></div>
+            <div class="summary-mini-item bg-avail"><span>AVAIL</span><span>${availCount}</span></div>
+            <div class="summary-mini-item bg-not-avail"><span>NOT AVAIL</span><span>${notAvailCount}</span></div>
         `;
 
         grid.innerHTML = '';
         aircraftRegs.forEach((reg) => {
             let lineOptions = '<option value="">L?</option>';
             for(let i=1; i<=15; i++) {
-                const lVal = `L${i}`;
-                lineOptions += `<option value="${lVal}" ${aircraftLines[reg] === lVal ? 'selected' : ''}>${lVal}</option>`;
+                lineOptions += `<option value="L${i}" ${aircraftLines[reg] === `L${i}` ? 'selected' : ''}>L${i}</option>`;
             }
 
             const card = document.createElement('div');
             card.className = 'aircraft-card';
-            card.draggable = true;
             card.dataset.reg = reg;
-
-            card.addEventListener('dragstart', handleAcDragStart);
             card.addEventListener('dragover', handleAcDragOver);
             card.addEventListener('dragleave', handleAcDragLeave);
             card.addEventListener('drop', handleAcDrop);
-            card.addEventListener('dragend', handleAcDragEnd);
 
             card.innerHTML = `
-                <div class="ac-actions">
+                <div class="ac-actions mp-cud-control">
                     <button class="ac-btn edit" onclick="editAcReg('${reg}')">✎</button>
                     <button class="ac-btn del" onclick="deleteAcDistro('${reg}')">✕</button>
                 </div>
                 <div class="ac-card-header">
                     <div class="ac-header-top">
-                        <span class="reg-badge">${reg}</span>
-                        <select class="line-mini-select" onchange="directUpdateLine('${reg}', this.value)">${lineOptions}</select>
+                        <span class="reg-badge cursor-grab" draggable="true" ondragstart="handleAcDragStart(event, '${reg}')" ondragend="handleAcDragEnd(event)">${reg} ↕</span>
+                        <select class="line-mini-select mp-cud-input" onchange="directUpdateLine('${reg}', this.value)">${lineOptions}</select>
                     </div>
-                    <input type="text" class="phase-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="PHASE">
+                    <input type="text" class="phase-input mp-cud-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="PHASE">
                 </div>
                 <div class="assignment-slots" ondragover="allowDrop(event)" ondrop="handleMPDrop(event, '${reg}')">
                     ${(assignments[reg] || []).map(id => {
                         const m = manpowerData.find(p => p.empNumber === id);
                         if(!m) return '';
                         const dName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
-                        return `<div class="drag-item" draggable="true" ondragstart="dragMP(event, '${m.empNumber}', '${reg}')"><span class="name">${dName}</span></div>`;
+                        return `<div class="drag-item" ondragstart="dragMP(event, '${m.empNumber}', '${reg}')"><span class="name">${dName}</span></div>`;
                     }).join('')}
                 </div>
             `;
@@ -879,13 +985,15 @@
         });
         
         const addBtn = document.createElement('div');
-        addBtn.className = 'add-aircraft-btn';
-        addBtn.innerText = '+'; 
-        addBtn.onclick = addNewAcDistro;
+        addBtn.className = 'add-aircraft-btn mp-cud-control';
+        addBtn.innerText = '+'; addBtn.onclick = addNewAcDistro;
         grid.appendChild(addBtn);
+
+        applyPermissions();
     }
 
     function editAcReg(oldReg) {
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
         const newReg = prompt("Edit A/C Reg:", oldReg);
         if (newReg && newReg.toUpperCase() !== oldReg) {
             const up = newReg.toUpperCase();
@@ -901,22 +1009,41 @@
     }
 
     let draggedCard = null;
-    function handleAcDragStart(e) { if (e.target.classList.contains('drag-item')) return; draggedCard = this; this.style.opacity = '0.4'; e.dataTransfer.setData('text/plain', this.dataset.reg); }
-    function handleAcDragOver(e) { e.preventDefault(); return false; }
+    function handleAcDragStart(e, reg) { if (!['admin', 'manager'].includes(currentUserRole)) { e.preventDefault(); return; } e.dataTransfer.setData('ac_reg', reg); }
+    function handleAcDragOver(e) { e.preventDefault(); }
     function handleAcDragLeave(e) {}
-    function handleAcDrop(e) { e.stopPropagation(); const sourceReg = e.dataTransfer.getData('text/plain'); const targetReg = this.dataset.reg; if (sourceReg && sourceReg !== targetReg && sourceReg.length < 10) { const fromIdx = aircraftRegs.indexOf(sourceReg); const toIdx = aircraftRegs.indexOf(targetReg); if (fromIdx !== -1 && toIdx !== -1) { aircraftRegs.splice(fromIdx, 1); aircraftRegs.splice(toIdx, 0, sourceReg); saveDataToDB(); renderDistro(); } } }
-    function handleAcDragEnd(e) { this.style.opacity = '1'; draggedCard = null; }
+    function handleAcDrop(e) { 
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        e.stopPropagation(); const sourceReg = e.dataTransfer.getData('ac_reg'); const targetReg = this.dataset.reg; 
+        if (sourceReg && sourceReg !== targetReg) { 
+            const fromIdx = aircraftRegs.indexOf(sourceReg); const toIdx = aircraftRegs.indexOf(targetReg); 
+            if (fromIdx !== -1 && toIdx !== -1) { aircraftRegs.splice(fromIdx, 1); aircraftRegs.splice(toIdx, 0, sourceReg); saveDataToDB(); renderDistro(); } 
+        } 
+    }
+    function handleAcDragEnd(e) { }
 
-    function dragMP(ev, id, origin) { ev.stopPropagation(); ev.dataTransfer.setData("mp_id", id); ev.dataTransfer.setData("origin", origin); }
+    function dragMP(ev, id, origin) { 
+        if (!['admin', 'manager'].includes(currentUserRole)) { ev.preventDefault(); return; }
+        ev.stopPropagation(); ev.dataTransfer.setData("mp_id", id); ev.dataTransfer.setData("origin", origin); 
+    }
     function allowDrop(ev) { ev.preventDefault(); }
-    function handleMPDrop(ev, reg) { ev.preventDefault(); const id = ev.dataTransfer.getData("mp_id"); const origin = ev.dataTransfer.getData("origin"); if (!id) return; if (origin !== 'pool' && origin !== reg) { assignments[origin] = (assignments[origin] || []).filter(i => i !== id); } if(!assignments[reg]) assignments[reg] = []; if(!assignments[reg].includes(id)) { assignments[reg].push(id); saveDataToDB(); renderDistro(); } }
-    function handleUnassignDrop(ev) { ev.preventDefault(); const id = ev.dataTransfer.getData("mp_id"); const origin = ev.dataTransfer.getData("origin"); if (id && origin !== 'pool') { assignments[origin] = assignments[origin].filter(i => i !== id); saveDataToDB(); renderDistro(); } }
+    function handleMPDrop(ev, reg) { 
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        ev.preventDefault(); const id = ev.dataTransfer.getData("mp_id"); const origin = ev.dataTransfer.getData("origin"); 
+        if (!id) return; if (origin !== 'pool' && origin !== reg) { assignments[origin] = (assignments[origin] || []).filter(i => i !== id); } 
+        if(!assignments[reg]) assignments[reg] = []; if(!assignments[reg].includes(id)) { assignments[reg].push(id); saveDataToDB(); renderDistro(); } 
+    }
+    function handleUnassignDrop(ev) { 
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        ev.preventDefault(); const id = ev.dataTransfer.getData("mp_id"); const origin = ev.dataTransfer.getData("origin"); 
+        if (id && origin !== 'pool') { assignments[origin] = assignments[origin].filter(i => i !== id); saveDataToDB(); renderDistro(); } 
+    }
 
-    function deleteAcDistro(reg) { if(confirm(`Remove ${reg}?`)) { aircraftRegs = aircraftRegs.filter(r => r !== reg); delete assignments[reg]; delete aircraftPhases[reg]; delete aircraftLines[reg]; saveDataToDB(); renderDistro(); } }
+    function deleteAcDistro(reg) { if (!['admin', 'manager'].includes(currentUserRole)) return; if(confirm(`Remove ${reg}?`)) { aircraftRegs = aircraftRegs.filter(r => r !== reg); delete assignments[reg]; delete aircraftPhases[reg]; delete aircraftLines[reg]; saveDataToDB(); renderDistro(); } }
     function toggleSidebar() { document.getElementById('poolSidebar').classList.toggle('collapsed'); }
-    function directUpdatePhase(reg, val) { aircraftPhases[reg] = val.toUpperCase(); saveDataToDB(); }
-    function directUpdateLine(reg, val) { aircraftLines[reg] = val; saveDataToDB(); }
-    function addNewAcDistro() { const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
+    function directUpdatePhase(reg, val) { if (!['admin', 'manager'].includes(currentUserRole)) return; aircraftPhases[reg] = val.toUpperCase(); saveDataToDB(); }
+    function directUpdateLine(reg, val) { if (!['admin', 'manager'].includes(currentUserRole)) return; aircraftLines[reg] = val; saveDataToDB(); }
+    function addNewAcDistro() { if (!['admin', 'manager'].includes(currentUserRole)) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
 
     function updateDashboard() {
         const container = document.getElementById('summaryContainer');
@@ -955,103 +1082,75 @@
     // ==========================================
     // SCRIPTS FOR PPC DASHBOARD (SUPABASE)
     // ==========================================
-    function updateDate() {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const today = new Date();
-        document.getElementById('current-date').innerText = "Updated On: " + today.toLocaleDateString('id-ID', options).toUpperCase();
-    }
-    updateDate();
-
     let planeData = [];
     let planeChartInstance = null;
 
     async function loadPlaneData() {
-        const defaultPlaneData = [
-            { reg: 'PK-GAA', jc: 12.5, mdr: 5.0, rts: '2026-06-15', hilite: 'Normal\nCheck Cabin A' },
-            { reg: 'PK-GAB', jc: 3.2, mdr: 10.1, rts: '2026-06-20', hilite: 'Check Engine\nPending Part' }
-        ];
-        planeData = await getStore('ppc_plane_data', defaultPlaneData);
-        renderApp();
+        try {
+            const defaultPlaneData = [
+                { reg: 'PK-GAA', jc: 12.5, mdr: 5.0, rts: '2026-06-15', hilite: 'Normal\nCheck Cabin A' },
+                { reg: 'PK-GAB', jc: 3.2, mdr: 10.1, rts: '2026-06-20', hilite: 'Check Engine\nPending Part' }
+            ];
+            planeData = await getStore('ppc_plane_data', defaultPlaneData);
+            renderApp();
+        } catch(err) { console.error("Load PPC err:", err); }
     }
 
-    function savePlaneDataToDB() {
-        _supabase.from('app_store').upsert([{ key: 'ppc_plane_data', value: planeData }]).then();
+    async function savePlaneDataToDB() {
+        if (!['admin', 'ppc'].includes(currentUserRole)) return;
+        try { await _supabase.from('app_store').upsert([{ key: 'ppc_plane_data', value: planeData }]); } 
+        catch (err) { console.error(err); }
     }
 
     function calculateHCountdown(rtsDateStr) {
         if (!rtsDateStr) return '-';
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const rtsDate = new Date(rtsDateStr);
-        rtsDate.setHours(0, 0, 0, 0);
-        
-        const diffTime = rtsDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const rtsDate = new Date(rtsDateStr); rtsDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil((rtsDate - today) / (1000 * 60 * 60 * 24));
 
-        if (diffDays > 0) {
-            return `<span class="bg-blue-50 border border-blue-200 text-blue-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">H-${diffDays}</span>`;
-        } else if (diffDays === 0) {
-            return `<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">H-0 (TODAY)</span>`;
-        } else {
-            return `<span class="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">OVERDUE</span>`;
-        }
+        if (diffDays > 0) return `<span class="bg-blue-50 border border-blue-200 text-blue-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">H-${diffDays}</span>`;
+        else if (diffDays === 0) return `<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">H-0 (TODAY)</span>`;
+        else return `<span class="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">OVERDUE</span>`;
     }
 
     function formatDateDisplay(dateStr) {
-        if (!dateStr) return '-';
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
+        if (!dateStr) return '-'; const parts = dateStr.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
         return dateStr;
     }
 
     function renderApp() {
         const tbody = document.getElementById('plane-table-body');
-        if (!tbody) return;
-        tbody.innerHTML = '';
+        if (!tbody) return; tbody.innerHTML = '';
 
-        const regs = [];
-        const jcData = [];
-        const mdrData = [];
+        const regs = [], jcData = [], mdrData = [];
 
         planeData.forEach((item, index) => {
-            regs.push(item.reg);
-            jcData.push(item.jc);
-            mdrData.push(item.mdr);
-
-            const hCountdown = calculateHCountdown(item.rts);
-            const displayRts = formatDateDisplay(item.rts);
-
+            regs.push(item.reg); jcData.push(item.jc); mdrData.push(item.mdr);
             const row = document.createElement('tr');
             row.className = "hover:bg-blue-50/40 transition-colors";
             row.innerHTML = `
                 <td class="px-3 py-3.5 whitespace-nowrap font-mono font-bold text-blue-600">${item.reg}</td>
                 <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${item.jc}%</td>
                 <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${item.mdr}%</td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono text-xs">${displayRts}</td>
-                <td class="px-3 py-3.5 whitespace-nowrap">${hCountdown}</td>
+                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono text-xs">${formatDateDisplay(item.rts)}</td>
+                <td class="px-3 py-3.5 whitespace-nowrap">${calculateHCountdown(item.rts)}</td>
                 <td class="px-3 py-3.5 text-gray-600 text-xs max-w-xs" style="white-space: pre-line;">${item.hilite}</td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-center space-x-2">
-                    <button onclick="openEditModal(${index})" title="Edit" class="text-blue-600 hover:text-blue-800 p-1 rounded transition">
-                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    </button>
-                    <button onclick="deleteData(${index})" title="Hapus" class="text-rose-600 hover:text-rose-800 p-1 rounded transition">
-                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
+                <td class="px-3 py-3.5 whitespace-nowrap text-center space-x-2 ppc-cud-control">
+                    <button onclick="openEditModal(${index})" title="Edit" class="text-blue-600 hover:text-blue-800 p-1 rounded transition">✎ Edit</button>
+                    <button onclick="deleteData(${index})" title="Hapus" class="text-rose-600 hover:text-rose-800 p-1 rounded transition">✕ Del</button>
                 </td>
             `;
             tbody.appendChild(row);
         });
 
-        savePlaneDataToDB();
         updateChart(regs, jcData, mdrData);
+        applyPermissions();
     }
 
     function updateChart(regs, jc, mdr) {
         const canvas = document.getElementById('planeChart');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+        if (!canvas) return; const ctx = canvas.getContext('2d');
         if (planeChartInstance) planeChartInstance.destroy();
 
         planeChartInstance = new Chart(ctx, {
@@ -1059,73 +1158,40 @@
             data: {
                 labels: regs,
                 datasets: [
-                    {
-                        label: 'JC (%)',
-                        data: jc,
-                        backgroundColor: 'rgba(37, 99, 235, 0.8)',
-                        borderColor: 'rgba(37, 99, 235, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    },
-                    {
-                        label: 'MDR (%)',
-                        data: mdr,
-                        backgroundColor: 'rgba(225, 29, 72, 0.8)',
-                        borderColor: 'rgba(225, 29, 72, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }
+                    { label: 'JC (%)', data: jc, backgroundColor: 'rgba(37, 99, 235, 0.8)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1, borderRadius: 4 },
+                    { label: 'MDR (%)', data: mdr, backgroundColor: 'rgba(225, 29, 72, 0.8)', borderColor: 'rgba(225, 29, 72, 1)', borderWidth: 1, borderRadius: 4 }
                 ]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#374151',
-                            font: { family: 'ui-sans-serif, system-ui', size: 11 }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(229, 231, 235, 1)' },
-                        ticks: { color: '#4b5563', font: { family: 'monospace' } }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        grid: { color: 'rgba(229, 231, 235, 1)' },
-                        ticks: { color: '#4b5563' }
-                    }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    function toggleAddModal() { document.getElementById('add-modal').classList.toggle('hidden'); }
+    function toggleAddModal() { 
+        if (!['admin', 'ppc'].includes(currentUserRole)) return;
+        document.getElementById('add-modal').classList.toggle('hidden'); 
+    }
 
     document.getElementById('plane-form').addEventListener('submit', function(e) {
         e.preventDefault();
+        if (!['admin', 'ppc'].includes(currentUserRole)) return;
         const reg = document.getElementById('reg').value.toUpperCase().trim();
-        const jc = parseFloat(document.getElementById('jc').value);
-        const mdr = parseFloat(document.getElementById('mdr').value);
-        const rts = document.getElementById('rts').value;
-        const hilite = document.getElementById('hilite').value.trim();
-
-        if (planeData.some(item => item.reg === reg)) {
-            alert('Registrasi pesawat sudah ada dalam sistem!');
-            return;
-        }
-
-        planeData.push({ reg, jc, mdr, rts, hilite });
+        if (planeData.some(item => item.reg === reg)) { alert('Registrasi pesawat sudah ada!'); return; }
+        
+        planeData.push({ 
+            reg, 
+            jc: parseFloat(document.getElementById('jc').value), 
+            mdr: parseFloat(document.getElementById('mdr').value), 
+            rts: document.getElementById('rts').value, 
+            hilite: document.getElementById('hilite').value.trim() 
+        });
         document.getElementById('plane-form').reset();
         toggleAddModal();
+        savePlaneDataToDB();
         renderApp();
     });
 
     function openEditModal(index) {
+        if (!['admin', 'ppc'].includes(currentUserRole)) return;
         const data = planeData[index];
         document.getElementById('edit-index').value = index;
         document.getElementById('edit-reg').value = data.reg;
@@ -1135,11 +1201,11 @@
         document.getElementById('edit-hilite').value = data.hilite;
         document.getElementById('edit-modal').classList.remove('hidden');
     }
-
     function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
     document.getElementById('edit-form').addEventListener('submit', function(e) {
         e.preventDefault();
+        if (!['admin', 'ppc'].includes(currentUserRole)) return;
         const index = document.getElementById('edit-index').value;
         planeData[index].jc = parseFloat(document.getElementById('edit-jc').value);
         planeData[index].mdr = parseFloat(document.getElementById('edit-mdr').value);
@@ -1147,21 +1213,31 @@
         planeData[index].hilite = document.getElementById('edit-hilite').value.trim();
 
         closeEditModal();
+        savePlaneDataToDB();
         renderApp();
     });
 
     function deleteData(index) {
-        if (confirm('Konfirmasi penghapusan data telemetri pesawat ini?')) {
+        if (!['admin', 'ppc'].includes(currentUserRole)) return;
+        if (confirm('Konfirmasi penghapusan data pesawat ini?')) {
             planeData.splice(index, 1);
+            savePlaneDataToDB();
             renderApp();
         }
     }
 
     // ==========================================
-    // INITIALIZATION RUN (Mulai narik dari database saat web dibuka)
+    // INITIALIZATION RUN
     // ==========================================
     window.addEventListener('DOMContentLoaded', async () => {
-        await Promise.all([loadData(), loadPlaneData()]);
+        try {
+            await Promise.all([loadData(), loadPlaneData()]);
+        } catch(err) { console.error("Init err:", err); } 
+        finally { 
+            const overlay = document.getElementById('loadingOverlay');
+            if(overlay) overlay.style.display = 'none'; 
+            applyPermissions();
+        }
     });
 
 </script>

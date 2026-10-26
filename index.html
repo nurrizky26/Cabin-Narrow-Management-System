@@ -266,12 +266,6 @@
             border-radius: 6px; transition: 0.2s; align-self: center; 
         }
         
-        .unit-input {
-            border: 2px solid var(--dark); border-radius: 6px; padding: 4px 10px; font-weight: 900;
-            text-align: center; width: 160px; text-transform: uppercase; font-size: 11px; outline: none;
-        }
-        .unit-input:disabled { background: #eee; cursor: not-allowed; }
-
         .phase-input { 
             width: 100%; 
             height: 18px; 
@@ -300,7 +294,7 @@
             font-weight: 800; min-width: 55px; text-align: center; flex-shrink: 0; font-size: 9px;
         }
 
-        /* PPC Dashboard Custom Styles overriding Tailwind reset where needed */
+        /* PPC Dashboard Custom Styles */
         #ppc-dashboard { overflow-y: auto; background-color: #f9fafb; }
         #ppc-dashboard.active { display: block; }
         
@@ -331,15 +325,15 @@
     <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
         <div class="brand">MANPOWER<span>PRO</span> Cabin Narrow 🧑‍🔧</div>
         
-        <!-- Unit Selector Dropdown (Hanya Tampil di Tab MP) -->
+        <!-- Unit Selector Dropdown dengan Kontras Warna Tinggi -->
         <div id="unitSelectorWrapper" style="display: flex; align-items: center; gap: 8px;">
             <label style="color: #a2a3b7; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">UNIT</label>
-            <select id="globalUnitSelect" onchange="changeUnit(this.value)" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 6px; font-weight: 800; outline: none; font-size: 11px; cursor: pointer;">
-                <option style="color: black;" value="TJN-1">TJN-1</option>
-                <option style="color: black;" value="TJN-2">TJN-2</option>
-                <option style="color: black;" value="TJN-3">TJN-3</option>
-                <option style="color: black;" value="TJN-4">TJN-4</option>
-                <option style="color: black;" value="TJN-5">TJN-5</option>
+            <select id="globalUnitSelect" onchange="changeUnit(this.value)" style="background: #ff9f1c; color: #1e1e2d; border: 2px solid white; padding: 6px 14px; border-radius: 6px; font-weight: 900; outline: none; font-size: 13px; cursor: pointer; box-shadow: 0 0 10px rgba(255,159,28,0.5);">
+                <option value="TJN-1">TJN-1</option>
+                <option value="TJN-2">TJN-2</option>
+                <option value="TJN-3">TJN-3</option>
+                <option value="TJN-4">TJN-4</option>
+                <option value="TJN-5">TJN-5</option>
             </select>
         </div>
 
@@ -361,7 +355,6 @@
 </nav>
 
 <div class="main-wrapper">
-    <!-- Summary Container -->
     <div id="summaryContainer" class="summary-grid"></div>
 
     <!-- TAB 1: AVAILABILITY -->
@@ -370,14 +363,19 @@
             <div class="header-action" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <h2 style="margin:0; font-size: 14px;">RESOURCE MANAGEMENT</h2>
                 <div style="display:flex; gap: 6px; align-items: center;">
-                    <button class="btn btn-excel" onclick="downloadAllData()">🗒️ DOWNLOAD REPORT</button>
+                    <!-- Upload Input -->
+                    <input type="file" id="uploadMpFile" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
+                    
+                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
+                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="document.getElementById('uploadMpFile').click()">📤 UPLOAD MP</button>
+                    
                     <select id="statusFilter" class="filter-select" onchange="renderTable()">
                         <option value="ALL">ALL STATUS</option>
                         <option value="AVAILABLE">AVAILABLE</option>
                         <option value="NOT_AVAILABLE">NOT AVAILABLE</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="SEARCH..." onkeyup="renderTable()" style="width: 120px; text-transform: uppercase;">
-                    <button class="btn btn-primary mp-cud-control" onclick="openStaffModal()">+ ADD MP</button>
+                    <button class="btn btn-primary mp-cud-control" style="display:none;" onclick="openStaffModal()">+ ADD MP</button>
                 </div>
             </div>
             <div class="table-container">
@@ -400,10 +398,8 @@
 
     <!-- TAB 2: SCHEDULE (DISTRIBUTION MP) -->
     <div id="schedule" class="sheet-content">
-        <div class="unit-container">
-            <input type="text" id="unitName" class="unit-input mp-cud-input" placeholder="INPUT UNIT" oninput="saveUnitName()">
-        </div>
-
+        <!-- Input unit deleted from here -->
+        
         <div class="distro-layout">
             <div class="pool-sidebar" id="poolSidebar">
                 <button class="toggle-btn" onclick="toggleSidebar()">◀</button>
@@ -474,7 +470,7 @@
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">Plan RTS</th>
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">H- RTS</th>
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">Hilite</th>
-                                    <th class="px-3 py-3 text-center uppercase tracking-wider ppc-cud-control">Actions</th>
+                                    <th class="px-3 py-3 text-center uppercase tracking-wider ppc-cud-control" style="display:none;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="plane-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
@@ -491,7 +487,7 @@
             </div>
         </main>
 
-        <div class="absolute bottom-6 left-6 z-40 ppc-cud-control">
+        <div class="absolute bottom-6 left-6 z-40 ppc-cud-control" style="display:none;">
             <button onclick="toggleAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center text-3xl font-bold transition-all transform hover:scale-110 focus:outline-none">
                 +
             </button>
@@ -681,7 +677,7 @@
 
         // Manpower Pro (Tabs 1 & 2)
         document.querySelectorAll('.mp-cud-control').forEach(el => {
-            el.style.display = canEditMP ? '' : 'none';
+            el.style.display = canEditMP ? 'inline-block' : 'none';
         });
         document.querySelectorAll('.mp-cud-input').forEach(el => {
             el.disabled = !canEditMP;
@@ -712,7 +708,7 @@
     const _supabase = createClient(supabaseUrl, supabaseKey);
 
     // ==========================================
-    // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT)
+    // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT & EXCEL UPLOAD)
     // ==========================================
     let currentUnit = localStorage.getItem('active_unit') || 'TJN-4';
     let manpowerData = [], aircraftRegs = [], assignments = {}, aircraftPhases = {}, aircraftLines = {}, generalWorkload = {};
@@ -731,7 +727,7 @@
     }
 
     async function saveDataToDB() {
-        if (!['admin', 'manager'].includes(currentUserRole)) return; // Double check access
+        if (!['admin', 'manager'].includes(currentUserRole)) return; 
         try {
             const updates = [
                 { key: `${currentUnit}_manpower_data`, value: manpowerData },
@@ -759,7 +755,6 @@
             ]);
 
             document.getElementById('globalUnitSelect').value = currentUnit;
-            document.getElementById('unitName').value = await getStore(`${currentUnit}_unit_name`, '');
             
             if (document.getElementById('distribution').classList.contains('active')) renderTable();
             if (document.getElementById('schedule').classList.contains('active')) renderDistro();
@@ -779,12 +774,6 @@
         generalWorkload.col2 = document.getElementById('workload_col2').value.toUpperCase();
         generalWorkload.col3 = document.getElementById('workload_col3').value.toUpperCase();
         _supabase.from('app_store').upsert([{ key: `${currentUnit}_general_workload`, value: generalWorkload }]).then();
-    }
-
-    function saveUnitName() {
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
-        const val = document.getElementById('unitName').value.toUpperCase();
-        _supabase.from('app_store').upsert([{ key: `${currentUnit}_unit_name`, value: val }]).then();
     }
 
     const statuses = {
@@ -909,6 +898,68 @@
     function deleteStaff(idx) { 
         if (!['admin', 'manager'].includes(currentUserRole)) return;
         if(confirm("Delete this MP?")) { manpowerData.splice(idx, 1); saveDataToDB(); renderTable(); } 
+    }
+
+    // ==========================================
+    // EXCEL UPLOAD & TEMPLATE LOGIC
+    // ==========================================
+    function downloadTemplate() {
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([
+            ["ID", "NAME", "SURNAME", "ROLE", "STATUS"],
+            ["123456", "JOHN DOE", "JOHN", "SENIOR AIRCRAFT CABIN TECHNICIAN", "Available"]
+        ]);
+        XLSX.utils.book_append_sheet(wb, ws, "Template_MP");
+        XLSX.writeFile(wb, "Template_Upload_MP.xlsx");
+    }
+
+    function handleFileUpload(e) {
+        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+
+            if (jsonData.length < 2) {
+                alert("File kosong atau format salah. Pastikan menggunakan format Template.");
+                document.getElementById('uploadMpFile').value = '';
+                return;
+            }
+
+            let added = 0;
+            // Mulai dari baris ke-1 (skip header baris ke-0)
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0 || !row[0]) continue; 
+
+                const empNumber = String(row[0]).trim().toUpperCase();
+                const employee = String(row[1] || "").trim().toUpperCase();
+                const surname = String(row[2] || "").trim().toUpperCase();
+                const role = String(row[3] || "TECHNICIAN ASSISTANCE").toUpperCase();
+                let rawStatus = String(row[4] || "Available").trim();
+                
+                const matchedStatus = Object.keys(statuses).find(s => s.toLowerCase() === rawStatus.toLowerCase()) || "Available";
+
+                const existingIdx = manpowerData.findIndex(m => m.empNumber === empNumber);
+                if (existingIdx > -1) {
+                    manpowerData[existingIdx] = { empNumber, employee, surname, role, status: matchedStatus };
+                } else {
+                    manpowerData.push({ empNumber, employee, surname, role, status: matchedStatus });
+                }
+                added++;
+            }
+
+            saveDataToDB();
+            renderTable();
+            alert(`Berhasil mengunggah dan memproses ${added} data MP.`);
+            document.getElementById('uploadMpFile').value = ''; 
+        };
+        reader.readAsArrayBuffer(file);
     }
 
     function renderDistro() {
@@ -1045,40 +1096,6 @@
     function directUpdateLine(reg, val) { if (!['admin', 'manager'].includes(currentUserRole)) return; aircraftLines[reg] = val; saveDataToDB(); }
     function addNewAcDistro() { if (!['admin', 'manager'].includes(currentUserRole)) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
 
-    function updateDashboard() {
-        const container = document.getElementById('summaryContainer');
-        if (!container) return; container.innerHTML = '';
-        const counts = { "TOTAL MP": manpowerData.length };
-        Object.keys(statuses).forEach(s => counts[s.toUpperCase()] = 0);
-        manpowerData.forEach(m => counts[m.status.toUpperCase()]++);
-        Object.entries(counts).forEach(([label, count]) => {
-            const color = label === "TOTAL MP" ? "var(--dark)" : (statuses[Object.keys(statuses).find(k => k.toUpperCase() === label)]?.color || "#6c757d");
-            container.insertAdjacentHTML('beforeend', `<div class="summary-card" style="border-left-color:${color}"><label>${label}</label><span>${count}</span></div>`);
-        });
-    }
-    
-    function downloadAllData() {
-        const wb = XLSX.utils.book_new();
-        const summaryData = [["MP AVAILABILITY SUMMARY"]];
-        const counts = { "TOTAL MP": manpowerData.length };
-        Object.keys(statuses).forEach(s => counts[s.toUpperCase()] = 0);
-        manpowerData.forEach(m => counts[m.status.toUpperCase()]++);
-        Object.entries(counts).forEach(([k, v]) => summaryData.push([k, v]));
-        summaryData.push([], ["ID", "NAME", "SURNAME", "ROLE", "STATUS"]);
-        manpowerData.forEach(m => summaryData.push([m.empNumber, m.employee, m.surname || "", m.role, m.status]));
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), "Availability");
-
-        const distData = [["UNIT", currentUnit], [], ["AIRCRAFT REG", "LINE", "PHASE", "ASSIGNED MP"]];
-        aircraftRegs.forEach(reg => {
-            const names = (assignments[reg] || []).map(id => { const m = manpowerData.find(x => x.empNumber === id); return m ? (m.surname || m.employee) : id; }).join(", ");
-            distData.push([reg, aircraftLines[reg] || "", aircraftPhases[reg] || "", names]);
-        });
-        distData.push([], ["GENERAL WORKLOAD COL 1"], [generalWorkload.col1], [], ["GENERAL WORKLOAD COL 2"], [generalWorkload.col2], [], ["GENERAL WORKLOAD COL 3"], [generalWorkload.col3]);
-        
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(distData), "Distribution");
-        XLSX.writeFile(wb, `MANPOWERPRO_CABIN_${currentUnit}_${new Date().toISOString().slice(0,10)}.xlsx`);
-    }
-
     // ==========================================
     // SCRIPTS FOR PPC DASHBOARD (SUPABASE)
     // ==========================================
@@ -1136,7 +1153,7 @@
                 <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono text-xs">${formatDateDisplay(item.rts)}</td>
                 <td class="px-3 py-3.5 whitespace-nowrap">${calculateHCountdown(item.rts)}</td>
                 <td class="px-3 py-3.5 text-gray-600 text-xs max-w-xs" style="white-space: pre-line;">${item.hilite}</td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-center space-x-2 ppc-cud-control">
+                <td class="px-3 py-3.5 whitespace-nowrap text-center space-x-2 ppc-cud-control" style="display:none;">
                     <button onclick="openEditModal(${index})" title="Edit" class="text-blue-600 hover:text-blue-800 p-1 rounded transition">✎ Edit</button>
                     <button onclick="deleteData(${index})" title="Hapus" class="text-rose-600 hover:text-rose-800 p-1 rounded transition">✕ Del</button>
                 </td>

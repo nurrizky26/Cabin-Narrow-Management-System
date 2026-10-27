@@ -399,8 +399,6 @@
 
     <!-- TAB 2: SCHEDULE (DISTRIBUTION MP) -->
     <div id="schedule" class="sheet-content">
-        <!-- Input unit deleted from here -->
-        
         <div class="distro-layout">
             <div class="pool-sidebar" id="poolSidebar">
                 <button class="toggle-btn" onclick="toggleSidebar()">◀</button>
@@ -625,13 +623,24 @@
     // SISTEM OTORISASI / LOGIN (CLIENT-SIDE)
     // ==========================================
     let currentUserRole = localStorage.getItem('currentUserRole') || 'viewer';
+    let managerUnit = localStorage.getItem('managerUnit') || null;
+
+    // Cek otorisasi untuk ManPower Pro tab
+    function isMPAuthorized() {
+        return currentUserRole === 'admin' || (currentUserRole === 'manager' && currentUnit === managerUnit);
+    }
 
     function updateAuthUI() {
         const roleDisplay = document.getElementById('roleDisplay');
         const loginBtn = document.getElementById('loginBtn');
         const logoutBtn = document.getElementById('logoutBtn');
 
-        roleDisplay.innerText = `ROLE: ${currentUserRole.toUpperCase()}`;
+        let displayRole = currentUserRole.toUpperCase();
+        if (currentUserRole === 'manager' && managerUnit) {
+            displayRole += ` (${managerUnit})`;
+        }
+
+        roleDisplay.innerText = `ROLE: ${displayRole}`;
         if (currentUserRole === 'viewer') {
             loginBtn.style.display = 'inline-block';
             logoutBtn.style.display = 'none';
@@ -646,34 +655,50 @@
         const u = document.getElementById('loginUser').value.trim();
         const p = document.getElementById('loginPass').value.trim();
 
-        if (u === 'admin' && p === 'papagolda76') currentUserRole = 'admin';
-        else if (u === 'manager' && p === 'captain76') currentUserRole = 'manager';
-        else if (u === 'ppc' && p === 'capt76') currentUserRole = 'ppc';
+        if (u === 'admin' && p === 'papagolda76') { currentUserRole = 'admin'; managerUnit = null; }
+        else if (u === 'manager' && p === 'merpati1') { currentUserRole = 'manager'; managerUnit = 'TJN-1'; }
+        else if (u === 'manager' && p === 'cendrawasih2') { currentUserRole = 'manager'; managerUnit = 'TJN-2'; }
+        else if (u === 'manager' && p === 'merak3') { currentUserRole = 'manager'; managerUnit = 'TJN-3'; }
+        else if (u === 'manager' && p === 'kenari4') { currentUserRole = 'manager'; managerUnit = 'TJN-4'; }
+        else if (u === 'manager' && p === 'garuda5') { currentUserRole = 'manager'; managerUnit = 'TJN-5'; }
+        else if (u === 'manager' && p === 'nuri6') { currentUserRole = 'manager'; managerUnit = 'TJN-6'; }
+        else if (u === 'ppc' && p === 'capt76') { currentUserRole = 'ppc'; managerUnit = null; }
         else {
             alert('Username atau Password salah!');
             return;
         }
 
         localStorage.setItem('currentUserRole', currentUserRole);
+        if (managerUnit) localStorage.setItem('managerUnit', managerUnit);
+        else localStorage.removeItem('managerUnit');
+
         document.getElementById('loginUser').value = '';
         document.getElementById('loginPass').value = '';
         document.getElementById('loginModalOverlay').style.display = 'none';
         
         updateAuthUI();
-        applyPermissions();
+        
+        if (currentUserRole === 'manager') {
+            document.getElementById('globalUnitSelect').value = managerUnit;
+            changeUnit(managerUnit); // Otomatis trigger loadData() dan applyPermissions()
+        } else {
+            applyPermissions();
+        }
     }
 
     function handleLogout() {
         if(confirm('Anda yakin ingin Logout?')) {
             currentUserRole = 'viewer';
+            managerUnit = null;
             localStorage.setItem('currentUserRole', currentUserRole);
+            localStorage.removeItem('managerUnit');
             updateAuthUI();
             applyPermissions();
         }
     }
 
     function applyPermissions() {
-        const canEditMP = ['admin', 'manager'].includes(currentUserRole);
+        const canEditMP = isMPAuthorized();
         const canEditPPC = ['admin', 'ppc'].includes(currentUserRole);
 
         // Manpower Pro (Tabs 1 & 2)
@@ -697,7 +722,6 @@
         });
     }
 
-    // Eksekusi auth UI awal
     updateAuthUI();
 
     // ==========================================
@@ -728,7 +752,7 @@
     }
 
     async function saveDataToDB() {
-        if (!['admin', 'manager'].includes(currentUserRole)) return; 
+        if (!isMPAuthorized()) return; 
         try {
             const updates = [
                 { key: `${currentUnit}_manpower_data`, value: manpowerData },
@@ -760,7 +784,10 @@
             if (document.getElementById('distribution').classList.contains('active')) renderTable();
             if (document.getElementById('schedule').classList.contains('active')) renderDistro();
         } catch(err) { console.error("Load MP err:", err); } 
-        finally { if(overlay) overlay.style.display = 'none'; }
+        finally { 
+            if(overlay) overlay.style.display = 'none'; 
+            applyPermissions(); // Pastikan pembaruan auth UI selesai setelah data dimuat
+        }
     }
 
     async function changeUnit(newUnit) {
@@ -770,7 +797,7 @@
     }
 
     function saveGeneralWorkload() {
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         generalWorkload.col1 = document.getElementById('workload_col1').value.toUpperCase();
         generalWorkload.col2 = document.getElementById('workload_col2').value.toUpperCase();
         generalWorkload.col3 = document.getElementById('workload_col3').value.toUpperCase();
@@ -862,7 +889,7 @@
     }
 
     function openStaffModal(idx = -1) {
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         document.getElementById('staffModal').style.display = 'flex';
         if(idx > -1) {
             const item = manpowerData[idx];
@@ -877,7 +904,7 @@
     function resetStaffInputs() { document.getElementById('empNumber').value = ''; document.getElementById('employee').value = ''; document.getElementById('surname').value = ''; document.getElementById('editIndex').value = '-1'; }
     
     function saveEmployee() {
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         const empNumber = document.getElementById('empNumber').value.trim().toUpperCase();
         const employee = document.getElementById('employee').value.trim().toUpperCase();
         const surname = document.getElementById('surname').value.trim().toUpperCase();
@@ -890,14 +917,14 @@
         }
     }
     function updateStatus(idx, val) { 
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         const id = manpowerData[idx].empNumber; 
         manpowerData[idx].status = val; 
         if(val !== "Available") Object.keys(assignments).forEach(r => assignments[r] = (assignments[r] || []).filter(e => e !== id));
         saveDataToDB(); renderTable(); 
     }
     function deleteStaff(idx) { 
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         if(confirm("Delete this MP?")) { manpowerData.splice(idx, 1); saveDataToDB(); renderTable(); } 
     }
 
@@ -915,7 +942,7 @@
     }
 
     function handleFileUpload(e) {
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         const file = e.target.files[0];
         if (!file) return;
 
@@ -933,7 +960,6 @@
             }
 
             let added = 0;
-            // Mulai dari baris ke-1 (skip header baris ke-0)
             for (let i = 1; i < jsonData.length; i++) {
                 const row = jsonData[i];
                 if (!row || row.length === 0 || !row[0]) continue; 
@@ -1045,7 +1071,7 @@
     }
 
     function editAcReg(oldReg) {
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         const newReg = prompt("Edit A/C Reg:", oldReg);
         if (newReg && newReg.toUpperCase() !== oldReg) {
             const up = newReg.toUpperCase();
@@ -1061,11 +1087,11 @@
     }
 
     let draggedCard = null;
-    function handleAcDragStart(e, reg) { if (!['admin', 'manager'].includes(currentUserRole)) { e.preventDefault(); return; } e.dataTransfer.setData('ac_reg', reg); }
+    function handleAcDragStart(e, reg) { if (!isMPAuthorized()) { e.preventDefault(); return; } e.dataTransfer.setData('ac_reg', reg); }
     function handleAcDragOver(e) { e.preventDefault(); }
     function handleAcDragLeave(e) {}
     function handleAcDrop(e) { 
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         e.stopPropagation(); const sourceReg = e.dataTransfer.getData('ac_reg'); const targetReg = this.dataset.reg; 
         if (sourceReg && sourceReg !== targetReg) { 
             const fromIdx = aircraftRegs.indexOf(sourceReg); const toIdx = aircraftRegs.indexOf(targetReg); 
@@ -1075,27 +1101,27 @@
     function handleAcDragEnd(e) { }
 
     function dragMP(ev, id, origin) { 
-        if (!['admin', 'manager'].includes(currentUserRole)) { ev.preventDefault(); return; }
+        if (!isMPAuthorized()) { ev.preventDefault(); return; }
         ev.stopPropagation(); ev.dataTransfer.setData("mp_id", id); ev.dataTransfer.setData("origin", origin); 
     }
     function allowDrop(ev) { ev.preventDefault(); }
     function handleMPDrop(ev, reg) { 
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         ev.preventDefault(); const id = ev.dataTransfer.getData("mp_id"); const origin = ev.dataTransfer.getData("origin"); 
         if (!id) return; if (origin !== 'pool' && origin !== reg) { assignments[origin] = (assignments[origin] || []).filter(i => i !== id); } 
         if(!assignments[reg]) assignments[reg] = []; if(!assignments[reg].includes(id)) { assignments[reg].push(id); saveDataToDB(); renderDistro(); } 
     }
     function handleUnassignDrop(ev) { 
-        if (!['admin', 'manager'].includes(currentUserRole)) return;
+        if (!isMPAuthorized()) return;
         ev.preventDefault(); const id = ev.dataTransfer.getData("mp_id"); const origin = ev.dataTransfer.getData("origin"); 
         if (id && origin !== 'pool') { assignments[origin] = assignments[origin].filter(i => i !== id); saveDataToDB(); renderDistro(); } 
     }
 
-    function deleteAcDistro(reg) { if (!['admin', 'manager'].includes(currentUserRole)) return; if(confirm(`Remove ${reg}?`)) { aircraftRegs = aircraftRegs.filter(r => r !== reg); delete assignments[reg]; delete aircraftPhases[reg]; delete aircraftLines[reg]; saveDataToDB(); renderDistro(); } }
+    function deleteAcDistro(reg) { if (!isMPAuthorized()) return; if(confirm(`Remove ${reg}?`)) { aircraftRegs = aircraftRegs.filter(r => r !== reg); delete assignments[reg]; delete aircraftPhases[reg]; delete aircraftLines[reg]; saveDataToDB(); renderDistro(); } }
     function toggleSidebar() { document.getElementById('poolSidebar').classList.toggle('collapsed'); }
-    function directUpdatePhase(reg, val) { if (!['admin', 'manager'].includes(currentUserRole)) return; aircraftPhases[reg] = val.toUpperCase(); saveDataToDB(); }
-    function directUpdateLine(reg, val) { if (!['admin', 'manager'].includes(currentUserRole)) return; aircraftLines[reg] = val; saveDataToDB(); }
-    function addNewAcDistro() { if (!['admin', 'manager'].includes(currentUserRole)) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
+    function directUpdatePhase(reg, val) { if (!isMPAuthorized()) return; aircraftPhases[reg] = val.toUpperCase(); saveDataToDB(); }
+    function directUpdateLine(reg, val) { if (!isMPAuthorized()) return; aircraftLines[reg] = val; saveDataToDB(); }
+    function addNewAcDistro() { if (!isMPAuthorized()) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
 
     // ==========================================
     // SCRIPTS FOR PPC DASHBOARD (SUPABASE)

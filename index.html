@@ -318,14 +318,13 @@
 </head>
 <body>
 
-<!-- Loading Indicator -->
 <div id="loadingOverlay">SYNCING DENGAN CLOUD DATABASE...</div>
 
 <nav class="sidebar-nav">
     <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
         <div class="brand">MANPOWER<span>PRO</span> Cabin Narrow 🧑‍🔧</div>
         
-        <!-- Unit Selector Dropdown dengan Kontras Warna Tinggi -->
+        <!-- Unit Selector Dropdown -->
         <div id="unitSelectorWrapper" style="display: flex; align-items: center; gap: 8px;">
             <label style="color: #a2a3b7; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">UNIT</label>
             <select id="globalUnitSelect" onchange="changeUnit(this.value)" style="background: #ff9f1c; color: #1e1e2d; border: 2px solid white; padding: 6px 14px; border-radius: 6px; font-weight: 900; outline: none; font-size: 13px; cursor: pointer; box-shadow: 0 0 10px rgba(255,159,28,0.5);">
@@ -349,6 +348,8 @@
     <div class="nav-clock"><div id="clockDate">LOADING...</div><div id="clockTime">00:00:00</div></div>
     
     <div class="nav-tabs">
+        <!-- New Dashboard Cabin Tab -->
+        <button class="nav-tab" onclick="switchTab(event, 'home-dashboard')">🏠 DASHBOARD CABIN</button>
         <button class="nav-tab active" onclick="switchTab(event, 'distribution')">AVAILABILITY</button>
         <button class="nav-tab" onclick="switchTab(event, 'schedule')">DISTRIBUTION MP</button>
         <button class="nav-tab" onclick="switchTab(event, 'ppc-dashboard')">PPC DASHBOARD</button>
@@ -358,18 +359,53 @@
 <div class="main-wrapper">
     <div id="summaryContainer" class="summary-grid"></div>
 
+    <!-- TAB 0: HOME / DASHBOARD CABIN -->
+    <div id="home-dashboard" class="sheet-content">
+        <div class="data-card" style="margin: 10px 15px; flex: 1; overflow-y: auto;">
+            <div class="header-action" style="margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+                <h2 style="margin:0; font-size: 16px; color: var(--primary);">🏠 DASHBOARD CABIN</h2>
+                <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 11px;">Informasi, Inovasi, dan Pengumuman Terkini</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Full Width Inovasi -->
+                <div class="form-group full">
+                    <label style="font-size: 12px; color: var(--special);">💡 INFO INOVASI</label>
+                    <textarea id="home_inovasi" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info inovasi di sini..." onchange="saveHomeData()"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label style="font-size: 12px; color: var(--success);">📊 INFO PCS</label>
+                    <textarea id="home_pcs" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info PCS di sini..." onchange="saveHomeData()"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label style="font-size: 12px; color: var(--warning);">🏆 INFO PENGHARGAAN</label>
+                    <textarea id="home_penghargaan" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info penghargaan di sini..." onchange="saveHomeData()"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label style="font-size: 12px; color: var(--purple);">🎂 INFO BIRTHDAY</label>
+                    <textarea id="home_birthday" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info ulang tahun di sini..." onchange="saveHomeData()"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label style="font-size: 12px; color: var(--dark);">📌 INFO LAINNYA</label>
+                    <textarea id="home_lainnya" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info tambahan lainnya di sini..." onchange="saveHomeData()"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TAB 1: AVAILABILITY -->
     <div id="distribution" class="sheet-content active">
         <div class="data-card">
             <div class="header-action" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <h2 style="margin:0; font-size: 14px;">RESOURCE MANAGEMENT</h2>
                 <div style="display:flex; gap: 6px; align-items: center;">
-                    <!-- Upload Input -->
                     <input type="file" id="uploadMpFile" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
-                    
                     <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
                     <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="document.getElementById('uploadMpFile').click()">📤 UPLOAD MP</button>
-                    
                     <select id="statusFilter" class="filter-select" onchange="renderTable()">
                         <option value="ALL">ALL STATUS</option>
                         <option value="AVAILABLE">AVAILABLE</option>
@@ -410,7 +446,6 @@
             
             <div class="distribution-content">
                 <div class="aircraft-grid" id="aircraftGrid"></div>
-                
                 <div class="workload-column">
                     <div class="workload-header">WORKLOAD </div>
                     <div class="workload-master-container">
@@ -464,8 +499,8 @@
                             <thead>
                                 <tr class="text-gray-500 font-mono text-[11px] bg-gray-50">
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">Registration</th>
-                                    <th class="px-3 py-3 text-left uppercase tracking-wider">JC</th>
-                                    <th class="px-3 py-3 text-left uppercase tracking-wider">MDR</th>
+                                    <th class="px-3 py-3 text-left uppercase tracking-wider">JC %</th>
+                                    <th class="px-3 py-3 text-left uppercase tracking-wider">MDR %</th>
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">Plan RTS</th>
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">H- RTS</th>
                                     <th class="px-3 py-3 text-left uppercase tracking-wider">Hilite</th>
@@ -496,7 +531,7 @@
         <div id="add-modal" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
             <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
-                    <h3 class="text-lg font-bold text-blue-600 m-0">Tambah Data Registrasi Baru</h3>
+                    <h3 class="text-lg font-bold text-blue-600 m-0">Tambah Data Pesawat</h3>
                     <button type="button" onclick="toggleAddModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
                 </div>
                 <form id="plane-form">
@@ -504,16 +539,29 @@
                         <label class="block text-xs font-mono uppercase text-gray-600 mb-1">A/C Reg.</label>
                         <input type="text" id="reg" placeholder="Contoh: PK-ABC" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase font-mono">
                     </div>
+                    
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC (%)</label>
-                            <input type="number" step="0.1" id="jc" placeholder="0 - 100" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC Open</label>
+                            <input type="number" id="jc-open" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
                         </div>
                         <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR (%)</label>
-                            <input type="number" step="0.1" id="mdr" placeholder="0 - 100" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC Closed</label>
+                            <input type="number" id="jc-closed" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
                         </div>
                     </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR Open</label>
+                            <input type="number" id="mdr-open" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR Closed</label>
+                            <input type="number" id="mdr-closed" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        </div>
+                    </div>
+
                     <div class="mb-4">
                         <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Plan RTS</label>
                         <input type="date" id="rts" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
@@ -542,16 +590,29 @@
                         <label class="block text-xs font-mono uppercase text-gray-600 mb-1">A/C Reg.</label>
                         <input type="text" id="edit-reg" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-400 cursor-not-allowed uppercase font-mono">
                     </div>
+                    
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC (%)</label>
-                            <input type="number" step="0.1" id="edit-jc" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC Open</label>
+                            <input type="number" id="edit-jc-open" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
                         </div>
                         <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR (%)</label>
-                            <input type="number" step="0.1" id="edit-mdr" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC Closed</label>
+                            <input type="number" id="edit-jc-closed" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
                         </div>
                     </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR Open</label>
+                            <input type="number" id="edit-mdr-open" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR Closed</label>
+                            <input type="number" id="edit-mdr-closed" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        </div>
+                    </div>
+
                     <div class="mb-4">
                         <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Plan RTS</label>
                         <input type="date" id="edit-rts" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
@@ -625,7 +686,6 @@
     let currentUserRole = localStorage.getItem('currentUserRole') || 'viewer';
     let managerUnit = localStorage.getItem('managerUnit') || null;
 
-    // Cek otorisasi untuk ManPower Pro tab
     function isMPAuthorized() {
         return currentUserRole === 'admin' || (currentUserRole === 'manager' && currentUnit === managerUnit);
     }
@@ -663,6 +723,7 @@
         else if (u === 'manager' && p === 'garuda5') { currentUserRole = 'manager'; managerUnit = 'TJN-5'; }
         else if (u === 'manager' && p === 'nuri6') { currentUserRole = 'manager'; managerUnit = 'TJN-6'; }
         else if (u === 'ppc' && p === 'capt76') { currentUserRole = 'ppc'; managerUnit = null; }
+        else if (u === 'dashboard' && p === 'papagolda76') { currentUserRole = 'dashboard'; managerUnit = null; }
         else {
             alert('Username atau Password salah!');
             return;
@@ -680,7 +741,7 @@
         
         if (currentUserRole === 'manager') {
             document.getElementById('globalUnitSelect').value = managerUnit;
-            changeUnit(managerUnit); // Otomatis trigger loadData() dan applyPermissions()
+            changeUnit(managerUnit); 
         } else {
             applyPermissions();
         }
@@ -700,6 +761,7 @@
     function applyPermissions() {
         const canEditMP = isMPAuthorized();
         const canEditPPC = ['admin', 'ppc'].includes(currentUserRole);
+        const canEditHome = ['admin', 'dashboard'].includes(currentUserRole);
 
         // Manpower Pro (Tabs 1 & 2)
         document.querySelectorAll('.mp-cud-control').forEach(el => {
@@ -709,7 +771,6 @@
             el.disabled = !canEditMP;
         });
 
-        // Toggle drag and drop capability
         document.querySelectorAll('.drag-item').forEach(el => {
             if (!el.classList.contains('not-avail')) {
                 el.setAttribute('draggable', canEditMP ? 'true' : 'false');
@@ -719,6 +780,11 @@
         // PPC Dashboard (Tab 3)
         document.querySelectorAll('.ppc-cud-control').forEach(el => {
             el.style.display = canEditPPC ? '' : 'none';
+        });
+
+        // Home Dashboard (Tab 0)
+        document.querySelectorAll('.home-cud-input').forEach(el => {
+            el.disabled = !canEditHome;
         });
     }
 
@@ -731,6 +797,34 @@
     const supabaseUrl = 'https://gdlnsvbngvndjmrkhknt.supabase.co';
     const supabaseKey = 'sb_publishable_W2CD0jEZD-7PRCsMXxsVnw_ZNRoAVXY';
     const _supabase = createClient(supabaseUrl, supabaseKey);
+
+    // ==========================================
+    // SCRIPTS FOR HOME DASHBOARD TAB
+    // ==========================================
+    let homeData = { inovasi: '', pcs: '', penghargaan: '', birthday: '', lainnya: '' };
+
+    async function loadHomeData() {
+        try {
+            homeData = await getStore('home_dashboard_data', { inovasi: '', pcs: '', penghargaan: '', birthday: '', lainnya: '' });
+            document.getElementById('home_inovasi').value = homeData.inovasi || '';
+            document.getElementById('home_pcs').value = homeData.pcs || '';
+            document.getElementById('home_penghargaan').value = homeData.penghargaan || '';
+            document.getElementById('home_birthday').value = homeData.birthday || '';
+            document.getElementById('home_lainnya').value = homeData.lainnya || '';
+        } catch (err) { console.error("Load Home err:", err); }
+    }
+
+    function saveHomeData() {
+        if (!['admin', 'dashboard'].includes(currentUserRole)) return;
+        homeData = {
+            inovasi: document.getElementById('home_inovasi').value,
+            pcs: document.getElementById('home_pcs').value,
+            penghargaan: document.getElementById('home_penghargaan').value,
+            birthday: document.getElementById('home_birthday').value,
+            lainnya: document.getElementById('home_lainnya').value
+        };
+        _supabase.from('app_store').upsert([{ key: 'home_dashboard_data', value: homeData }]).then();
+    }
 
     // ==========================================
     // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT & EXCEL UPLOAD)
@@ -786,7 +880,7 @@
         } catch(err) { console.error("Load MP err:", err); } 
         finally { 
             if(overlay) overlay.style.display = 'none'; 
-            applyPermissions(); // Pastikan pembaruan auth UI selesai setelah data dimuat
+            applyPermissions(); 
         }
     }
 
@@ -827,7 +921,7 @@
         e.currentTarget.classList.add('active');
         
         const unitSel = document.getElementById('unitSelectorWrapper');
-        unitSel.style.display = (id === 'ppc-dashboard') ? 'none' : 'flex';
+        unitSel.style.display = (id === 'ppc-dashboard' || id === 'home-dashboard') ? 'none' : 'flex';
         document.getElementById('summaryContainer').style.display = (id === 'distribution') ? 'grid' : 'none';
         
         if(id === 'schedule') renderDistro();
@@ -1132,8 +1226,8 @@
     async function loadPlaneData() {
         try {
             const defaultPlaneData = [
-                { reg: 'PK-GAA', jc: 12.5, mdr: 5.0, rts: '2026-06-15', hilite: 'Normal\nCheck Cabin A' },
-                { reg: 'PK-GAB', jc: 3.2, mdr: 10.1, rts: '2026-06-20', hilite: 'Check Engine\nPending Part' }
+                { reg: 'PK-GAA', jcOpen: 8, jcClosed: 2, jc: 20.0, mdrOpen: 19, mdrClosed: 1, mdr: 5.0, rts: '2026-06-15', hilite: 'Normal\nCheck Cabin A' },
+                { reg: 'PK-GAB', jcOpen: 29, jcClosed: 1, jc: 3.3, mdrOpen: 9, mdrClosed: 1, mdr: 10.0, rts: '2026-06-20', hilite: 'Check Engine\nPending Part' }
             ];
             planeData = await getStore('ppc_plane_data', defaultPlaneData);
             renderApp();
@@ -1170,13 +1264,28 @@
         const regs = [], jcData = [], mdrData = [];
 
         planeData.forEach((item, index) => {
-            regs.push(item.reg); jcData.push(item.jc); mdrData.push(item.mdr);
+            regs.push(item.reg); 
+            
+            const jcOpen = item.jcOpen !== undefined ? item.jcOpen : 0;
+            const jcClosed = item.jcClosed !== undefined ? item.jcClosed : 0;
+            const mdrOpen = item.mdrOpen !== undefined ? item.mdrOpen : 0;
+            const mdrClosed = item.mdrClosed !== undefined ? item.mdrClosed : 0;
+            
+            const jcTotal = jcOpen + jcClosed;
+            const mdrTotal = mdrOpen + mdrClosed;
+            
+            const jcPerc = item.jc || 0;
+            const mdrPerc = item.mdr || 0;
+
+            jcData.push(jcPerc); 
+            mdrData.push(mdrPerc);
+
             const row = document.createElement('tr');
             row.className = "hover:bg-blue-50/40 transition-colors";
             row.innerHTML = `
                 <td class="px-3 py-3.5 whitespace-nowrap font-mono font-bold text-blue-600">${item.reg}</td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${item.jc}%</td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${item.mdr}%</td>
+                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${jcPerc}% <br><span class="text-xs text-gray-400">(${jcClosed}/${jcTotal})</span></td>
+                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${mdrPerc}% <br><span class="text-xs text-gray-400">(${mdrClosed}/${mdrTotal})</span></td>
                 <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono text-xs">${formatDateDisplay(item.rts)}</td>
                 <td class="px-3 py-3.5 whitespace-nowrap">${calculateHCountdown(item.rts)}</td>
                 <td class="px-3 py-3.5 text-gray-600 text-xs max-w-xs" style="white-space: pre-line;">${item.hilite}</td>
@@ -1218,16 +1327,29 @@
     document.getElementById('plane-form').addEventListener('submit', function(e) {
         e.preventDefault();
         if (!['admin', 'ppc'].includes(currentUserRole)) return;
+        
         const reg = document.getElementById('reg').value.toUpperCase().trim();
         if (planeData.some(item => item.reg === reg)) { alert('Registrasi pesawat sudah ada!'); return; }
         
+        const jcOpen = parseInt(document.getElementById('jc-open').value) || 0;
+        const jcClosed = parseInt(document.getElementById('jc-closed').value) || 0;
+        const mdrOpen = parseInt(document.getElementById('mdr-open').value) || 0;
+        const mdrClosed = parseInt(document.getElementById('mdr-closed').value) || 0;
+
+        const jcTotal = jcOpen + jcClosed;
+        const mdrTotal = mdrOpen + mdrClosed;
+
+        const jc = jcTotal > 0 ? parseFloat(((jcClosed / jcTotal) * 100).toFixed(1)) : 0;
+        const mdr = mdrTotal > 0 ? parseFloat(((mdrClosed / mdrTotal) * 100).toFixed(1)) : 0;
+
         planeData.push({ 
             reg, 
-            jc: parseFloat(document.getElementById('jc').value), 
-            mdr: parseFloat(document.getElementById('mdr').value), 
+            jcOpen, jcClosed, jc,
+            mdrOpen, mdrClosed, mdr,
             rts: document.getElementById('rts').value, 
             hilite: document.getElementById('hilite').value.trim() 
         });
+        
         document.getElementById('plane-form').reset();
         toggleAddModal();
         savePlaneDataToDB();
@@ -1239,20 +1361,38 @@
         const data = planeData[index];
         document.getElementById('edit-index').value = index;
         document.getElementById('edit-reg').value = data.reg;
-        document.getElementById('edit-jc').value = data.jc;
-        document.getElementById('edit-mdr').value = data.mdr;
+        document.getElementById('edit-jc-open').value = data.jcOpen !== undefined ? data.jcOpen : 0;
+        document.getElementById('edit-jc-closed').value = data.jcClosed !== undefined ? data.jcClosed : 0;
+        document.getElementById('edit-mdr-open').value = data.mdrOpen !== undefined ? data.mdrOpen : 0;
+        document.getElementById('edit-mdr-closed').value = data.mdrClosed !== undefined ? data.mdrClosed : 0;
         document.getElementById('edit-rts').value = data.rts || '';
         document.getElementById('edit-hilite').value = data.hilite;
         document.getElementById('edit-modal').classList.remove('hidden');
     }
+    
     function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
     document.getElementById('edit-form').addEventListener('submit', function(e) {
         e.preventDefault();
         if (!['admin', 'ppc'].includes(currentUserRole)) return;
+        
         const index = document.getElementById('edit-index').value;
-        planeData[index].jc = parseFloat(document.getElementById('edit-jc').value);
-        planeData[index].mdr = parseFloat(document.getElementById('edit-mdr').value);
+        const jcOpen = parseInt(document.getElementById('edit-jc-open').value) || 0;
+        const jcClosed = parseInt(document.getElementById('edit-jc-closed').value) || 0;
+        const mdrOpen = parseInt(document.getElementById('edit-mdr-open').value) || 0;
+        const mdrClosed = parseInt(document.getElementById('edit-mdr-closed').value) || 0;
+
+        const jcTotal = jcOpen + jcClosed;
+        const mdrTotal = mdrOpen + mdrClosed;
+
+        planeData[index].jcOpen = jcOpen;
+        planeData[index].jcClosed = jcClosed;
+        planeData[index].jc = jcTotal > 0 ? parseFloat(((jcClosed / jcTotal) * 100).toFixed(1)) : 0;
+
+        planeData[index].mdrOpen = mdrOpen;
+        planeData[index].mdrClosed = mdrClosed;
+        planeData[index].mdr = mdrTotal > 0 ? parseFloat(((mdrClosed / mdrTotal) * 100).toFixed(1)) : 0;
+
         planeData[index].rts = document.getElementById('edit-rts').value;
         planeData[index].hilite = document.getElementById('edit-hilite').value.trim();
 
@@ -1275,7 +1415,7 @@
     // ==========================================
     window.addEventListener('DOMContentLoaded', async () => {
         try {
-            await Promise.all([loadData(), loadPlaneData()]);
+            await Promise.all([loadData(), loadPlaneData(), loadHomeData()]);
         } catch(err) { console.error("Init err:", err); } 
         finally { 
             const overlay = document.getElementById('loadingOverlay');

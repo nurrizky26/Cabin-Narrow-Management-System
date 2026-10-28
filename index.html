@@ -348,7 +348,6 @@
     <div class="nav-clock"><div id="clockDate">LOADING...</div><div id="clockTime">00:00:00</div></div>
     
     <div class="nav-tabs">
-        <!-- New Dashboard Cabin Tab -->
         <button class="nav-tab" onclick="switchTab(event, 'home-dashboard')">🏠 DASHBOARD CABIN</button>
         <button class="nav-tab active" onclick="switchTab(event, 'distribution')">AVAILABILITY</button>
         <button class="nav-tab" onclick="switchTab(event, 'schedule')">DISTRIBUTION MP</button>
@@ -368,27 +367,22 @@
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- Full Width Inovasi -->
                 <div class="form-group full">
                     <label style="font-size: 12px; color: var(--special);">💡 INFO INOVASI</label>
                     <textarea id="home_inovasi" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info inovasi di sini..." onchange="saveHomeData()"></textarea>
                 </div>
-                
                 <div class="form-group">
                     <label style="font-size: 12px; color: var(--success);">📊 INFO PCS</label>
                     <textarea id="home_pcs" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info PCS di sini..." onchange="saveHomeData()"></textarea>
                 </div>
-                
                 <div class="form-group">
                     <label style="font-size: 12px; color: var(--warning);">🏆 INFO PENGHARGAAN</label>
                     <textarea id="home_penghargaan" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info penghargaan di sini..." onchange="saveHomeData()"></textarea>
                 </div>
-                
                 <div class="form-group">
                     <label style="font-size: 12px; color: var(--purple);">🎂 INFO BIRTHDAY</label>
                     <textarea id="home_birthday" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info ulang tahun di sini..." onchange="saveHomeData()"></textarea>
                 </div>
-                
                 <div class="form-group">
                     <label style="font-size: 12px; color: var(--dark);">📌 INFO LAINNYA</label>
                     <textarea id="home_lainnya" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info tambahan lainnya di sini..." onchange="saveHomeData()"></textarea>
@@ -404,8 +398,10 @@
                 <h2 style="margin:0; font-size: 14px;">RESOURCE MANAGEMENT</h2>
                 <div style="display:flex; gap: 6px; align-items: center;">
                     <input type="file" id="uploadMpFile" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
+                    
                     <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
                     <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="document.getElementById('uploadMpFile').click()">📤 UPLOAD MP</button>
+                    
                     <select id="statusFilter" class="filter-select" onchange="renderTable()">
                         <option value="ALL">ALL STATUS</option>
                         <option value="AVAILABLE">AVAILABLE</option>
@@ -663,10 +659,10 @@
                 <div class="form-group"><label>ROLE</label>
                     <select id="role" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                         <option>MANAGER</option>
-                        <option>AIRCRAFT CABIN TECHNICIAN</option>
-                        <option>SENIOR AIRCRAFT CABIN TECHNICIAN</option>
-                        <option>AIRCRAFT CABIN ENGINEER</option>
                         <option>SENIOR AIRCRAFT CABIN ENGINEER</option>
+                        <option>AIRCRAFT CABIN ENGINEER</option>
+                        <option>SENIOR AIRCRAFT CABIN TECHNICIAN</option>
+                        <option>AIRCRAFT CABIN TECHNICIAN</option>
                         <option>TECHNICIAN ASSISTANCE</option>
                     </select>
                 </div>
@@ -679,12 +675,28 @@
     </div>
 </div>
 
+<!-- Global Footer -->
+<div style="background-color: #fff; border-top: 1px solid #e2e8f0; text-align: center; padding: 6px; font-size: 11px; font-weight: 800; color: #8b0000; flex-shrink: 0; z-index: 10;">
+    Note: setelah melakukan perubahan pada page, segera lakukan refresh page untuk memastikan data sudah sesuai
+</div>
+
 <script>
     // ==========================================
     // SISTEM OTORISASI / LOGIN (CLIENT-SIDE)
     // ==========================================
     let currentUserRole = localStorage.getItem('currentUserRole') || 'viewer';
     let managerUnit = localStorage.getItem('managerUnit') || null;
+
+    // Role Hierarchy Configuration
+    const roleOrder = {
+        "MANAGER": 1,
+        "SENIOR AIRCRAFT CABIN ENGINEER": 2,
+        "AIRCRAFT CABIN ENGINEER": 3,
+        "SENIOR AIRCRAFT CABIN TECHNICIAN": 4,
+        "AIRCRAFT CABIN TECHNICIAN": 5,
+        "TECHNICIAN ASSISTANCE": 6,
+        "TECHNICAL CABIN ASSISTANCE": 6
+    };
 
     function isMPAuthorized() {
         return currentUserRole === 'admin' || (currentUserRole === 'manager' && currentUnit === managerUnit);
@@ -955,6 +967,13 @@
                 if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
                 return 0;
             });
+        } else {
+            // Pengurutan Default berdasarkan Hierarki Role
+            filtered.sort((a, b) => {
+                let wA = roleOrder[a.role ? a.role.toUpperCase() : ""] || 99;
+                let wB = roleOrder[b.role ? b.role.toUpperCase() : ""] || 99;
+                return wA - wB;
+            });
         }
 
         tbody.innerHTML = '';
@@ -1093,8 +1112,15 @@
         document.getElementById('workload_col2').value = generalWorkload.col2 || "";
         document.getElementById('workload_col3').value = generalWorkload.col3 || "";
 
+        // Pengurutan Default Pool berdasarkan Hierarki Role
+        let sortedForPool = [...manpowerData].sort((a, b) => {
+            let wA = roleOrder[a.role ? a.role.toUpperCase() : ""] || 99;
+            let wB = roleOrder[b.role ? b.role.toUpperCase() : ""] || 99;
+            return wA - wB;
+        });
+
         let poolHtml = '';
-        manpowerData.forEach(m => {
+        sortedForPool.forEach(m => {
             const isAssigned = assignedIds.includes(m.empNumber);
             const dName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
             const sc = statuses[m.status]?.color || "#ccc";

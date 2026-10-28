@@ -324,7 +324,6 @@
     <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
         <div class="brand">MANPOWER<span>PRO</span> Cabin Narrow 🧑‍🔧</div>
         
-        <!-- Unit Selector Dropdown -->
         <div id="unitSelectorWrapper" style="display: flex; align-items: center; gap: 8px;">
             <label style="color: #a2a3b7; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">UNIT</label>
             <select id="globalUnitSelect" onchange="changeUnit(this.value)" style="background: #ff9f1c; color: #1e1e2d; border: 2px solid white; padding: 6px 14px; border-radius: 6px; font-weight: 900; outline: none; font-size: 13px; cursor: pointer; box-shadow: 0 0 10px rgba(255,159,28,0.5);">
@@ -337,7 +336,6 @@
             </select>
         </div>
 
-        <!-- Auth UI -->
         <div style="display: flex; align-items: center; gap: 10px; margin-left: 15px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px;">
             <span id="roleDisplay" class="auth-badge">ROLE: VIEWER</span>
             <button id="loginBtn" class="auth-btn btn-login" onclick="document.getElementById('loginModalOverlay').style.display='flex'">LOGIN</button>
@@ -360,32 +358,27 @@
 
     <!-- TAB 0: HOME / DASHBOARD CABIN -->
     <div id="home-dashboard" class="sheet-content">
-        <div class="data-card" style="margin: 10px 15px; flex: 1; overflow-y: auto;">
-            <div class="header-action" style="margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
-                <h2 style="margin:0; font-size: 16px; color: var(--primary);">🏠 DASHBOARD CABIN</h2>
-                <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 11px;">Informasi, Inovasi, dan Pengumuman Terkini</p>
+        <div class="data-card" style="margin: 10px 15px; flex: 1; display: flex; flex-direction: column;">
+            <div class="header-action" style="margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="margin:0; font-size: 16px; color: var(--primary);">🏠 DASHBOARD CABIN</h2>
+                    <p style="margin: 3px 0 0 0; color: var(--text-muted); font-size: 11px;">Informasi, Inovasi, dan Pengumuman Terkini</p>
+                </div>
+                <!-- Button Add Info hanya untuk Admin/Dashboard -->
+                <button class="btn btn-primary home-cud-control" style="display:none;" onclick="document.getElementById('add-info-modal').style.display='flex'">+ ADD INFO</button>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div class="form-group full">
-                    <label style="font-size: 12px; color: var(--special);">💡 INFO INOVASI</label>
-                    <textarea id="home_inovasi" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info inovasi di sini..." onchange="saveHomeData()"></textarea>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; flex: 1; overflow: hidden; min-height: 400px;">
+                <!-- Kolom Kiri (View Besar) -->
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; background: #fdfdfd; display: flex; flex-direction: column; overflow-y: auto;">
+                    <img id="main-info-image" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 6px; display: none; margin-bottom: 15px;" src="" alt="Info Image">
+                    <h3 id="main-info-title" style="margin: 0 0 10px 0; font-size: 18px; color: var(--dark);">Pilih informasi di sebelah kanan</h3>
+                    <p id="main-info-text" style="white-space: pre-wrap; font-size: 13px; color: #4a5568; line-height: 1.6;"></p>
                 </div>
-                <div class="form-group">
-                    <label style="font-size: 12px; color: var(--success);">📊 INFO PCS</label>
-                    <textarea id="home_pcs" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info PCS di sini..." onchange="saveHomeData()"></textarea>
-                </div>
-                <div class="form-group">
-                    <label style="font-size: 12px; color: var(--warning);">🏆 INFO PENGHARGAAN</label>
-                    <textarea id="home_penghargaan" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info penghargaan di sini..." onchange="saveHomeData()"></textarea>
-                </div>
-                <div class="form-group">
-                    <label style="font-size: 12px; color: var(--purple);">🎂 INFO BIRTHDAY</label>
-                    <textarea id="home_birthday" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info ulang tahun di sini..." onchange="saveHomeData()"></textarea>
-                </div>
-                <div class="form-group">
-                    <label style="font-size: 12px; color: var(--dark);">📌 INFO LAINNYA</label>
-                    <textarea id="home_lainnya" class="workload-direct-edit home-cud-input" style="border:1px solid #e2e8f0; border-radius:8px; min-height:100px; font-size: 12px; background: #fdfdfd;" placeholder="Tulis info tambahan lainnya di sini..." onchange="saveHomeData()"></textarea>
+                
+                <!-- Kolom Kanan (Daftar List) -->
+                <div id="info-list-container" style="border: 1px solid #e2e8f0; border-radius: 8px; background: #fdfdfd; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Diisi lewat Javascript -->
                 </div>
             </div>
         </div>
@@ -673,6 +666,31 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal for Add Dashboard Info -->
+    <div id="add-info-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 style="margin:0; color: var(--primary);">TAMBAH INFO DASHBOARD</h3><button type="button" style="background:none; border:none; cursor:pointer; font-size:16px" onclick="document.getElementById('add-info-modal').style.display='none'">✕</button></div>
+            <form id="info-form" onsubmit="saveNewInfo(event)">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>JUDUL INFO</label>
+                    <input type="text" id="info-title" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>GAMBAR (UPLOAD)</label>
+                    <input type="file" id="info-image-file" accept="image/*" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-size: 11px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>ISI TEXT</label>
+                    <textarea id="info-text" rows="5" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                <div class="modal-footer" style="margin-top:0">
+                    <button type="button" class="btn" style="background:#eee" onclick="document.getElementById('add-info-modal').style.display='none'">BATAL</button>
+                    <button type="submit" class="btn btn-primary">SIMPAN INFO</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Global Footer -->
@@ -687,7 +705,6 @@
     let currentUserRole = localStorage.getItem('currentUserRole') || 'viewer';
     let managerUnit = localStorage.getItem('managerUnit') || null;
 
-    // Role Hierarchy Configuration
     const roleOrder = {
         "MANAGER": 1,
         "SENIOR AIRCRAFT CABIN ENGINEER": 2,
@@ -795,8 +812,14 @@
         });
 
         // Home Dashboard (Tab 0)
-        document.querySelectorAll('.home-cud-input').forEach(el => {
-            el.disabled = !canEditHome;
+        document.querySelectorAll('.home-cud-control').forEach(el => {
+            if(canEditHome) {
+                if(el.tagName === 'BUTTON') el.style.display = 'inline-block';
+                else if(el.tagName === 'DIV' && el.style.display === 'none') el.style.display = 'flex';
+                else el.style.display = '';
+            } else {
+                el.style.display = 'none';
+            }
         });
     }
 
@@ -813,29 +836,126 @@
     // ==========================================
     // SCRIPTS FOR HOME DASHBOARD TAB
     // ==========================================
-    let homeData = { inovasi: '', pcs: '', penghargaan: '', birthday: '', lainnya: '' };
+    let homeData = []; // Diganti menjadi Array untuk list info
 
     async function loadHomeData() {
         try {
-            homeData = await getStore('home_dashboard_data', { inovasi: '', pcs: '', penghargaan: '', birthday: '', lainnya: '' });
-            document.getElementById('home_inovasi').value = homeData.inovasi || '';
-            document.getElementById('home_pcs').value = homeData.pcs || '';
-            document.getElementById('home_penghargaan').value = homeData.penghargaan || '';
-            document.getElementById('home_birthday').value = homeData.birthday || '';
-            document.getElementById('home_lainnya').value = homeData.lainnya || '';
+            homeData = await getStore('home_dashboard_data', []);
+            if(!Array.isArray(homeData)) homeData = []; // Fallback jika data sebelumnya (JSON object lama) terbaca
+            renderHomeData();
         } catch (err) { console.error("Load Home err:", err); }
     }
 
-    function saveHomeData() {
+    function renderHomeData() {
+        const container = document.getElementById('info-list-container');
+        container.innerHTML = '';
+        
+        if(homeData.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding: 20px; color:#a0aec0; font-size:11px;">Belum ada informasi.</div>';
+            document.getElementById('main-info-title').innerText = "Belum ada informasi";
+            document.getElementById('main-info-text').innerText = "";
+            document.getElementById('main-info-image').style.display = "none";
+            return;
+        }
+
+        homeData.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.style.cssText = "display: flex; gap: 10px; padding: 10px; border: 1px solid #edf2f7; border-radius: 6px; cursor: pointer; transition: 0.2s; background: white;";
+            div.onmouseover = () => div.style.borderColor = "var(--primary)";
+            div.onmouseout = () => div.style.borderColor = "#edf2f7";
+            div.onclick = () => setMainInfo(index);
+            
+            let imgHtml = item.image ? `<img src="${item.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; flex-shrink:0;">` : `<div style="width:60px; height:60px; background:#f1f5f9; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#cbd5e1; font-size:20px;">📄</div>`;
+            
+            let snippet = item.text.length > 50 ? item.text.substring(0, 50) + '...' : item.text;
+            
+            div.innerHTML = `
+                ${imgHtml}
+                <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                    <h4 style="margin: 0 0 4px 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--dark);">${item.title}</h4>
+                    <p style="margin: 0; font-size: 9px; color: var(--text-muted); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${snippet}</p>
+                </div>
+                <div class="home-cud-control" style="display:none; align-items:center;">
+                    <button onclick="deleteInfo(event, ${index})" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size: 12px; padding: 4px;">✕</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        
+        // Auto select item pertama
+        setMainInfo(0);
+        applyPermissions();
+    }
+
+    function setMainInfo(index) {
+        if(index < 0 || index >= homeData.length) return;
+        const item = homeData[index];
+        document.getElementById('main-info-title').innerText = item.title;
+        document.getElementById('main-info-text').innerText = item.text;
+        const img = document.getElementById('main-info-image');
+        if(item.image) {
+            img.src = item.image;
+            img.style.display = 'block';
+        } else {
+            img.style.display = 'none';
+            img.src = '';
+        }
+    }
+
+    async function saveNewInfo(e) {
+        e.preventDefault();
         if (!['admin', 'dashboard'].includes(currentUserRole)) return;
-        homeData = {
-            inovasi: document.getElementById('home_inovasi').value,
-            pcs: document.getElementById('home_pcs').value,
-            penghargaan: document.getElementById('home_penghargaan').value,
-            birthday: document.getElementById('home_birthday').value,
-            lainnya: document.getElementById('home_lainnya').value
-        };
+        
+        const title = document.getElementById('info-title').value.trim();
+        const text = document.getElementById('info-text').value.trim();
+        const fileInput = document.getElementById('info-image-file');
+        
+        let base64Image = null;
+        if(fileInput.files && fileInput.files[0]) {
+            base64Image = await resizeImageToBase64(fileInput.files[0], 800);
+        }
+        
+        homeData.unshift({ title, text, image: base64Image, timestamp: new Date().getTime() });
+        
+        document.getElementById('info-form').reset();
+        document.getElementById('add-info-modal').style.display = 'none';
+        
         _supabase.from('app_store').upsert([{ key: 'home_dashboard_data', value: homeData }]).then();
+        renderHomeData();
+    }
+
+    function deleteInfo(e, index) {
+        e.stopPropagation();
+        if (!['admin', 'dashboard'].includes(currentUserRole)) return;
+        if(confirm("Hapus info ini?")) {
+            homeData.splice(index, 1);
+            _supabase.from('app_store').upsert([{ key: 'home_dashboard_data', value: homeData }]).then();
+            renderHomeData();
+        }
+    }
+
+    function resizeImageToBase64(file, maxSize) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(readerEvent) {
+                const image = new Image();
+                image.onload = function() {
+                    let width = image.width;
+                    let height = image.height;
+                    if (width > height) {
+                        if (width > maxSize) { height *= maxSize / width; width = maxSize; }
+                    } else {
+                        if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                }
+                image.src = readerEvent.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
     }
 
     // ==========================================
@@ -968,7 +1088,6 @@
                 return 0;
             });
         } else {
-            // Pengurutan Default berdasarkan Hierarki Role
             filtered.sort((a, b) => {
                 let wA = roleOrder[a.role ? a.role.toUpperCase() : ""] || 99;
                 let wB = roleOrder[b.role ? b.role.toUpperCase() : ""] || 99;
@@ -1112,7 +1231,6 @@
         document.getElementById('workload_col2').value = generalWorkload.col2 || "";
         document.getElementById('workload_col3').value = generalWorkload.col3 || "";
 
-        // Pengurutan Default Pool berdasarkan Hierarki Role
         let sortedForPool = [...manpowerData].sort((a, b) => {
             let wA = roleOrder[a.role ? a.role.toUpperCase() : ""] || 99;
             let wB = roleOrder[b.role ? b.role.toUpperCase() : ""] || 99;

@@ -172,7 +172,7 @@
         }
         .workload-header { 
             font-size: 11px; font-weight: 800; color: white; padding: 6px 15px; letter-spacing: 0.5px;
-            background: linear-gradient(135deg, var(--dark) 0%, #3a3a4f 100%); border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             text-align: center;
         }
 
@@ -436,8 +436,11 @@
             <div class="distribution-content">
                 <div class="aircraft-grid" id="aircraftGrid"></div>
                 <div class="workload-column">
-                    <div class="workload-header">WORKLOAD </div>
-                    <div class="workload-master-container">
+                    <div class="workload-header" id="workloadHeader" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 15px; background: var(--primary); transition: background 0.2s ease;">
+                        <button type="button" id="btnWorkloadView" class="btn" onclick="switchWorkloadMode('WORK LOAD')" style="background: var(--primary); color: #fff; border: 2px solid #fff; font-weight: 800; height: 24px; padding: 0 14px; font-size: 10px; border-radius: 4px; cursor: pointer;">WORK LOAD</button>
+                        <button type="button" id="btnNextloadView" class="btn" onclick="switchWorkloadMode('NEXT LOAD')" style="background: var(--warning); color: #1e1e2d; border: 1px solid rgba(255,255,255,0.4); font-weight: 800; height: 24px; padding: 0 14px; font-size: 10px; border-radius: 4px; cursor: pointer; opacity: 0.5;">NEXT LOAD</button>
+                    </div>
+                    <div class="workload-master-container" id="workloadContainerCurrent">
                         <div class="workload-pane">
                             <div class="pane-title"></div>
                             <textarea id="workload_col1" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
@@ -449,6 +452,20 @@
                         <div class="workload-pane">
                             <div class="pane-title"></div>
                             <textarea id="workload_col3" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
+                        </div>
+                    </div>
+                    <div class="workload-master-container" id="workloadContainerNext" style="display: none;">
+                        <div class="workload-pane">
+                            <div class="pane-title"></div>
+                            <textarea id="nextload_col1" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea>
+                        </div>
+                        <div class="workload-pane">
+                            <div class="pane-title"></div>
+                            <textarea id="nextload_col2" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea>
+                        </div>
+                        <div class="workload-pane">
+                            <div class="pane-title"></div>
+                            <textarea id="nextload_col3" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea>
                         </div>
                     </div>
                 </div>
@@ -962,7 +979,8 @@
     // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT & EXCEL UPLOAD)
     // ==========================================
     let currentUnit = localStorage.getItem('active_unit') || 'TJN-4';
-    let manpowerData = [], aircraftRegs = [], assignments = {}, aircraftPhases = {}, aircraftLines = {}, generalWorkload = {};
+    let manpowerData = [], aircraftRegs = [], assignments = {}, aircraftPhases = {}, aircraftLines = {}, generalWorkload = {}, nextWorkload = {};
+    let currentWorkloadMode = 'WORK LOAD';
     let currentSort = { column: null, direction: 'asc' };
 
     async function getStore(key, defaultVal) {
@@ -996,13 +1014,14 @@
         if(overlay) overlay.style.display = 'flex';
 
         try {
-            [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload] = await Promise.all([
+            [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload, nextWorkload] = await Promise.all([
                 getStore(`${currentUnit}_manpower_data`, []),
                 getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
                 getStore(`${currentUnit}_assignments`, {}),
                 getStore(`${currentUnit}_aircraft_phases`, {}),
                 getStore(`${currentUnit}_aircraft_lines`, {}),
-                getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" })
+                getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" }),
+                getStore(`${currentUnit}_next_workload`, { col1: "", col2: "", col3: "" })
             ]);
 
             document.getElementById('globalUnitSelect').value = currentUnit;
@@ -1028,6 +1047,65 @@
         generalWorkload.col2 = document.getElementById('workload_col2').value.toUpperCase();
         generalWorkload.col3 = document.getElementById('workload_col3').value.toUpperCase();
         _supabase.from('app_store').upsert([{ key: `${currentUnit}_general_workload`, value: generalWorkload }]).then();
+    }
+
+    function saveNextWorkload() {
+        if (!isMPAuthorized()) return;
+        nextWorkload.col1 = document.getElementById('nextload_col1').value.toUpperCase();
+        nextWorkload.col2 = document.getElementById('nextload_col2').value.toUpperCase();
+        nextWorkload.col3 = document.getElementById('nextload_col3').value.toUpperCase();
+        _supabase.from('app_store').upsert([{ key: `${currentUnit}_next_workload`, value: nextWorkload }]).then();
+    }
+
+    function switchWorkloadMode(mode) {
+        currentWorkloadMode = mode;
+        const btnWorkload = document.getElementById('btnWorkloadView');
+        const btnNextload = document.getElementById('btnNextloadView');
+        const header = document.getElementById('workloadHeader');
+        const currentContainer = document.getElementById('workloadContainerCurrent');
+        const nextContainer = document.getElementById('workloadContainerNext');
+
+        if (!currentContainer || !nextContainer) return;
+
+        if (mode === 'WORK LOAD') {
+            currentContainer.style.display = 'grid';
+            nextContainer.style.display = 'none';
+
+            if (header) header.style.background = 'var(--primary)';
+            if (btnWorkload) {
+                btnWorkload.style.background = 'var(--primary)';
+                btnWorkload.style.color = '#fff';
+                btnWorkload.style.border = '2px solid #fff';
+                btnWorkload.style.opacity = '1';
+                btnWorkload.style.boxShadow = '0 0 8px rgba(255,255,255,0.4)';
+            }
+            if (btnNextload) {
+                btnNextload.style.background = 'var(--warning)';
+                btnNextload.style.color = '#1e1e2d';
+                btnNextload.style.border = '1px solid rgba(255,255,255,0.4)';
+                btnNextload.style.opacity = '0.5';
+                btnNextload.style.boxShadow = 'none';
+            }
+        } else {
+            currentContainer.style.display = 'none';
+            nextContainer.style.display = 'grid';
+
+            if (header) header.style.background = 'var(--warning)';
+            if (btnNextload) {
+                btnNextload.style.background = 'var(--warning)';
+                btnNextload.style.color = '#1e1e2d';
+                btnNextload.style.border = '2px solid #fff';
+                btnNextload.style.opacity = '1';
+                btnNextload.style.boxShadow = '0 0 8px rgba(255,255,255,0.4)';
+            }
+            if (btnWorkload) {
+                btnWorkload.style.background = 'var(--primary)';
+                btnWorkload.style.color = '#fff';
+                btnWorkload.style.border = '1px solid rgba(255,255,255,0.4)';
+                btnWorkload.style.opacity = '0.5';
+                btnWorkload.style.boxShadow = 'none';
+            }
+        }
     }
 
     const statuses = {
@@ -1242,6 +1320,13 @@
         document.getElementById('workload_col1').value = generalWorkload.col1 || "";
         document.getElementById('workload_col2').value = generalWorkload.col2 || "";
         document.getElementById('workload_col3').value = generalWorkload.col3 || "";
+        if (document.getElementById('nextload_col1')) {
+            document.getElementById('nextload_col1').value = nextWorkload.col1 || "";
+            document.getElementById('nextload_col2').value = nextWorkload.col2 || "";
+            document.getElementById('nextload_col3').value = nextWorkload.col3 || "";
+        }
+
+        switchWorkloadMode(currentWorkloadMode);
 
         let sortedForPool = [...manpowerData].sort((a, b) => {
             let wA = roleOrder[a.role ? a.role.toUpperCase() : ""] || 99;
@@ -1535,8 +1620,8 @@
         const index = document.getElementById('edit-index').value;
         const jcOpen = parseInt(document.getElementById('edit-jc-open').value) || 0;
         const jcClosed = parseInt(document.getElementById('edit-jc-closed').value) || 0;
-        const mdrOpen = parseInt(document.getElementById('edit-mdr-open').value) || 0;
-        const mdrClosed = parseInt(document.getElementById('edit-mdr-closed').value) || 0;
+        const mdrOpen = parseInt(document.getElementById('mdr-open').value) || 0;
+        const mdrClosed = parseInt(document.getElementById('mdr-closed').value) || 0;
 
         const jcTotal = jcOpen + jcClosed;
         const mdrTotal = mdrOpen + mdrClosed;

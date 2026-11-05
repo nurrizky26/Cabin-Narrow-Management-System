@@ -434,20 +434,33 @@
                 <div class="pool-summary" id="poolAvailabilitySummary"></div>
             </div>
 
-            <!-- Panel Khusus ALL TJN: Kolom Ringkasan & Detail di Sebelah Kanan MP POOL -->
-            <div id="allTjnRightPanel" style="display:none; flex:1; flex-direction:column; gap:10px; overflow:hidden;">
-                <!-- Ringkasan Status -->
-                <div class="data-card" style="padding:10px; flex-shrink:0;">
-                    <div style="font-size:10px; font-weight:800; color:var(--primary); margin-bottom:6px; text-transform:uppercase;">REKAPAN MANPOWER (ALL TJN)</div>
-                    <div id="allTjnSummaryGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:6px;"></div>
-                </div>
-                <!-- Detail Nama & Status -->
-                <div class="data-card" style="padding:10px; flex:1; overflow:hidden;">
-                    <div style="font-size:10px; font-weight:800; color:var(--dark); margin-bottom:6px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
-                        <span>DETAIL NAMA & STATUS</span>
-                        <span id="allTjnDetailCount" style="font-size:9px; color:var(--text-muted);"></span>
+            <!-- Panel Khusus ALL TJN: Tampilan Vertikal Berdampingan (Rekapan di Kiri, Detail di Kanan) Tanpa MP Pool -->
+            <div id="allTjnRightPanel" style="display:none; flex:1; gap:12px; height:100%; overflow:hidden;">
+                <!-- Kolom Kiri: REKAPAN MANPOWER (ALL TJN) -->
+                <div class="data-card" style="width: 320px; min-width: 300px; max-width: 350px; padding: 12px; display: flex; flex-direction: column; overflow-y: auto;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px;">
+                        📊 REKAPAN MANPOWER (ALL TJN)
                     </div>
-                    <div class="table-container" style="flex:1;">
+                    <div id="allTjnSummaryGrid" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                </div>
+
+                <!-- Kolom Kanan: DETAIL NAMA & STATUS (Filter by Avail / Not Avail) -->
+                <div class="data-card" style="flex: 1; padding: 12px; display: flex; flex-direction: column; overflow: hidden;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--dark); text-transform: uppercase;">
+                            📋 DETAIL NAMA & STATUS
+                            <span id="allTjnDetailCount" style="font-size: 9px; color: var(--text-muted); font-weight: normal; margin-left: 6px;"></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 9px; font-weight: 700; color: var(--text-muted);">FILTER:</label>
+                            <select id="allTjnFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 6px;">
+                                <option value="ALL">ALL STATUS</option>
+                                <option value="AVAILABLE">AVAILABLE</option>
+                                <option value="NOT_AVAILABLE">NOT AVAILABLE</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container" style="flex: 1;">
                         <table>
                             <thead>
                                 <tr>
@@ -765,8 +778,9 @@
     };
 
     function isMPAuthorized() {
-        if (currentUnit === 'ALL TJN') return false; // ALL TJN bersifat gabungan/agregasi view-only
-        return currentUserRole === 'admin' || (currentUserRole === 'manager' && currentUnit === managerUnit);
+        if (currentUserRole === 'admin') return true;
+        if (currentUnit === 'ALL TJN') return false;
+        return (currentUserRole === 'manager' && currentUnit === managerUnit);
     }
 
     function updateAuthUI() {
@@ -1030,14 +1044,24 @@
     async function saveDataToDB() {
         if (!isMPAuthorized()) return; 
         try {
-            const updates = [
-                { key: `${currentUnit}_manpower_data`, value: manpowerData },
-                { key: `${currentUnit}_aircraft_regs`, value: aircraftRegs },
-                { key: `${currentUnit}_assignments`, value: assignments },
-                { key: `${currentUnit}_aircraft_phases`, value: aircraftPhases },
-                { key: `${currentUnit}_aircraft_lines`, value: aircraftLines }
-            ];
-            await _supabase.from('app_store').upsert(updates);
+            if (currentUnit === 'ALL TJN' && currentUserRole === 'admin') {
+                const units = ['TJN-1', 'TJN-2', 'TJN-3', 'TJN-4', 'TJN-5', 'TJN-6'];
+                const updates = [];
+                units.forEach(u => {
+                    const unitMp = manpowerData.filter(m => (m.unitSource || 'TJN-4') === u);
+                    updates.push({ key: `${u}_manpower_data`, value: unitMp });
+                });
+                await _supabase.from('app_store').upsert(updates);
+            } else {
+                const updates = [
+                    { key: `${currentUnit}_manpower_data`, value: manpowerData },
+                    { key: `${currentUnit}_aircraft_regs`, value: aircraftRegs },
+                    { key: `${currentUnit}_assignments`, value: assignments },
+                    { key: `${currentUnit}_aircraft_phases`, value: aircraftPhases },
+                    { key: `${currentUnit}_aircraft_lines`, value: aircraftLines }
+                ];
+                await _supabase.from('app_store').upsert(updates);
+            }
         } catch (err) { console.error("Error simpan data:", err); }
     }
 
@@ -1319,7 +1343,7 @@
         const editIdx = parseInt(document.getElementById('editIndex').value);
         if(empNumber && employee) {
             if (editIdx > -1) manpowerData[editIdx] = {...manpowerData[editIdx], empNumber, employee, surname, role};
-            else manpowerData.push({ empNumber, employee, surname, role, status: "Available" });
+            else manpowerData.push({ empNumber, employee, surname, role, status: "Available", unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) });
             saveDataToDB(); closeStaffModal(); renderTable();
         }
     }
@@ -1381,9 +1405,9 @@
 
                 const existingIdx = manpowerData.findIndex(m => m.empNumber === empNumber);
                 if (existingIdx > -1) {
-                    manpowerData[existingIdx] = { empNumber, employee, surname, role, status: matchedStatus };
+                    manpowerData[existingIdx] = { empNumber, employee, surname, role, status: matchedStatus, unitSource: manpowerData[existingIdx].unitSource || (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) };
                 } else {
-                    manpowerData.push({ empNumber, employee, surname, role, status: matchedStatus });
+                    manpowerData.push({ empNumber, employee, surname, role, status: matchedStatus, unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) });
                 }
                 added++;
             }
@@ -1404,20 +1428,22 @@
 
         const standardDistro = document.getElementById('standardDistroContent');
         const allTjnRight = document.getElementById('allTjnRightPanel');
+        const poolSidebar = document.getElementById('poolSidebar');
 
-        // Handling khusus tampilan ALL TJN
+        // Handling khusus tampilan ALL TJN: Tanpa MP Pool, Vertikal berdampingan (Kiri Rekapan, Kanan Detail)
         if (currentUnit === 'ALL TJN') {
             if (standardDistro) standardDistro.style.display = 'none';
             if (allTjnRight) allTjnRight.style.display = 'flex';
-            document.getElementById('poolSidebar').style.width = '240px';
-            document.getElementById('poolSidebar').style.minWidth = '240px';
-            document.getElementById('poolAvailabilitySummary').style.display = 'none'; // Dipindah ke panel kanan
+            if (poolSidebar) poolSidebar.style.display = 'none';
             renderAllTjnDistributionPanel();
         } else {
             if (standardDistro) standardDistro.style.display = 'flex';
             if (allTjnRight) allTjnRight.style.display = 'none';
-            document.getElementById('poolSidebar').style.width = '120px';
-            document.getElementById('poolSidebar').style.minWidth = '120px';
+            if (poolSidebar) {
+                poolSidebar.style.display = 'flex';
+                poolSidebar.style.width = '120px';
+                poolSidebar.style.minWidth = '120px';
+            }
             document.getElementById('poolAvailabilitySummary').style.display = 'flex';
         }
 
@@ -1549,17 +1575,27 @@
 
         const summaryGrid = document.getElementById('allTjnSummaryGrid');
         summaryGrid.innerHTML = statConfig.map(s => `
-            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid ${s.color}; border-radius:6px; padding:6px 10px;">
-                <div style="font-size:7.5px; font-weight:800; color:var(--text-muted); text-transform:uppercase; line-height:1.2;">${s.label}</div>
-                <div style="font-size:14px; font-weight:900; color:${s.color}; margin-top:2px;">${s.val}</div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid ${s.color}; border-radius:6px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:8.5px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">${s.label}</span>
+                <span style="font-size:13px; font-weight:900; color:${s.color};">${s.val}</span>
             </div>
         `).join('');
 
+        // Filter tabel detail berdasarkan (ALL, AVAILABLE, NOT AVAILABLE)
+        const filterSelect = document.getElementById('allTjnFilterSelect');
+        const filterVal = filterSelect ? filterSelect.value : 'ALL';
+
+        let filteredMp = manpowerData.filter(m => {
+            if (filterVal === 'AVAILABLE') return m.status === 'Available';
+            if (filterVal === 'NOT_AVAILABLE') return m.status !== 'Available';
+            return true;
+        });
+
         const detailBody = document.getElementById('allTjnDetailBody');
         const detailCount = document.getElementById('allTjnDetailCount');
-        if (detailCount) detailCount.innerText = `${total} Personel`;
+        if (detailCount) detailCount.innerText = `(${filteredMp.length} Personel)`;
 
-        let sorted = [...manpowerData].sort((a, b) => {
+        let sorted = [...filteredMp].sort((a, b) => {
             const uCompare = (a.unitSource || "").localeCompare(b.unitSource || "");
             if (uCompare !== 0) return uCompare;
             let wA = roleOrder[a.role ? a.role.toUpperCase() : ""] || 99;
@@ -1801,7 +1837,7 @@
         const jcOpen = parseInt(document.getElementById('edit-jc-open').value) || 0;
         const jcClosed = parseInt(document.getElementById('edit-jc-closed').value) || 0;
         const mdrOpen = parseInt(document.getElementById('mdr-open').value) || 0;
-        const mdrClosed = parseInt(document.getElementById('mdr-closed').value) || 0;
+        const mdrClosed = parseInt(document.getElementById('edit-mdr-closed').value) || 0;
 
         const jcTotal = jcOpen + jcClosed;
         const mdrTotal = mdrOpen + mdrClosed;

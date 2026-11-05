@@ -307,38 +307,73 @@
         .btn-login { background: var(--success); color: white; }
         .btn-logout { background: var(--danger); color: white; }
 
-        /* Save Update Data Button in Footer */
+        /* Save Update Data Button in Footer - High Contrast */
         .btn-save-update {
-            background: linear-gradient(135deg, #059669, #10b981);
-            color: #ffffff;
-            border: 1px solid #34d399;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.45);
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #0f172a;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 14px rgba(245, 158, 11, 0.75), 0 2px 4px rgba(0,0,0,0.2);
             font-size: 11px;
             font-weight: 900;
-            letter-spacing: 0.6px;
-            padding: 5px 14px;
-            height: 28px;
+            letter-spacing: 0.8px;
+            padding: 5px 16px;
+            height: 30px;
             border-radius: 6px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             text-transform: uppercase;
         }
         .btn-save-update:hover {
-            background: linear-gradient(135deg, #047857, #059669);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.65);
-            transform: translateY(-1px);
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.95), 0 3px 6px rgba(0,0,0,0.3);
+            transform: translateY(-1px) scale(1.03);
+            color: #000000;
         }
         .btn-save-update:active {
             transform: scale(0.97);
+        }
+
+        /* Pop-out Toast Notification */
+        .toast-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: #1e1e2d;
+            color: white;
+            padding: 16px 28px;
+            border-radius: 12px;
+            border: 2px solid #2ec4b6;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .toast-popup.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
         }
     </style>
 </head>
 <body>
 
 <div id="loadingOverlay">SYNCING DENGAN CLOUD DATABASE...</div>
+
+<!-- Pop-out Toast Notification -->
+<div id="saveToastPopup" class="toast-popup">
+    <div style="font-size: 28px;">✅</div>
+    <div style="font-size: 14px; font-weight: 800; color: #2ec4b6; letter-spacing: 0.5px;">DATA BERHASIL DISIMPAN!</div>
+    <div style="font-size: 11px; color: #cbd5e1; text-align: center;">Perubahan Manpower dan Distribution telah tersimpan ke database.</div>
+</div>
 
 <nav class="sidebar-nav">
     <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
@@ -527,16 +562,24 @@
 
             <!-- Panel Khusus ALL TJN: Tampilan Vertikal Berdampingan (Rekapan di Kiri, Detail di Kanan) Tanpa MP Pool -->
             <div id="allTjnRightPanel" style="display:none; flex:1; gap:12px; height:100%; overflow:hidden;">
-                <!-- Kolom Kiri: REKAPAN MANPOWER (ALL TJN) -->
+                <!-- Kolom Kiri: REKAPAN MANPOWER (ALL TJN) dengan Selektor Shift -->
                 <div class="data-card" style="width: 320px; min-width: 300px; max-width: 350px; padding: 12px; display: flex; flex-direction: column; overflow-y: auto;">
-                    <div style="font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
                         <span>📊 REKAPAN MANPOWER</span>
-                        <span id="allTjnShiftBadge" style="font-size: 8px; background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 800;">ALL SHIFT</span>
+                        <!-- Filter Shift Option ALL TJN dipindahkan ke kolom kiri/rekapan -->
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <label style="font-size: 8.5px; font-weight: 700; color: var(--text-muted);">SHIFT:</label>
+                            <select id="allTjnShiftFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 22px; font-size: 8.5px; padding: 0 4px; font-weight: 800; color: var(--primary); background: white;">
+                                <option value="ALL">ALL SHIFT</option>
+                                <option value="MORNING SHIFT">MORNING SHIFT</option>
+                                <option value="LATE SHIFT">LATE SHIFT</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="allTjnSummaryGrid" style="display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
 
-                <!-- Kolom Kanan: DETAIL NAMA & STATUS (Filter by Shift, Status & Text Search) -->
+                <!-- Kolom Kanan: DETAIL NAMA & STATUS (Filter by Status & Text Search) -->
                 <div class="data-card" style="flex: 1; padding: 12px; display: flex; flex-direction: column; overflow: hidden;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                         <div style="font-size: 11px; font-weight: 800; color: var(--dark); text-transform: uppercase;">
@@ -544,16 +587,8 @@
                             <span id="allTjnDetailCount" style="font-size: 9px; color: var(--text-muted); font-weight: normal; margin-left: 6px;"></span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                            <input type="text" id="searchInputAllTjn" placeholder="SEARCH NAMA / ID..." onkeyup="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 8px; border-radius: 4px; border: 1px solid #e2e8f0; width: 130px; text-transform: uppercase; outline:none;">
+                            <input type="text" id="searchInputAllTjn" placeholder="SEARCH NAMA / ID..." onkeyup="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 8px; border-radius: 4px; border: 1px solid #e2e8f0; width: 140px; text-transform: uppercase; outline:none;">
                             
-                            <!-- Filter Shift Option ALL TJN -->
-                            <label style="font-size: 9px; font-weight: 700; color: var(--text-muted);">SHIFT:</label>
-                            <select id="allTjnShiftFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 6px; font-weight: 700; color: var(--primary);">
-                                <option value="ALL">ALL SHIFT</option>
-                                <option value="MORNING SHIFT">MORNING SHIFT</option>
-                                <option value="LATE SHIFT">LATE SHIFT</option>
-                            </select>
-
                             <!-- Filter Status ALL TJN -->
                             <label style="font-size: 9px; font-weight: 700; color: var(--text-muted);">STATUS:</label>
                             <select id="allTjnFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 6px;">
@@ -864,8 +899,8 @@
     </div>
 </div>
 
-<!-- Global Footer with Prominent Save Update Data Button -->
-<div style="background-color: #fff; border-top: 1px solid #e2e8f0; padding: 6px 16px; font-size: 11px; font-weight: 800; color: #8b0000; flex-shrink: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; min-height: 40px;">
+<!-- Global Footer with High-Contrast Save Update Data Button -->
+<div style="background-color: #fff; border-top: 1px solid #e2e8f0; padding: 6px 16px; font-size: 11px; font-weight: 800; color: #8b0000; flex-shrink: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; min-height: 42px;">
     <div style="flex: 1; text-align: center;">
         Note: setelah melakukan perubahan pada page, segera lakukan refresh page untuk memastikan data sudah sesuai
     </div>
@@ -1191,7 +1226,7 @@
     }
 
     // ==========================================
-    // FUNGSI SAVE UPDATE DATA LANGSUNG (TANPA RELOAD PAGE)
+    // FUNGSI SAVE UPDATE DATA LANGSUNG (TANPA RELOAD PAGE) & TOAST NOTIF
     // ==========================================
     function updateSaveButtonVisibility() {
         const btn = document.getElementById('btnSaveUpdateData');
@@ -1207,6 +1242,15 @@
         }
     }
 
+    function showToastNotification() {
+        const toast = document.getElementById('saveToastPopup');
+        if (!toast) return;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2200);
+    }
+
     async function triggerSaveUpdateData() {
         if (!isMPAuthorized()) {
             alert('Anda tidak memiliki otorisasi untuk menyimpan data unit ini.');
@@ -1217,7 +1261,7 @@
         const originalHtml = btn ? btn.innerHTML : '';
         if (btn) {
             btn.innerHTML = `<span>⏳</span> SAVING...`;
-            btn.style.opacity = '0.8';
+            btn.style.opacity = '0.85';
             btn.disabled = true;
         }
 
@@ -1250,12 +1294,12 @@
             if (document.getElementById('distribution').classList.contains('active')) renderTable();
             if (document.getElementById('schedule').classList.contains('active')) renderDistro();
 
+            showToastNotification();
+
             if (btn) {
-                btn.innerHTML = `<span>✅</span> DATA SAVED!`;
-                btn.style.background = 'linear-gradient(135deg, #047857, #10b981)';
+                btn.innerHTML = `<span>✅</span> SAVED!`;
                 setTimeout(() => {
                     btn.innerHTML = originalHtml;
-                    btn.style.background = '';
                     btn.style.opacity = '1';
                     btn.disabled = false;
                 }, 1800);
@@ -1296,11 +1340,25 @@
 
                 units.forEach((u, i) => {
                     const unitDefaultShift = allShiftsRes[i] || 'MORNING SHIFT';
-                    const list = (allMpRes[i] || []).map(item => ({ 
-                        ...item, 
-                        unitSource: u,
-                        shift: item.shift || unitDefaultShift
-                    }));
+                    
+                    // Ketentuan shift ALL TJN:
+                    // TJN-1 s.d. TJN-4: ambil dari option shift unit di sebelah Resource Management
+                    // TJN-5 & TJN-6: ambil dari penempatan shift individual (Morning / Late Table)
+                    const isDualTableUnit = ['TJN-5', 'TJN-6'].includes(u);
+
+                    const list = (allMpRes[i] || []).map(item => {
+                        let finalShift = unitDefaultShift;
+                        if (isDualTableUnit) {
+                            finalShift = item.shift || 'MORNING SHIFT';
+                        } else {
+                            finalShift = unitDefaultShift; // Override mengikuti shift unit terkini
+                        }
+                        return { 
+                            ...item, 
+                            unitSource: u,
+                            shift: finalShift
+                        };
+                    });
                     aggregatedMp = aggregatedMp.concat(list);
 
                     const regs = allRegsRes[i] || [];
@@ -1331,12 +1389,17 @@
                     getStore(`${currentUnit}_shift_status`, "MORNING SHIFT")
                 ]);
 
-                manpowerData = manpowerData.map(m => ({ ...m, shift: m.shift || unitShiftStatus || 'MORNING SHIFT' }));
+                // Sinkronisasi shift per unit
+                const isDual = ['TJN-5', 'TJN-6'].includes(currentUnit);
+                manpowerData = manpowerData.map(m => ({
+                    ...m,
+                    shift: isDual ? (m.shift || 'MORNING SHIFT') : (unitShiftStatus || 'MORNING SHIFT')
+                }));
             }
 
             document.getElementById('globalUnitSelect').value = currentUnit;
 
-            // Toggle Tampilan Tab Availability (Split Shift untuk TJN-5 & 6, Standar untuk yang lain)
+            // Toggle Tampilan Tab Availability
             const isSplitShiftUnit = ['TJN-5', 'TJN-6'].includes(currentUnit);
             const standardCard = document.getElementById('standardAvailabilityCard');
             const splitCard = document.getElementById('splitShiftAvailabilityCard');
@@ -1382,7 +1445,7 @@
         unitShiftStatus = val;
         try {
             await _supabase.from('app_store').upsert([{ key: `${currentUnit}_shift_status`, value: unitShiftStatus }]);
-            manpowerData = manpowerData.map(m => (!m.shift ? { ...m, shift: val } : m));
+            manpowerData = manpowerData.map(m => ({ ...m, shift: val }));
             renderTable();
         } catch (err) { console.error("Error simpan unit shift:", err); }
     }
@@ -1826,11 +1889,9 @@
             return idStr.startsWith('5') || idStr.startsWith('7');
         });
 
+        // Baca Shift Filter yang terletak di kolom kiri/rekapan
         const shiftFilterSelect = document.getElementById('allTjnShiftFilterSelect');
         const selectedShift = shiftFilterSelect ? shiftFilterSelect.value : 'ALL';
-
-        const shiftBadge = document.getElementById('allTjnShiftBadge');
-        if (shiftBadge) shiftBadge.innerText = selectedShift;
 
         const shiftFilteredMp = validPrefixMp.filter(m => {
             if (selectedShift === 'ALL') return true;

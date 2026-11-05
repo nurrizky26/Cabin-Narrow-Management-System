@@ -229,7 +229,7 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         thead th { position: sticky; top: 0; z-index: 10; text-align: left; background: #f8fafc; padding: 8px 12px; color: var(--text-muted); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; cursor: pointer; }
 
-        #tableBody td { padding: 2px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10.5px; height: 24px; line-height: 1; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        tbody td { padding: 2px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10.5px; height: 24px; line-height: 1; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .btn { padding: 4px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 10px; height: 28px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
@@ -294,6 +294,12 @@
             font-weight: 800; min-width: 55px; text-align: center; flex-shrink: 0; font-size: 9px;
         }
 
+        /* Shift Drop Zone Target Highlights */
+        .shift-table-card.drag-over {
+            border: 2px dashed var(--primary) !important;
+            background-color: rgba(67, 97, 238, 0.03);
+        }
+
         /* PPC Dashboard Custom Styles */
         #ppc-dashboard { overflow-y: auto; background-color: #f9fafb; }
         #ppc-dashboard.active { display: block; }
@@ -314,6 +320,34 @@
         }
         .btn-login { background: var(--success); color: white; }
         .btn-logout { background: var(--danger); color: white; }
+
+        /* Save Update Data Button in Footer */
+        .btn-save-update {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #ffffff;
+            border: 1px solid #34d399;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.45);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.6px;
+            padding: 5px 14px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+        }
+        .btn-save-update:hover {
+            background: linear-gradient(135deg, #047857, #059669);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.65);
+            transform: translateY(-1px);
+        }
+        .btn-save-update:active {
+            transform: scale(0.97);
+        }
     </style>
 </head>
 <body>
@@ -387,12 +421,11 @@
 
     <!-- TAB 1: AVAILABILITY -->
     <div id="distribution" class="sheet-content">
-        <div class="data-card">
-            <!-- Header Baris Atas Tab Availability -->
+        <!-- MODE 1: Tabel Standar untuk TJN 1-4 & ALL TJN -->
+        <div id="standardAvailabilityCard" class="data-card">
             <div class="header-action" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                 <div style="display:flex; align-items:center; gap: 12px;">
                     <h2 style="margin:0; font-size: 14px;">RESOURCE MANAGEMENT</h2>
-                    <!-- Fitur Status Shift Option Unit TJN 1-6 -->
                     <div id="unitShiftContainer" style="display:none; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px;">
                         <label style="font-size:9px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">UNIT SHIFT:</label>
                         <select id="unitShiftSelect" class="filter-select mp-cud-input" onchange="changeUnitShift(this.value)" style="height:24px; font-size:9.5px; font-weight:800; color:var(--primary); background:white; cursor:pointer;">
@@ -403,10 +436,8 @@
                 </div>
                 <div style="display:flex; gap: 6px; align-items: center;">
                     <input type="file" id="uploadMpFile" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
-
                     <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
                     <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="document.getElementById('uploadMpFile').click()">📤 UPLOAD MP</button>
-
                     <select id="statusFilter" class="filter-select" onchange="renderTable()">
                         <option value="ALL">ALL STATUS</option>
                         <option value="AVAILABLE">AVAILABLE</option>
@@ -419,18 +450,88 @@
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr id="availabilityTableHeader">
+                        <tr>
                             <th style="width:80px" onclick="sortTable('empNumber')">ID ↕</th>
                             <th onclick="sortTable('employee')">FULL NAME ↕</th>
                             <th onclick="sortTable('surname')">NICKNAME (POOL) ↕</th>
                             <th onclick="sortTable('role')">ROLE ↕</th>
                             <th style="width:130px" onclick="sortTable('status')">STATUS ↕</th>
-                            <th id="thShiftHeader" style="width:120px; display:none;" onclick="sortTable('shift')">SHIFT ↕</th>
                             <th style="width:60px; text-align:right" class="mp-cud-control"></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- MODE 2: Khusus TJN-5 & TJN-6 (Dua Tabel Atas & Bawah, Drag-and-Drop Shift) -->
+        <div id="splitShiftAvailabilityCard" style="display:none; flex:1; flex-direction:column; gap:10px; height:100%; overflow:hidden;">
+            <!-- Header Kontrol Bersama TJN-5 & 6 -->
+            <div class="data-card" style="padding:8px 12px; flex:0 0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h2 style="margin:0; font-size:13px; font-weight:800; color:var(--dark);">RESOURCE MANAGEMENT (DUAL SHIFT)</h2>
+                    <span style="font-size:9px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:800;">DRAG ROW TO MOVE SHIFT</span>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <input type="file" id="uploadMpFileSplit" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
+                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
+                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="document.getElementById('uploadMpFileSplit').click()">📤 UPLOAD MP</button>
+                    <select id="statusFilterSplit" class="filter-select" onchange="renderTable()">
+                        <option value="ALL">ALL STATUS</option>
+                        <option value="AVAILABLE">AVAILABLE</option>
+                        <option value="NOT_AVAILABLE">NOT AVAILABLE</option>
+                    </select>
+                    <input type="text" id="searchInputSplit" placeholder="SEARCH..." onkeyup="renderTable()" style="width: 120px; text-transform: uppercase;">
+                    <button class="btn btn-primary mp-cud-control" style="display:none;" onclick="openStaffModal()">+ ADD MP</button>
+                </div>
+            </div>
+
+            <!-- Tabel Atas: Morning Shift -->
+            <div class="data-card shift-table-card" style="flex:1; padding:10px; display:flex; flex-direction:column; overflow:hidden;"
+                 ondragover="handleShiftTableDragOver(event)" ondragleave="handleShiftTableDragLeave(event)" ondrop="handleShiftTableDrop(event, 'MORNING SHIFT')">
+                <div style="font-size:11px; font-weight:800; color:#0369a1; margin-bottom:6px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+                    <span>☀️ RESOURCE MANAGEMENT - MORNING SHIFT</span>
+                    <span id="morningCountBadge" style="font-size:9px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px;">0 Personel</span>
+                </div>
+                <div class="table-container" style="flex:1;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:80px" onclick="sortTable('empNumber')">ID ↕</th>
+                                <th onclick="sortTable('employee')">FULL NAME ↕</th>
+                                <th onclick="sortTable('surname')">NICKNAME (POOL) ↕</th>
+                                <th onclick="sortTable('role')">ROLE ↕</th>
+                                <th style="width:130px" onclick="sortTable('status')">STATUS ↕</th>
+                                <th style="width:60px; text-align:right" class="mp-cud-control"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyMorning"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabel Bawah: Late Shift -->
+            <div class="data-card shift-table-card" style="flex:1; padding:10px; display:flex; flex-direction:column; overflow:hidden;"
+                 ondragover="handleShiftTableDragOver(event)" ondragleave="handleShiftTableDragLeave(event)" ondrop="handleShiftTableDrop(event, 'LATE SHIFT')">
+                <div style="font-size:11px; font-weight:800; color:#b45309; margin-bottom:6px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🌙 RESOURCE MANAGEMENT - LATE SHIFT</span>
+                    <span id="lateCountBadge" style="font-size:9px; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px;">0 Personel</span>
+                </div>
+                <div class="table-container" style="flex:1;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:80px" onclick="sortTable('empNumber')">ID ↕</th>
+                                <th onclick="sortTable('employee')">FULL NAME ↕</th>
+                                <th onclick="sortTable('surname')">NICKNAME (POOL) ↕</th>
+                                <th onclick="sortTable('role')">ROLE ↕</th>
+                                <th style="width:130px" onclick="sortTable('status')">STATUS ↕</th>
+                                <th style="width:60px; text-align:right" class="mp-cud-control"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyLate"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -562,7 +663,6 @@
 
         <main class="container mx-auto px-6 py-8 pb-24">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
                 <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 overflow-x-auto flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center mb-6">
@@ -786,9 +886,16 @@
     </div>
 </div>
 
-<!-- Global Footer -->
-<div style="background-color: #fff; border-top: 1px solid #e2e8f0; text-align: center; padding: 6px; font-size: 11px; font-weight: 800; color: #8b0000; flex-shrink: 0; z-index: 10;">
-    Note: setelah melakukan perubahan pada page, segera lakukan refresh page untuk memastikan data sudah sesuai
+<!-- Global Footer with Prominent Save Update Data Button -->
+<div style="background-color: #fff; border-top: 1px solid #e2e8f0; padding: 6px 16px; font-size: 11px; font-weight: 800; color: #8b0000; flex-shrink: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; min-height: 40px;">
+    <div style="flex: 1; text-align: center;">
+        Note: setelah melakukan perubahan pada page, segera lakukan refresh page untuk memastikan data sudah sesuai
+    </div>
+    <div style="flex-shrink: 0; display: flex; align-items: center;">
+        <button type="button" id="btnSaveUpdateData" class="btn-save-update" onclick="triggerSaveUpdateData()" style="display: none;">
+            <span>💾</span> SAVE UPDATE DATA
+        </button>
+    </div>
 </div>
 
 <script>
@@ -901,6 +1008,12 @@
             }
         });
 
+        // Set draggable pada baris tabel shift TJN-5 & 6
+        document.querySelectorAll('.shift-row-drag').forEach(el => {
+            el.setAttribute('draggable', canEditMP ? 'true' : 'false');
+            el.style.cursor = canEditMP ? 'grab' : 'default';
+        });
+
         // PPC Dashboard (Tab 3)
         document.querySelectorAll('.ppc-cud-control').forEach(el => {
             el.style.display = canEditPPC ? '' : 'none';
@@ -916,6 +1029,8 @@
                 el.style.display = 'none';
             }
         });
+
+        updateSaveButtonVisibility();
     }
 
     updateAuthUI();
@@ -1097,6 +1212,89 @@
         } catch (err) { console.error("Error simpan data:", err); }
     }
 
+    // ==========================================
+    // FUNGSI SAVE UPDATE DATA LANGSUNG (TANPA RELOAD PAGE)
+    // ==========================================
+    function updateSaveButtonVisibility() {
+        const btn = document.getElementById('btnSaveUpdateData');
+        if (!btn) return;
+        const validUnits = ['TJN-1', 'TJN-2', 'TJN-3', 'TJN-4', 'TJN-5', 'TJN-6'];
+        const isDistroActive = document.getElementById('distribution').classList.contains('active');
+        const isScheduleActive = document.getElementById('schedule').classList.contains('active');
+
+        if (validUnits.includes(currentUnit) && (isDistroActive || isScheduleActive) && isMPAuthorized()) {
+            btn.style.display = 'inline-flex';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    async function triggerSaveUpdateData() {
+        if (!isMPAuthorized()) {
+            alert('Anda tidak memiliki otorisasi untuk menyimpan data unit ini.');
+            return;
+        }
+
+        const btn = document.getElementById('btnSaveUpdateData');
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.innerHTML = `<span>⏳</span> SAVING...`;
+            btn.style.opacity = '0.8';
+            btn.disabled = true;
+        }
+
+        try {
+            // Ambil data workload bila sedang berada di tab schedule
+            if (document.getElementById('workload_col1')) {
+                generalWorkload.col1 = document.getElementById('workload_col1').value.toUpperCase();
+                generalWorkload.col2 = document.getElementById('workload_col2').value.toUpperCase();
+                generalWorkload.col3 = document.getElementById('workload_col3').value.toUpperCase();
+            }
+            if (document.getElementById('nextload_col1')) {
+                nextWorkload.col1 = document.getElementById('nextload_col1').value.toUpperCase();
+                nextWorkload.col2 = document.getElementById('nextload_col2').value.toUpperCase();
+                nextWorkload.col3 = document.getElementById('nextload_col3').value.toUpperCase();
+            }
+
+            const updates = [
+                { key: `${currentUnit}_manpower_data`, value: manpowerData },
+                { key: `${currentUnit}_aircraft_regs`, value: aircraftRegs },
+                { key: `${currentUnit}_assignments`, value: assignments },
+                { key: `${currentUnit}_aircraft_phases`, value: aircraftPhases },
+                { key: `${currentUnit}_aircraft_lines`, value: aircraftLines },
+                { key: `${currentUnit}_general_workload`, value: generalWorkload },
+                { key: `${currentUnit}_next_workload`, value: nextWorkload },
+                { key: `${currentUnit}_shift_status`, value: unitShiftStatus }
+            ];
+
+            const { error } = await _supabase.from('app_store').upsert(updates);
+            if (error) throw error;
+
+            // Update UI secara in-place tanpa perlu me-reload halaman
+            if (document.getElementById('distribution').classList.contains('active')) renderTable();
+            if (document.getElementById('schedule').classList.contains('active')) renderDistro();
+
+            if (btn) {
+                btn.innerHTML = `<span>✅</span> DATA SAVED!`;
+                btn.style.background = 'linear-gradient(135deg, #047857, #10b981)';
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.style.background = '';
+                    btn.style.opacity = '1';
+                    btn.disabled = false;
+                }, 1800);
+            }
+        } catch (err) {
+            console.error("Gagal menyimpan update data:", err);
+            alert("Terjadi kendala saat menyimpan data ke server.");
+            if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.style.opacity = '1';
+                btn.disabled = false;
+            }
+        }
+    }
+
     async function loadData() {
         const overlay = document.getElementById('loadingOverlay');
         if(overlay) overlay.style.display = 'flex';
@@ -1157,17 +1355,31 @@
                     getStore(`${currentUnit}_shift_status`, "MORNING SHIFT")
                 ]);
 
-                // Pastikan jika individual staff belum ada properti shift, gunakan shift unit
+                // Pastikan setiap personel memiliki nilai shift default jika belum diset
                 manpowerData = manpowerData.map(m => ({ ...m, shift: m.shift || unitShiftStatus || 'MORNING SHIFT' }));
             }
 
             document.getElementById('globalUnitSelect').value = currentUnit;
 
-            // Update UI Shift Container di tab Availability
+            // Toggle Tampilan Tab Availability (Split Shift untuk TJN-5 & 6, Standar untuk yang lain)
+            const isSplitShiftUnit = ['TJN-5', 'TJN-6'].includes(currentUnit);
+            const standardCard = document.getElementById('standardAvailabilityCard');
+            const splitCard = document.getElementById('splitShiftAvailabilityCard');
             const unitShiftContainer = document.getElementById('unitShiftContainer');
             const unitShiftSelect = document.getElementById('unitShiftSelect');
+
+            if (standardCard && splitCard) {
+                if (isSplitShiftUnit) {
+                    standardCard.style.display = 'none';
+                    splitCard.style.display = 'flex';
+                } else {
+                    standardCard.style.display = 'flex';
+                    splitCard.style.display = 'none';
+                }
+            }
+
             if (unitShiftContainer && unitShiftSelect) {
-                if (currentUnit !== 'ALL TJN') {
+                if (currentUnit !== 'ALL TJN' && !isSplitShiftUnit) {
                     unitShiftContainer.style.display = 'flex';
                     unitShiftSelect.value = unitShiftStatus || 'MORNING SHIFT';
                 } else {
@@ -1195,7 +1407,6 @@
         unitShiftStatus = val;
         try {
             await _supabase.from('app_store').upsert([{ key: `${currentUnit}_shift_status`, value: unitShiftStatus }]);
-            // Update default shift personel unit ini jika belum diset secara individual
             manpowerData = manpowerData.map(m => (!m.shift ? { ...m, shift: val } : m));
             renderTable();
         } catch (err) { console.error("Error simpan unit shift:", err); }
@@ -1309,6 +1520,8 @@
         if(id === 'schedule') renderDistro();
         if(id === 'distribution') renderTable();
         if(id === 'ppc-dashboard') { if(planeChartInstance) planeChartInstance.resize(); }
+
+        updateSaveButtonVisibility();
     }
 
     function sortTable(col) {
@@ -1317,16 +1530,47 @@
         renderTable();
     }
 
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        if (!tbody) return;
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        const filter = document.getElementById('statusFilter').value;
+    function renderTableRowHtml(item) {
+        const idx = item.originalIdx;
+        const sur = item.surname ? item.surname : (item.employee.split(' ').length > 1 ? `${item.employee.split(' ')[0]} ${item.employee.split(' ').slice(-1)}` : item.employee);
+        const unitTag = item.unitSource ? `<span style="font-size:8px; padding:1px 4px; border-radius:3px; background:#e2e8f0; color:#334155; margin-left:4px; font-weight:800;">${item.unitSource}</span>` : '';
+        const canDrag = isMPAuthorized();
 
-        // Tampilkan header Kolom Shift hanya di TJN-5 dan TJN-6
-        const showShiftCol = ['TJN-5', 'TJN-6'].includes(currentUnit);
-        const thShift = document.getElementById('thShiftHeader');
-        if (thShift) thShift.style.display = showShiftCol ? '' : 'none';
+        return `
+            <tr class="shift-row-drag" draggable="${canDrag ? 'true' : 'false'}" ondragstart="handleShiftRowDragStart(event, '${item.empNumber}')" style="cursor:${canDrag ? 'grab' : 'default'}">
+                <td style="width:80px"><b>${item.empNumber}</b>${unitTag}</td>
+                <td>${item.employee}</td>
+                <td style="color:var(--primary); font-weight:700">${sur}</td>
+                <td style="color:var(--text-muted)">${item.role}</td>
+                <td style="width:130px">
+                    <select class="badge-select mp-cud-input" style="background:${statuses[item.status]?.color}; color:white" onchange="updateStatus(${idx}, this.value)">
+                        ${Object.keys(statuses).map(s => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
+                    </select>
+                </td>
+                <td style="text-align:right; width:60px" class="mp-cud-control">
+                    <button style="border:none; background:none; color:var(--primary); cursor:pointer; padding:0 4px; font-size:12px" onclick="openStaffModal(${idx})">✎</button>
+                    <button style="border:none; background:none; color:#ccc; cursor:pointer; padding:0 4px; font-size:12px" onclick="deleteStaff(${idx})">✕</button>
+                </td>
+            </tr>`;
+    }
+
+    function renderTable() {
+        const isSplit = ['TJN-5', 'TJN-6'].includes(currentUnit);
+
+        let search = '';
+        let filter = 'ALL';
+
+        if (isSplit) {
+            const searchEl = document.getElementById('searchInputSplit');
+            const filterEl = document.getElementById('statusFilterSplit');
+            search = searchEl ? searchEl.value.toLowerCase() : '';
+            filter = filterEl ? filterEl.value : 'ALL';
+        } else {
+            const searchEl = document.getElementById('searchInput');
+            const filterEl = document.getElementById('statusFilter');
+            search = searchEl ? searchEl.value.toLowerCase() : '';
+            filter = filterEl ? filterEl.value : 'ALL';
+        }
 
         let filtered = manpowerData.map((item, index) => ({...item, originalIdx: index})).filter(item => {
             const matchesSearch = item.employee.toLowerCase().includes(search) || item.empNumber.toLowerCase().includes(search);
@@ -1350,51 +1594,79 @@
             });
         }
 
-        tbody.innerHTML = '';
-        filtered.forEach((item) => {
-            const idx = item.originalIdx;
-            const sur = item.surname ? item.surname : (item.employee.split(' ').length > 1 ? `${item.employee.split(' ')[0]} ${item.employee.split(' ').slice(-1)}` : item.employee);
-            const unitTag = item.unitSource ? `<span style="font-size:8px; padding:1px 4px; border-radius:3px; background:#e2e8f0; color:#334155; margin-left:4px; font-weight:800;">${item.unitSource}</span>` : '';
-            
-            let shiftTd = '';
-            if (showShiftCol) {
-                const currentShift = item.shift || 'MORNING SHIFT';
-                shiftTd = `
-                    <td style="width:120px">
-                        <select class="badge-select mp-cud-input" style="background:#1e1e2d; color:white; font-size:8px;" onchange="updateStaffShift(${idx}, this.value)">
-                            <option value="MORNING SHIFT" ${currentShift === 'MORNING SHIFT' ? 'selected' : ''}>MORNING SHIFT</option>
-                            <option value="LATE SHIFT" ${currentShift === 'LATE SHIFT' ? 'selected' : ''}>LATE SHIFT</option>
-                        </select>
-                    </td>
-                `;
-            }
+        if (isSplit) {
+            const tbodyMorning = document.getElementById('tableBodyMorning');
+            const tbodyLate = document.getElementById('tableBodyLate');
+            const morningCountBadge = document.getElementById('morningCountBadge');
+            const lateCountBadge = document.getElementById('lateCountBadge');
 
-            tbody.insertAdjacentHTML('beforeend', `
-                <tr>
-                    <td style="width:80px"><b>${item.empNumber}</b>${unitTag}</td>
-                    <td>${item.employee}</td>
-                    <td style="color:var(--primary); font-weight:700">${sur}</td>
-                    <td style="color:var(--text-muted)">${item.role}</td>
-                    <td style="width:130px">
-                        <select class="badge-select mp-cud-input" style="background:${statuses[item.status]?.color}; color:white" onchange="updateStatus(${idx}, this.value)">
-                            ${Object.keys(statuses).map(s => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
-                        </select>
-                    </td>
-                    ${shiftTd}
-                    <td style="text-align:right; width:60px" class="mp-cud-control">
-                        <button style="border:none; background:none; color:var(--primary); cursor:pointer; padding:0 4px; font-size:12px" onclick="openStaffModal(${idx})">✎</button>
-                        <button style="border:none; background:none; color:#ccc; cursor:pointer; padding:0 4px; font-size:12px" onclick="deleteStaff(${idx})">✕</button>
-                    </td>
-                </tr>`);
-        });
+            let morningHtml = '';
+            let lateHtml = '';
+            let countM = 0;
+            let countL = 0;
+
+            filtered.forEach(item => {
+                const shift = item.shift || 'MORNING SHIFT';
+                if (shift === 'LATE SHIFT') {
+                    lateHtml += renderTableRowHtml(item);
+                    countL++;
+                } else {
+                    morningHtml += renderTableRowHtml(item);
+                    countM++;
+                }
+            });
+
+            if (tbodyMorning) tbodyMorning.innerHTML = morningHtml || '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:10px;">Tidak ada personel morning shift.</td></tr>';
+            if (tbodyLate) tbodyLate.innerHTML = lateHtml || '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:10px;">Tidak ada personel late shift.</td></tr>';
+
+            if (morningCountBadge) morningCountBadge.innerText = `${countM} Personel`;
+            if (lateCountBadge) lateCountBadge.innerText = `${countL} Personel`;
+        } else {
+            const tbody = document.getElementById('tableBody');
+            if (tbody) {
+                tbody.innerHTML = filtered.map(item => renderTableRowHtml(item)).join('');
+            }
+        }
+
         updateDashboard();
         applyPermissions();
     }
 
-    function updateStaffShift(idx, val) {
+    // ==========================================
+    // LOGIKA DRAG AND DROP SHIFT ANTAR TABEL (TJN-5 & 6)
+    // ==========================================
+    function handleShiftRowDragStart(e, empNumber) {
+        if (!isMPAuthorized()) { e.preventDefault(); return; }
+        e.dataTransfer.setData('text/plain', empNumber);
+        e.dataTransfer.setData('source_shift_row', empNumber);
+    }
+
+    function handleShiftTableDragOver(e) {
         if (!isMPAuthorized()) return;
-        manpowerData[idx].shift = val;
-        saveDataToDB();
+        e.preventDefault();
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleShiftTableDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleShiftTableDrop(e, targetShift) {
+        if (!isMPAuthorized()) return;
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+
+        const empNumber = e.dataTransfer.getData('source_shift_row') || e.dataTransfer.getData('text/plain');
+        if (!empNumber) return;
+
+        const staffIndex = manpowerData.findIndex(m => m.empNumber === empNumber);
+        if (staffIndex !== -1) {
+            if (manpowerData[staffIndex].shift !== targetShift) {
+                manpowerData[staffIndex].shift = targetShift;
+                saveDataToDB();
+                renderTable();
+            }
+        }
     }
 
     function updateDashboard() {
@@ -1499,7 +1771,8 @@
 
             if (jsonData.length < 2) {
                 alert("File kosong atau format salah. Pastikan menggunakan format Template.");
-                document.getElementById('uploadMpFile').value = '';
+                if (document.getElementById('uploadMpFile')) document.getElementById('uploadMpFile').value = '';
+                if (document.getElementById('uploadMpFileSplit')) document.getElementById('uploadMpFileSplit').value = '';
                 return;
             }
 
@@ -1530,7 +1803,8 @@
             saveDataToDB();
             renderTable();
             alert(`Berhasil mengunggah dan memproses ${added} data MP.`);
-            document.getElementById('uploadMpFile').value = ''; 
+            if (document.getElementById('uploadMpFile')) document.getElementById('uploadMpFile').value = '';
+            if (document.getElementById('uploadMpFileSplit')) document.getElementById('uploadMpFileSplit').value = '';
         };
         reader.readAsArrayBuffer(file);
     }

@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ManPower Pro & PPC Dashboard</title>
 
-    <!-- Libraries for ManPower Pro -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Libraries for PPC Dashboard -->
@@ -93,17 +91,6 @@
         .form-group { display: flex; flex-direction: column; gap: 5px; }
         .form-group.full { grid-column: span 2; }
         .form-group label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-
-        .summary-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: 8px; margin-bottom: 12px; flex-shrink: 0;
-        }
-        .summary-card {
-            background: white; padding: 8px 12px; border-radius: var(--border-radius);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03); border-left: 3px solid var(--primary);
-        }
-        .summary-card label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.3px; }
-        .summary-card span { font-size: 16px; font-weight: 800; display: block; margin-top: 1px; }
 
         .distro-layout { display: flex; gap: 10px; height: 100%; overflow: hidden; }
 
@@ -233,7 +220,6 @@
 
         .btn { padding: 4px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 10px; height: 28px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-excel { background: #107c41; color: white; display: flex; align-items: center; gap: 5px; }
 
         .filter-select, #searchInput { height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 10px; outline: none; }
 
@@ -389,8 +375,6 @@
 </nav>
 
 <div class="main-wrapper">
-    <div id="summaryContainer" class="summary-grid" style="display: none;"></div>
-
     <!-- TAB 0: HOME / DASHBOARD CABIN -->
     <div id="home-dashboard" class="sheet-content active">
         <div class="data-card" style="margin: 10px 15px; flex: 1; display: flex; flex-direction: column;">
@@ -435,9 +419,6 @@
                     </div>
                 </div>
                 <div style="display:flex; gap: 6px; align-items: center;">
-                    <input type="file" id="uploadMpFile" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
-                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
-                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="document.getElementById('uploadMpFile').click()">📤 UPLOAD MP</button>
                     <select id="statusFilter" class="filter-select" onchange="renderTable()">
                         <option value="ALL">ALL STATUS</option>
                         <option value="AVAILABLE">AVAILABLE</option>
@@ -473,9 +454,6 @@
                     <span style="font-size:9px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:800;">DRAG ROW TO MOVE SHIFT</span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center;">
-                    <input type="file" id="uploadMpFileSplit" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
-                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="downloadTemplate()">📥 TEMPLATE</button>
-                    <button class="btn btn-excel mp-cud-control" style="display:none;" onclick="document.getElementById('uploadMpFileSplit').click()">📤 UPLOAD MP</button>
                     <select id="statusFilterSplit" class="filter-select" onchange="renderTable()">
                         <option value="ALL">ALL STATUS</option>
                         <option value="AVAILABLE">AVAILABLE</option>
@@ -1168,7 +1146,7 @@
     }
 
     // ==========================================
-    // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT & EXCEL UPLOAD)
+    // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT)
     // ==========================================
     let currentUnit = localStorage.getItem('active_unit') || 'TJN-4';
     let manpowerData = [], aircraftRegs = [], assignments = {}, aircraftPhases = {}, aircraftLines = {}, generalWorkload = {}, nextWorkload = {};
@@ -1244,7 +1222,6 @@
         }
 
         try {
-            // Ambil data workload bila sedang berada di tab schedule
             if (document.getElementById('workload_col1')) {
                 generalWorkload.col1 = document.getElementById('workload_col1').value.toUpperCase();
                 generalWorkload.col2 = document.getElementById('workload_col2').value.toUpperCase();
@@ -1270,7 +1247,6 @@
             const { error } = await _supabase.from('app_store').upsert(updates);
             if (error) throw error;
 
-            // Update UI secara in-place tanpa perlu me-reload halaman
             if (document.getElementById('distribution').classList.contains('active')) renderTable();
             if (document.getElementById('schedule').classList.contains('active')) renderDistro();
 
@@ -1355,7 +1331,6 @@
                     getStore(`${currentUnit}_shift_status`, "MORNING SHIFT")
                 ]);
 
-                // Pastikan setiap personel memiliki nilai shift default jika belum diset
                 manpowerData = manpowerData.map(m => ({ ...m, shift: m.shift || unitShiftStatus || 'MORNING SHIFT' }));
             }
 
@@ -1514,8 +1489,6 @@
 
         const unitSel = document.getElementById('unitSelectorWrapper');
         if (unitSel) unitSel.style.display = (id === 'ppc-dashboard' || id === 'home-dashboard') ? 'none' : 'flex';
-        const summaryCont = document.getElementById('summaryContainer');
-        if (summaryCont) summaryCont.style.display = (id === 'distribution') ? 'grid' : 'none';
 
         if(id === 'schedule') renderDistro();
         if(id === 'distribution') renderTable();
@@ -1628,7 +1601,6 @@
             }
         }
 
-        updateDashboard();
         applyPermissions();
     }
 
@@ -1667,20 +1639,6 @@
                 renderTable();
             }
         }
-    }
-
-    function updateDashboard() {
-        const container = document.getElementById('summaryContainer');
-        if (!container) return;
-        const total = manpowerData.length;
-        const avail = manpowerData.filter(m => m.status === 'Available').length;
-        const notAvail = total - avail;
-
-        container.innerHTML = `
-            <div class="summary-card" style="border-left-color: var(--primary);"><label>TOTAL MP</label><span>${total}</span></div>
-            <div class="summary-card" style="border-left-color: var(--success);"><label>AVAILABLE</label><span style="color: var(--success);">${avail}</span></div>
-            <div class="summary-card" style="border-left-color: var(--danger);"><label>NOT AVAILABLE</label><span style="color: var(--danger);">${notAvail}</span></div>
-        `;
     }
 
     function openStaffModal(idx = -1) {
@@ -1742,71 +1700,6 @@
     function deleteStaff(idx) { 
         if (!isMPAuthorized()) return;
         if(confirm("Delete this MP?")) { manpowerData.splice(idx, 1); saveDataToDB(); renderTable(); } 
-    }
-
-    // ==========================================
-    // EXCEL UPLOAD & TEMPLATE LOGIC
-    // ==========================================
-    function downloadTemplate() {
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet([
-            ["ID", "NAME", "SURNAME", "ROLE", "STATUS", "SHIFT"],
-            ["123456", "JOHN DOE", "JOHN", "SENIOR AIRCRAFT CABIN TECHNICIAN", "Available", "MORNING SHIFT"]
-        ]);
-        XLSX.utils.book_append_sheet(wb, ws, "Template_MP");
-        XLSX.writeFile(wb, "Template_Upload_MP.xlsx");
-    }
-
-    function handleFileUpload(e) {
-        if (!isMPAuthorized()) return;
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            const data = new Uint8Array(evt.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
-
-            if (jsonData.length < 2) {
-                alert("File kosong atau format salah. Pastikan menggunakan format Template.");
-                if (document.getElementById('uploadMpFile')) document.getElementById('uploadMpFile').value = '';
-                if (document.getElementById('uploadMpFileSplit')) document.getElementById('uploadMpFileSplit').value = '';
-                return;
-            }
-
-            let added = 0;
-            for (let i = 1; i < jsonData.length; i++) {
-                const row = jsonData[i];
-                if (!row || row.length === 0 || !row[0]) continue; 
-
-                const empNumber = String(row[0]).trim().toUpperCase();
-                const employee = String(row[1] || "").trim().toUpperCase();
-                const surname = String(row[2] || "").trim().toUpperCase();
-                const role = String(row[3] || "TECHNICIAN ASSISTANCE").toUpperCase();
-                let rawStatus = String(row[4] || "Available").trim();
-                let rawShift = String(row[5] || unitShiftStatus || "MORNING SHIFT").trim().toUpperCase();
-                if (!['MORNING SHIFT', 'LATE SHIFT'].includes(rawShift)) rawShift = 'MORNING SHIFT';
-
-                const matchedStatus = Object.keys(statuses).find(s => s.toLowerCase() === rawStatus.toLowerCase()) || "Available";
-
-                const existingIdx = manpowerData.findIndex(m => m.empNumber === empNumber);
-                if (existingIdx > -1) {
-                    manpowerData[existingIdx] = { empNumber, employee, surname, role, status: matchedStatus, shift: rawShift, unitSource: manpowerData[existingIdx].unitSource || (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) };
-                } else {
-                    manpowerData.push({ empNumber, employee, surname, role, status: matchedStatus, shift: rawShift, unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) });
-                }
-                added++;
-            }
-
-            saveDataToDB();
-            renderTable();
-            alert(`Berhasil mengunggah dan memproses ${added} data MP.`);
-            if (document.getElementById('uploadMpFile')) document.getElementById('uploadMpFile').value = '';
-            if (document.getElementById('uploadMpFileSplit')) document.getElementById('uploadMpFileSplit').value = '';
-        };
-        reader.readAsArrayBuffer(file);
     }
 
     function renderDistro() {
@@ -1928,21 +1821,17 @@
     }
 
     function renderAllTjnDistributionPanel() {
-        // 1. Filter awal: HANYA menampilkan ref ID berawalan angka 5 dan 7 saja
         const validPrefixMp = manpowerData.filter(m => {
             const idStr = String(m.empNumber || "").trim();
             return idStr.startsWith('5') || idStr.startsWith('7');
         });
 
-        // 2. Baca Filter Shift terpilih di ALL TJN
         const shiftFilterSelect = document.getElementById('allTjnShiftFilterSelect');
         const selectedShift = shiftFilterSelect ? shiftFilterSelect.value : 'ALL';
 
-        // Update badge shift di atas kartu rekapan
         const shiftBadge = document.getElementById('allTjnShiftBadge');
         if (shiftBadge) shiftBadge.innerText = selectedShift;
 
-        // 3. Terapkan Filter Shift pada dataset Rekapan & Detail
         const shiftFilteredMp = validPrefixMp.filter(m => {
             if (selectedShift === 'ALL') return true;
             return (m.shift || 'MORNING SHIFT').toUpperCase() === selectedShift;
@@ -1990,7 +1879,6 @@
             </div>
         `).join('');
 
-        // 4. Filter status (ALL, AVAILABLE, NOT AVAILABLE) & Text Search Nama / ID
         const filterSelect = document.getElementById('allTjnFilterSelect');
         const filterVal = filterSelect ? filterSelect.value : 'ALL';
         const searchInput = document.getElementById('searchInputAllTjn');

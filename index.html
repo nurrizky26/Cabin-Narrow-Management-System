@@ -450,22 +450,33 @@
             <div id="allTjnRightPanel" style="display:none; flex:1; gap:12px; height:100%; overflow:hidden;">
                 <!-- Kolom Kiri: REKAPAN MANPOWER (ALL TJN) -->
                 <div class="data-card" style="width: 320px; min-width: 300px; max-width: 350px; padding: 12px; display: flex; flex-direction: column; overflow-y: auto;">
-                    <div style="font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px;">
-                        📊 REKAPAN MANPOWER (ALL TJN)
+                    <div style="font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>📊 REKAPAN MANPOWER</span>
+                        <span id="allTjnShiftBadge" style="font-size: 8px; background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 800;">ALL SHIFT</span>
                     </div>
                     <div id="allTjnSummaryGrid" style="display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
 
-                <!-- Kolom Kanan: DETAIL NAMA & STATUS (Filter by Avail / Not Avail & Text Search) -->
+                <!-- Kolom Kanan: DETAIL NAMA & STATUS (Filter by Shift, Status & Text Search) -->
                 <div class="data-card" style="flex: 1; padding: 12px; display: flex; flex-direction: column; overflow: hidden;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                         <div style="font-size: 11px; font-weight: 800; color: var(--dark); text-transform: uppercase;">
                             📋 DETAIL NAMA & STATUS
                             <span id="allTjnDetailCount" style="font-size: 9px; color: var(--text-muted); font-weight: normal; margin-left: 6px;"></span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <input type="text" id="searchInputAllTjn" placeholder="SEARCH NAMA / ID..." onkeyup="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 8px; border-radius: 4px; border: 1px solid #e2e8f0; width: 140px; text-transform: uppercase; outline:none;">
-                            <label style="font-size: 9px; font-weight: 700; color: var(--text-muted);">FILTER:</label>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <input type="text" id="searchInputAllTjn" placeholder="SEARCH NAMA / ID..." onkeyup="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 8px; border-radius: 4px; border: 1px solid #e2e8f0; width: 130px; text-transform: uppercase; outline:none;">
+                            
+                            <!-- Filter Shift Option ALL TJN -->
+                            <label style="font-size: 9px; font-weight: 700; color: var(--text-muted);">SHIFT:</label>
+                            <select id="allTjnShiftFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 6px; font-weight: 700; color: var(--primary);">
+                                <option value="ALL">ALL SHIFT</option>
+                                <option value="MORNING SHIFT">MORNING SHIFT</option>
+                                <option value="LATE SHIFT">LATE SHIFT</option>
+                            </select>
+
+                            <!-- Filter Status ALL TJN -->
+                            <label style="font-size: 9px; font-weight: 700; color: var(--text-muted);">STATUS:</label>
                             <select id="allTjnFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 6px;">
                                 <option value="ALL">ALL STATUS</option>
                                 <option value="AVAILABLE">AVAILABLE</option>
@@ -481,6 +492,7 @@
                                     <th style="width:80px">ID</th>
                                     <th>NAMA</th>
                                     <th style="width:130px">ROLE</th>
+                                    <th style="width:110px">SHIFT</th>
                                     <th style="width:130px">STATUS</th>
                                 </tr>
                             </thead>
@@ -1095,11 +1107,13 @@
                 const allMpPromises = units.map(u => getStore(`${u}_manpower_data`, []));
                 const allRegsPromises = units.map(u => getStore(`${u}_aircraft_regs`, []));
                 const allAssignPromises = units.map(u => getStore(`${u}_assignments`, {}));
+                const allShiftPromises = units.map(u => getStore(`${u}_shift_status`, "MORNING SHIFT"));
 
-                const [allMpRes, allRegsRes, allAssignRes] = await Promise.all([
+                const [allMpRes, allRegsRes, allAssignRes, allShiftsRes] = await Promise.all([
                     Promise.all(allMpPromises),
                     Promise.all(allRegsPromises),
-                    Promise.all(allAssignPromises)
+                    Promise.all(allAssignPromises),
+                    Promise.all(allShiftPromises)
                 ]);
 
                 let aggregatedMp = [];
@@ -1107,7 +1121,12 @@
                 let aggregatedAssign = {};
 
                 units.forEach((u, i) => {
-                    const list = (allMpRes[i] || []).map(item => ({ ...item, unitSource: u }));
+                    const unitDefaultShift = allShiftsRes[i] || 'MORNING SHIFT';
+                    const list = (allMpRes[i] || []).map(item => ({ 
+                        ...item, 
+                        unitSource: u,
+                        shift: item.shift || unitDefaultShift
+                    }));
                     aggregatedMp = aggregatedMp.concat(list);
 
                     const regs = allRegsRes[i] || [];
@@ -1137,6 +1156,9 @@
                     getStore(`${currentUnit}_next_workload`, { col1: "", col2: "", col3: "" }),
                     getStore(`${currentUnit}_shift_status`, "MORNING SHIFT")
                 ]);
+
+                // Pastikan jika individual staff belum ada properti shift, gunakan shift unit
+                manpowerData = manpowerData.map(m => ({ ...m, shift: m.shift || unitShiftStatus || 'MORNING SHIFT' }));
             }
 
             document.getElementById('globalUnitSelect').value = currentUnit;
@@ -1173,6 +1195,9 @@
         unitShiftStatus = val;
         try {
             await _supabase.from('app_store').upsert([{ key: `${currentUnit}_shift_status`, value: unitShiftStatus }]);
+            // Update default shift personel unit ini jika belum diset secara individual
+            manpowerData = manpowerData.map(m => (!m.shift ? { ...m, shift: val } : m));
+            renderTable();
         } catch (err) { console.error("Error simpan unit shift:", err); }
     }
 
@@ -1421,7 +1446,7 @@
         const surname = document.getElementById('surname').value.trim().toUpperCase();
         const role = document.getElementById('role').value;
         const showShift = ['TJN-5', 'TJN-6'].includes(currentUnit);
-        const shift = showShift && document.getElementById('staffShift') ? document.getElementById('staffShift').value : undefined;
+        const shift = showShift && document.getElementById('staffShift') ? document.getElementById('staffShift').value : (unitShiftStatus || 'MORNING SHIFT');
         const editIdx = parseInt(document.getElementById('editIndex').value);
 
         if(empNumber && employee) {
@@ -1429,8 +1454,7 @@
                 manpowerData[editIdx] = {...manpowerData[editIdx], empNumber, employee, surname, role};
                 if (showShift) manpowerData[editIdx].shift = shift;
             } else {
-                const newStaff = { empNumber, employee, surname, role, status: "Available", unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) };
-                if (showShift) newStaff.shift = shift || 'MORNING SHIFT';
+                const newStaff = { empNumber, employee, surname, role, status: "Available", unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit), shift: shift || 'MORNING SHIFT' };
                 manpowerData.push(newStaff);
             }
             saveDataToDB(); closeStaffModal(); renderTable();
@@ -1454,8 +1478,8 @@
     function downloadTemplate() {
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet([
-            ["ID", "NAME", "SURNAME", "ROLE", "STATUS"],
-            ["123456", "JOHN DOE", "JOHN", "SENIOR AIRCRAFT CABIN TECHNICIAN", "Available"]
+            ["ID", "NAME", "SURNAME", "ROLE", "STATUS", "SHIFT"],
+            ["123456", "JOHN DOE", "JOHN", "SENIOR AIRCRAFT CABIN TECHNICIAN", "Available", "MORNING SHIFT"]
         ]);
         XLSX.utils.book_append_sheet(wb, ws, "Template_MP");
         XLSX.writeFile(wb, "Template_Upload_MP.xlsx");
@@ -1489,14 +1513,16 @@
                 const surname = String(row[2] || "").trim().toUpperCase();
                 const role = String(row[3] || "TECHNICIAN ASSISTANCE").toUpperCase();
                 let rawStatus = String(row[4] || "Available").trim();
+                let rawShift = String(row[5] || unitShiftStatus || "MORNING SHIFT").trim().toUpperCase();
+                if (!['MORNING SHIFT', 'LATE SHIFT'].includes(rawShift)) rawShift = 'MORNING SHIFT';
 
                 const matchedStatus = Object.keys(statuses).find(s => s.toLowerCase() === rawStatus.toLowerCase()) || "Available";
 
                 const existingIdx = manpowerData.findIndex(m => m.empNumber === empNumber);
                 if (existingIdx > -1) {
-                    manpowerData[existingIdx] = { empNumber, employee, surname, role, status: matchedStatus, unitSource: manpowerData[existingIdx].unitSource || (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) };
+                    manpowerData[existingIdx] = { empNumber, employee, surname, role, status: matchedStatus, shift: rawShift, unitSource: manpowerData[existingIdx].unitSource || (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) };
                 } else {
-                    manpowerData.push({ empNumber, employee, surname, role, status: matchedStatus, unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) });
+                    manpowerData.push({ empNumber, employee, surname, role, status: matchedStatus, shift: rawShift, unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) });
                 }
                 added++;
             }
@@ -1628,13 +1654,27 @@
     }
 
     function renderAllTjnDistributionPanel() {
-        // Filter awal: HANYA menampilkan ref ID berawalan angka 5 dan 7 saja
+        // 1. Filter awal: HANYA menampilkan ref ID berawalan angka 5 dan 7 saja
         const validPrefixMp = manpowerData.filter(m => {
             const idStr = String(m.empNumber || "").trim();
             return idStr.startsWith('5') || idStr.startsWith('7');
         });
 
-        const total = validPrefixMp.length;
+        // 2. Baca Filter Shift terpilih di ALL TJN
+        const shiftFilterSelect = document.getElementById('allTjnShiftFilterSelect');
+        const selectedShift = shiftFilterSelect ? shiftFilterSelect.value : 'ALL';
+
+        // Update badge shift di atas kartu rekapan
+        const shiftBadge = document.getElementById('allTjnShiftBadge');
+        if (shiftBadge) shiftBadge.innerText = selectedShift;
+
+        // 3. Terapkan Filter Shift pada dataset Rekapan & Detail
+        const shiftFilteredMp = validPrefixMp.filter(m => {
+            if (selectedShift === 'ALL') return true;
+            return (m.shift || 'MORNING SHIFT').toUpperCase() === selectedShift;
+        });
+
+        const total = shiftFilteredMp.length;
         const countByStatus = {
             "Available": 0,
             "Annual Leave": 0,
@@ -1646,7 +1686,7 @@
             "TANPA KETERANGAN": 0
         };
 
-        validPrefixMp.forEach(m => {
+        shiftFilteredMp.forEach(m => {
             const st = m.status || 'Available';
             if (countByStatus[st] !== undefined) countByStatus[st]++;
             else countByStatus["TANPA KETERANGAN"]++;
@@ -1676,13 +1716,13 @@
             </div>
         `).join('');
 
-        // Filter status (ALL, AVAILABLE, NOT AVAILABLE) & Text Search Nama / ID
+        // 4. Filter status (ALL, AVAILABLE, NOT AVAILABLE) & Text Search Nama / ID
         const filterSelect = document.getElementById('allTjnFilterSelect');
         const filterVal = filterSelect ? filterSelect.value : 'ALL';
         const searchInput = document.getElementById('searchInputAllTjn');
         const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-        let filteredMp = validPrefixMp.filter(m => {
+        let filteredMp = shiftFilteredMp.filter(m => {
             const matchesStatus = filterVal === 'ALL' || (filterVal === 'AVAILABLE' ? m.status === 'Available' : m.status !== 'Available');
             const matchesSearch = !searchVal || 
                 (m.employee && m.employee.toLowerCase().includes(searchVal)) || 
@@ -1704,12 +1744,20 @@
 
         detailBody.innerHTML = sorted.map(m => {
             const sc = statuses[m.status]?.color || "#718096";
+            const shiftText = m.shift || 'MORNING SHIFT';
+            const shiftBadgeColor = shiftText === 'MORNING SHIFT' ? 'background:#e0f2fe; color:#0369a1;' : 'background:#fef3c7; color:#b45309;';
+
             return `
                 <tr>
                     <td style="font-weight:800; color:var(--primary);">${m.unitSource || '-'}</td>
                     <td><b>${m.empNumber}</b></td>
                     <td>${m.employee}</td>
                     <td style="color:var(--text-muted);">${m.role || '-'}</td>
+                    <td>
+                        <span style="display:inline-block; padding:1px 6px; border-radius:4px; font-size:8px; font-weight:800; ${shiftBadgeColor}">
+                            ${shiftText}
+                        </span>
+                    </td>
                     <td>
                         <span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:8.5px; font-weight:800; background:${sc}; color:white;">
                             ${(m.status || 'AVAILABLE').toUpperCase()}

@@ -327,6 +327,7 @@
         <div id="unitSelectorWrapper" style="display: none; align-items: center; gap: 8px;">
             <label style="color: #a2a3b7; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">UNIT</label>
             <select id="globalUnitSelect" onchange="changeUnit(this.value)" style="background: #ff9f1c; color: #1e1e2d; border: 2px solid white; padding: 6px 14px; border-radius: 6px; font-weight: 900; outline: none; font-size: 13px; cursor: pointer; box-shadow: 0 0 10px rgba(255,159,28,0.5);">
+                <option value="ALL TJN">ALL TJN</option>
                 <option value="TJN-1">TJN-1</option>
                 <option value="TJN-2">TJN-2</option>
                 <option value="TJN-3">TJN-3</option>
@@ -433,7 +434,38 @@
                 <div class="pool-summary" id="poolAvailabilitySummary"></div>
             </div>
 
-            <div class="distribution-content">
+            <!-- Panel Khusus ALL TJN: Kolom Ringkasan & Detail di Sebelah Kanan MP POOL -->
+            <div id="allTjnRightPanel" style="display:none; flex:1; flex-direction:column; gap:10px; overflow:hidden;">
+                <!-- Ringkasan Status -->
+                <div class="data-card" style="padding:10px; flex-shrink:0;">
+                    <div style="font-size:10px; font-weight:800; color:var(--primary); margin-bottom:6px; text-transform:uppercase;">REKAPAN MANPOWER (ALL TJN)</div>
+                    <div id="allTjnSummaryGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:6px;"></div>
+                </div>
+                <!-- Detail Nama & Status -->
+                <div class="data-card" style="padding:10px; flex:1; overflow:hidden;">
+                    <div style="font-size:10px; font-weight:800; color:var(--dark); margin-bottom:6px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+                        <span>DETAIL NAMA & STATUS</span>
+                        <span id="allTjnDetailCount" style="font-size:9px; color:var(--text-muted);"></span>
+                    </div>
+                    <div class="table-container" style="flex:1;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:70px">UNIT</th>
+                                    <th style="width:80px">ID</th>
+                                    <th>NAMA</th>
+                                    <th style="width:130px">ROLE</th>
+                                    <th style="width:130px">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allTjnDetailBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Default: Aircraft Grid + Workload -->
+            <div class="distribution-content" id="standardDistroContent">
                 <div class="aircraft-grid" id="aircraftGrid"></div>
                 <div class="workload-column">
                     <div class="workload-header" id="workloadHeader" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 15px; background: var(--primary); transition: background 0.2s ease;">
@@ -733,6 +765,7 @@
     };
 
     function isMPAuthorized() {
+        if (currentUnit === 'ALL TJN') return false; // ALL TJN bersifat gabungan/agregasi view-only
         return currentUserRole === 'admin' || (currentUserRole === 'manager' && currentUnit === managerUnit);
     }
 
@@ -853,12 +886,12 @@
     // ==========================================
     // SCRIPTS FOR HOME DASHBOARD TAB
     // ==========================================
-    let homeData = []; // Diganti menjadi Array untuk list info
+    let homeData = [];
 
     async function loadHomeData() {
         try {
             homeData = await getStore('home_dashboard_data', []);
-            if(!Array.isArray(homeData)) homeData = []; // Fallback jika data sebelumnya (JSON object lama) terbaca
+            if(!Array.isArray(homeData)) homeData = [];
             renderHomeData();
         } catch (err) { console.error("Load Home err:", err); }
     }
@@ -899,7 +932,6 @@
             container.appendChild(div);
         });
 
-        // Auto select item pertama
         setMainInfo(0);
         applyPermissions();
     }
@@ -1014,15 +1046,53 @@
         if(overlay) overlay.style.display = 'flex';
 
         try {
-            [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload, nextWorkload] = await Promise.all([
-                getStore(`${currentUnit}_manpower_data`, []),
-                getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
-                getStore(`${currentUnit}_assignments`, {}),
-                getStore(`${currentUnit}_aircraft_phases`, {}),
-                getStore(`${currentUnit}_aircraft_lines`, {}),
-                getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" }),
-                getStore(`${currentUnit}_next_workload`, { col1: "", col2: "", col3: "" })
-            ]);
+            if (currentUnit === 'ALL TJN') {
+                const units = ['TJN-1', 'TJN-2', 'TJN-3', 'TJN-4', 'TJN-5', 'TJN-6'];
+                const allMpPromises = units.map(u => getStore(`${u}_manpower_data`, []));
+                const allRegsPromises = units.map(u => getStore(`${u}_aircraft_regs`, []));
+                const allAssignPromises = units.map(u => getStore(`${u}_assignments`, {}));
+
+                const [allMpRes, allRegsRes, allAssignRes] = await Promise.all([
+                    Promise.all(allMpPromises),
+                    Promise.all(allRegsPromises),
+                    Promise.all(allAssignPromises)
+                ]);
+
+                let aggregatedMp = [];
+                let aggregatedRegs = [];
+                let aggregatedAssign = {};
+
+                units.forEach((u, i) => {
+                    const list = (allMpRes[i] || []).map(item => ({ ...item, unitSource: u }));
+                    aggregatedMp = aggregatedMp.concat(list);
+
+                    const regs = allRegsRes[i] || [];
+                    regs.forEach(r => { if (!aggregatedRegs.includes(r)) aggregatedRegs.push(r); });
+
+                    const assigns = allAssignRes[i] || {};
+                    Object.keys(assigns).forEach(r => {
+                        aggregatedAssign[r] = (aggregatedAssign[r] || []).concat(assigns[r] || []);
+                    });
+                });
+
+                manpowerData = aggregatedMp;
+                aircraftRegs = aggregatedRegs;
+                assignments = aggregatedAssign;
+                aircraftPhases = {};
+                aircraftLines = {};
+                generalWorkload = { col1: "", col2: "", col3: "" };
+                nextWorkload = { col1: "", col2: "", col3: "" };
+            } else {
+                [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload, nextWorkload] = await Promise.all([
+                    getStore(`${currentUnit}_manpower_data`, []),
+                    getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
+                    getStore(`${currentUnit}_assignments`, {}),
+                    getStore(`${currentUnit}_aircraft_phases`, {}),
+                    getStore(`${currentUnit}_aircraft_lines`, {}),
+                    getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" }),
+                    getStore(`${currentUnit}_next_workload`, { col1: "", col2: "", col3: "" })
+                ]);
+            }
 
             document.getElementById('globalUnitSelect').value = currentUnit;
 
@@ -1189,9 +1259,10 @@
         filtered.forEach((item) => {
             const idx = item.originalIdx;
             const sur = item.surname ? item.surname : (item.employee.split(' ').length > 1 ? `${item.employee.split(' ')[0]} ${item.employee.split(' ').slice(-1)}` : item.employee);
+            const unitTag = item.unitSource ? `<span style="font-size:8px; padding:1px 4px; border-radius:3px; background:#e2e8f0; color:#334155; margin-left:4px; font-weight:800;">${item.unitSource}</span>` : '';
             tbody.insertAdjacentHTML('beforeend', `
                 <tr>
-                    <td style="width:80px"><b>${item.empNumber}</b></td>
+                    <td style="width:80px"><b>${item.empNumber}</b>${unitTag}</td>
                     <td>${item.employee}</td>
                     <td style="color:var(--primary); font-weight:700">${sur}</td>
                     <td style="color:var(--text-muted)">${item.role}</td>
@@ -1208,6 +1279,20 @@
         });
         updateDashboard();
         applyPermissions();
+    }
+
+    function updateDashboard() {
+        const container = document.getElementById('summaryContainer');
+        if (!container) return;
+        const total = manpowerData.length;
+        const avail = manpowerData.filter(m => m.status === 'Available').length;
+        const notAvail = total - avail;
+
+        container.innerHTML = `
+            <div class="summary-card" style="border-left-color: var(--primary);"><label>TOTAL MP</label><span>${total}</span></div>
+            <div class="summary-card" style="border-left-color: var(--success);"><label>AVAILABLE</label><span style="color: var(--success);">${avail}</span></div>
+            <div class="summary-card" style="border-left-color: var(--danger);"><label>NOT AVAILABLE</label><span style="color: var(--danger);">${notAvail}</span></div>
+        `;
     }
 
     function openStaffModal(idx = -1) {
@@ -1317,6 +1402,25 @@
         const assignedIds = Object.values(assignments).flat();
         let availCount = 0, notAvailCount = 0;
 
+        const standardDistro = document.getElementById('standardDistroContent');
+        const allTjnRight = document.getElementById('allTjnRightPanel');
+
+        // Handling khusus tampilan ALL TJN
+        if (currentUnit === 'ALL TJN') {
+            if (standardDistro) standardDistro.style.display = 'none';
+            if (allTjnRight) allTjnRight.style.display = 'flex';
+            document.getElementById('poolSidebar').style.width = '240px';
+            document.getElementById('poolSidebar').style.minWidth = '240px';
+            document.getElementById('poolAvailabilitySummary').style.display = 'none'; // Dipindah ke panel kanan
+            renderAllTjnDistributionPanel();
+        } else {
+            if (standardDistro) standardDistro.style.display = 'flex';
+            if (allTjnRight) allTjnRight.style.display = 'none';
+            document.getElementById('poolSidebar').style.width = '120px';
+            document.getElementById('poolSidebar').style.minWidth = '120px';
+            document.getElementById('poolAvailabilitySummary').style.display = 'flex';
+        }
+
         document.getElementById('workload_col1').value = generalWorkload.col1 || "";
         document.getElementById('workload_col2').value = generalWorkload.col2 || "";
         document.getElementById('workload_col3').value = generalWorkload.col3 || "";
@@ -1340,15 +1444,16 @@
             const dName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
             const sc = statuses[m.status]?.color || "#ccc";
             const sl = m.status.toUpperCase();
+            const unitBadge = m.unitSource ? `<span style="font-size:7px; background:#edf2f7; color:#475569; padding:1px 3px; border-radius:3px; margin-left:auto; font-weight:800;">${m.unitSource}</span>` : '';
 
             if (m.status === "Available") {
                 availCount++; 
                 if (!isAssigned) {
-                    poolHtml += `<div class="drag-item" ondragstart="dragMP(event, '${m.empNumber}', 'pool')"><span class="name">${dName}</span><div class="status-info"><span class="status-dot" style="background:${sc}"></span>AVAILABLE</div></div>`;
+                    poolHtml += `<div class="drag-item" ondragstart="dragMP(event, '${m.empNumber}', 'pool')"><div style="display:flex; align-items:center;"><span class="name">${dName}</span>${unitBadge}</div><div class="status-info"><span class="status-dot" style="background:${sc}"></span>AVAILABLE</div></div>`;
                 }
             } else {
                 notAvailCount++; 
-                poolHtml += `<div class="drag-item not-avail"><span class="name">${dName}</span><div class="status-info"><span class="status-dot" style="background:${sc}"></span>${sl}</div></div>`;
+                poolHtml += `<div class="drag-item not-avail"><div style="display:flex; align-items:center;"><span class="name">${dName}</span>${unitBadge}</div><div class="status-info"><span class="status-dot" style="background:${sc}"></span>${sl}</div></div>`;
             }
         });
         pool.innerHTML = poolHtml;
@@ -1359,50 +1464,125 @@
             <div class="summary-mini-item bg-not-avail"><span>NOT AVAIL</span><span>${notAvailCount}</span></div>
         `;
 
-        grid.innerHTML = '';
-        aircraftRegs.forEach((reg) => {
-            let lineOptions = '<option value="">L?</option>';
-            for(let i=1; i<=15; i++) {
-                lineOptions += `<option value="L${i}" ${aircraftLines[reg] === `L${i}` ? 'selected' : ''}>L${i}</option>`;
-            }
+        if (currentUnit !== 'ALL TJN') {
+            grid.innerHTML = '';
+            aircraftRegs.forEach((reg) => {
+                let lineOptions = '<option value="">L?</option>';
+                for(let i=1; i<=15; i++) {
+                    lineOptions += `<option value="L${i}" ${aircraftLines[reg] === `L${i}` ? 'selected' : ''}>L${i}</option>`;
+                }
 
-            const card = document.createElement('div');
-            card.className = 'aircraft-card';
-            card.dataset.reg = reg;
-            card.addEventListener('dragover', handleAcDragOver);
-            card.addEventListener('dragleave', handleAcDragLeave);
-            card.addEventListener('drop', handleAcDrop);
+                const card = document.createElement('div');
+                card.className = 'aircraft-card';
+                card.dataset.reg = reg;
+                card.addEventListener('dragover', handleAcDragOver);
+                card.addEventListener('dragleave', handleAcDragLeave);
+                card.addEventListener('drop', handleAcDrop);
 
-            card.innerHTML = `
-                <div class="ac-actions mp-cud-control">
-                    <button class="ac-btn edit" onclick="editAcReg('${reg}')">✎</button>
-                    <button class="ac-btn del" onclick="deleteAcDistro('${reg}')">✕</button>
-                </div>
-                <div class="ac-card-header">
-                    <div class="ac-header-top">
-                        <span class="reg-badge cursor-grab" draggable="true" ondragstart="handleAcDragStart(event, '${reg}')" ondragend="handleAcDragEnd(event)">${reg} ↕</span>
-                        <select class="line-mini-select mp-cud-input" onchange="directUpdateLine('${reg}', this.value)">${lineOptions}</select>
+                card.innerHTML = `
+                    <div class="ac-actions mp-cud-control">
+                        <button class="ac-btn edit" onclick="editAcReg('${reg}')">✎</button>
+                        <button class="ac-btn del" onclick="deleteAcDistro('${reg}')">✕</button>
                     </div>
-                    <input type="text" class="phase-input mp-cud-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="Maint. Type">
-                </div>
-                <div class="assignment-slots" ondragover="allowDrop(event)" ondrop="handleMPDrop(event, '${reg}')">
-                    ${(assignments[reg] || []).map(id => {
-                        const m = manpowerData.find(p => p.empNumber === id);
-                        if(!m) return '';
-                        const dName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
-                        return `<div class="drag-item" ondragstart="dragMP(event, '${m.empNumber}', '${reg}')"><span class="name">${dName}</span></div>`;
-                    }).join('')}
-                </div>
-            `;
-            grid.appendChild(card);
-        });
+                    <div class="ac-card-header">
+                        <div class="ac-header-top">
+                            <span class="reg-badge cursor-grab" draggable="true" ondragstart="handleAcDragStart(event, '${reg}')" ondragend="handleAcDragEnd(event)">${reg} ↕</span>
+                            <select class="line-mini-select mp-cud-input" onchange="directUpdateLine('${reg}', this.value)">${lineOptions}</select>
+                        </div>
+                        <input type="text" class="phase-input mp-cud-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="Maint. Type">
+                    </div>
+                    <div class="assignment-slots" ondragover="allowDrop(event)" ondrop="handleMPDrop(event, '${reg}')">
+                        ${(assignments[reg] || []).map(id => {
+                            const m = manpowerData.find(p => p.empNumber === id);
+                            if(!m) return '';
+                            const dName = m.surname ? m.surname : (m.employee.split(' ').length > 1 ? `${m.employee.split(' ')[0]} ${m.employee.split(' ').slice(-1)}` : m.employee);
+                            return `<div class="drag-item" ondragstart="dragMP(event, '${m.empNumber}', '${reg}')"><span class="name">${dName}</span></div>`;
+                        }).join('')}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
 
-        const addBtn = document.createElement('div');
-        addBtn.className = 'add-aircraft-btn mp-cud-control';
-        addBtn.innerText = '+'; addBtn.onclick = addNewAcDistro;
-        grid.appendChild(addBtn);
+            const addBtn = document.createElement('div');
+            addBtn.className = 'add-aircraft-btn mp-cud-control';
+            addBtn.innerText = '+'; addBtn.onclick = addNewAcDistro;
+            grid.appendChild(addBtn);
+        }
 
         applyPermissions();
+    }
+
+    function renderAllTjnDistributionPanel() {
+        const total = manpowerData.length;
+        const countByStatus = {
+            "Available": 0,
+            "Annual Leave": 0,
+            "Change Shift": 0,
+            "Sick Leave": 0,
+            "Training": 0,
+            "Extra Leave/Special Leave": 0,
+            "OFF": 0,
+            "TANPA KETERANGAN": 0
+        };
+
+        manpowerData.forEach(m => {
+            const st = m.status || 'Available';
+            if (countByStatus[st] !== undefined) countByStatus[st]++;
+            else countByStatus["TANPA KETERANGAN"]++;
+        });
+
+        const avail = countByStatus["Available"] || 0;
+        const notAvail = total - avail;
+
+        const statConfig = [
+            { label: 'TOTAL EMPLOYEE', val: total, color: 'var(--primary)' },
+            { label: 'EMPLOYEE AVAILABLE', val: avail, color: 'var(--success)' },
+            { label: 'EMPLOYEE NOT AVAILABLE', val: notAvail, color: 'var(--danger)' },
+            { label: 'ANNUAL LEAVE', val: countByStatus['Annual Leave'] || 0, color: '#ff9f1c' },
+            { label: 'CHANGE SHIFT', val: countByStatus['Change Shift'] || 0, color: '#9b59b6' },
+            { label: 'SICK LEAVE', val: countByStatus['Sick Leave'] || 0, color: '#e71d36' },
+            { label: 'TRAINING', val: countByStatus['Training'] || 0, color: '#4361ee' },
+            { label: 'EXTRA LEAVE/SPECIAL LEAVE', val: countByStatus['Extra Leave/Special Leave'] || 0, color: '#6366f1' },
+            { label: 'OFF', val: countByStatus['OFF'] || 0, color: '#718096' },
+            { label: 'TANPA KETERANGAN', val: countByStatus['TANPA KETERANGAN'] || 0, color: '#000000' }
+        ];
+
+        const summaryGrid = document.getElementById('allTjnSummaryGrid');
+        summaryGrid.innerHTML = statConfig.map(s => `
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid ${s.color}; border-radius:6px; padding:6px 10px;">
+                <div style="font-size:7.5px; font-weight:800; color:var(--text-muted); text-transform:uppercase; line-height:1.2;">${s.label}</div>
+                <div style="font-size:14px; font-weight:900; color:${s.color}; margin-top:2px;">${s.val}</div>
+            </div>
+        `).join('');
+
+        const detailBody = document.getElementById('allTjnDetailBody');
+        const detailCount = document.getElementById('allTjnDetailCount');
+        if (detailCount) detailCount.innerText = `${total} Personel`;
+
+        let sorted = [...manpowerData].sort((a, b) => {
+            const uCompare = (a.unitSource || "").localeCompare(b.unitSource || "");
+            if (uCompare !== 0) return uCompare;
+            let wA = roleOrder[a.role ? a.role.toUpperCase() : ""] || 99;
+            let wB = roleOrder[b.role ? b.role.toUpperCase() : ""] || 99;
+            return wA - wB;
+        });
+
+        detailBody.innerHTML = sorted.map(m => {
+            const sc = statuses[m.status]?.color || "#718096";
+            return `
+                <tr>
+                    <td style="font-weight:800; color:var(--primary);">${m.unitSource || '-'}</td>
+                    <td><b>${m.empNumber}</b></td>
+                    <td>${m.employee}</td>
+                    <td style="color:var(--text-muted);">${m.role || '-'}</td>
+                    <td>
+                        <span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:8.5px; font-weight:800; background:${sc}; color:white;">
+                            ${(m.status || 'AVAILABLE').toUpperCase()}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function editAcReg(oldReg) {

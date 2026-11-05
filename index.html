@@ -388,8 +388,19 @@
     <!-- TAB 1: AVAILABILITY -->
     <div id="distribution" class="sheet-content">
         <div class="data-card">
-            <div class="header-action" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h2 style="margin:0; font-size: 14px;">RESOURCE MANAGEMENT</h2>
+            <!-- Header Baris Atas Tab Availability -->
+            <div class="header-action" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <div style="display:flex; align-items:center; gap: 12px;">
+                    <h2 style="margin:0; font-size: 14px;">RESOURCE MANAGEMENT</h2>
+                    <!-- Fitur Status Shift Option Unit TJN 1-6 -->
+                    <div id="unitShiftContainer" style="display:none; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px;">
+                        <label style="font-size:9px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">UNIT SHIFT:</label>
+                        <select id="unitShiftSelect" class="filter-select mp-cud-input" onchange="changeUnitShift(this.value)" style="height:24px; font-size:9.5px; font-weight:800; color:var(--primary); background:white; cursor:pointer;">
+                            <option value="MORNING SHIFT">MORNING SHIFT</option>
+                            <option value="LATE SHIFT">LATE SHIFT</option>
+                        </select>
+                    </div>
+                </div>
                 <div style="display:flex; gap: 6px; align-items: center;">
                     <input type="file" id="uploadMpFile" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileUpload(event)">
 
@@ -408,12 +419,13 @@
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr>
+                        <tr id="availabilityTableHeader">
                             <th style="width:80px" onclick="sortTable('empNumber')">ID ↕</th>
                             <th onclick="sortTable('employee')">FULL NAME ↕</th>
                             <th onclick="sortTable('surname')">NICKNAME (POOL) ↕</th>
                             <th onclick="sortTable('role')">ROLE ↕</th>
                             <th style="width:130px" onclick="sortTable('status')">STATUS ↕</th>
+                            <th id="thShiftHeader" style="width:120px; display:none;" onclick="sortTable('shift')">SHIFT ↕</th>
                             <th style="width:60px; text-align:right" class="mp-cud-control"></th>
                         </tr>
                     </thead>
@@ -444,14 +456,15 @@
                     <div id="allTjnSummaryGrid" style="display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
 
-                <!-- Kolom Kanan: DETAIL NAMA & STATUS (Filter by Avail / Not Avail) -->
+                <!-- Kolom Kanan: DETAIL NAMA & STATUS (Filter by Avail / Not Avail & Text Search) -->
                 <div class="data-card" style="flex: 1; padding: 12px; display: flex; flex-direction: column; overflow: hidden;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                         <div style="font-size: 11px; font-weight: 800; color: var(--dark); text-transform: uppercase;">
                             📋 DETAIL NAMA & STATUS
                             <span id="allTjnDetailCount" style="font-size: 9px; color: var(--text-muted); font-weight: normal; margin-left: 6px;"></span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
+                            <input type="text" id="searchInputAllTjn" placeholder="SEARCH NAMA / ID..." onkeyup="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 8px; border-radius: 4px; border: 1px solid #e2e8f0; width: 140px; text-transform: uppercase; outline:none;">
                             <label style="font-size: 9px; font-weight: 700; color: var(--text-muted);">FILTER:</label>
                             <select id="allTjnFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 6px;">
                                 <option value="ALL">ALL STATUS</option>
@@ -719,6 +732,12 @@
                         <option>SENIOR AIRCRAFT CABIN TECHNICIAN</option>
                         <option>AIRCRAFT CABIN TECHNICIAN</option>
                         <option>TECHNICIAN ASSISTANCE</option>
+                    </select>
+                </div>
+                <div class="form-group" id="staffModalShiftGroup" style="display:none;"><label>SHIFT</label>
+                    <select id="staffShift" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                        <option value="MORNING SHIFT">MORNING SHIFT</option>
+                        <option value="LATE SHIFT">LATE SHIFT</option>
                     </select>
                 </div>
             </div>
@@ -1026,6 +1045,7 @@
     // ==========================================
     let currentUnit = localStorage.getItem('active_unit') || 'TJN-4';
     let manpowerData = [], aircraftRegs = [], assignments = {}, aircraftPhases = {}, aircraftLines = {}, generalWorkload = {}, nextWorkload = {};
+    let unitShiftStatus = 'MORNING SHIFT';
     let currentWorkloadMode = 'WORK LOAD';
     let currentSort = { column: null, direction: 'asc' };
 
@@ -1107,18 +1127,31 @@
                 generalWorkload = { col1: "", col2: "", col3: "" };
                 nextWorkload = { col1: "", col2: "", col3: "" };
             } else {
-                [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload, nextWorkload] = await Promise.all([
+                [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload, nextWorkload, unitShiftStatus] = await Promise.all([
                     getStore(`${currentUnit}_manpower_data`, []),
                     getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
                     getStore(`${currentUnit}_assignments`, {}),
                     getStore(`${currentUnit}_aircraft_phases`, {}),
                     getStore(`${currentUnit}_aircraft_lines`, {}),
                     getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" }),
-                    getStore(`${currentUnit}_next_workload`, { col1: "", col2: "", col3: "" })
+                    getStore(`${currentUnit}_next_workload`, { col1: "", col2: "", col3: "" }),
+                    getStore(`${currentUnit}_shift_status`, "MORNING SHIFT")
                 ]);
             }
 
             document.getElementById('globalUnitSelect').value = currentUnit;
+
+            // Update UI Shift Container di tab Availability
+            const unitShiftContainer = document.getElementById('unitShiftContainer');
+            const unitShiftSelect = document.getElementById('unitShiftSelect');
+            if (unitShiftContainer && unitShiftSelect) {
+                if (currentUnit !== 'ALL TJN') {
+                    unitShiftContainer.style.display = 'flex';
+                    unitShiftSelect.value = unitShiftStatus || 'MORNING SHIFT';
+                } else {
+                    unitShiftContainer.style.display = 'none';
+                }
+            }
 
             if (document.getElementById('distribution').classList.contains('active')) renderTable();
             if (document.getElementById('schedule').classList.contains('active')) renderDistro();
@@ -1133,6 +1166,14 @@
         currentUnit = newUnit;
         localStorage.setItem('active_unit', currentUnit);
         await loadData();
+    }
+
+    async function changeUnitShift(val) {
+        if (!isMPAuthorized() || currentUnit === 'ALL TJN') return;
+        unitShiftStatus = val;
+        try {
+            await _supabase.from('app_store').upsert([{ key: `${currentUnit}_shift_status`, value: unitShiftStatus }]);
+        } catch (err) { console.error("Error simpan unit shift:", err); }
     }
 
     function saveGeneralWorkload() {
@@ -1257,6 +1298,11 @@
         const search = document.getElementById('searchInput').value.toLowerCase();
         const filter = document.getElementById('statusFilter').value;
 
+        // Tampilkan header Kolom Shift hanya di TJN-5 dan TJN-6
+        const showShiftCol = ['TJN-5', 'TJN-6'].includes(currentUnit);
+        const thShift = document.getElementById('thShiftHeader');
+        if (thShift) thShift.style.display = showShiftCol ? '' : 'none';
+
         let filtered = manpowerData.map((item, index) => ({...item, originalIdx: index})).filter(item => {
             const matchesSearch = item.employee.toLowerCase().includes(search) || item.empNumber.toLowerCase().includes(search);
             const matchesStatus = filter === 'ALL' || (filter === 'AVAILABLE' ? item.status === 'Available' : item.status !== 'Available');
@@ -1284,6 +1330,20 @@
             const idx = item.originalIdx;
             const sur = item.surname ? item.surname : (item.employee.split(' ').length > 1 ? `${item.employee.split(' ')[0]} ${item.employee.split(' ').slice(-1)}` : item.employee);
             const unitTag = item.unitSource ? `<span style="font-size:8px; padding:1px 4px; border-radius:3px; background:#e2e8f0; color:#334155; margin-left:4px; font-weight:800;">${item.unitSource}</span>` : '';
+            
+            let shiftTd = '';
+            if (showShiftCol) {
+                const currentShift = item.shift || 'MORNING SHIFT';
+                shiftTd = `
+                    <td style="width:120px">
+                        <select class="badge-select mp-cud-input" style="background:#1e1e2d; color:white; font-size:8px;" onchange="updateStaffShift(${idx}, this.value)">
+                            <option value="MORNING SHIFT" ${currentShift === 'MORNING SHIFT' ? 'selected' : ''}>MORNING SHIFT</option>
+                            <option value="LATE SHIFT" ${currentShift === 'LATE SHIFT' ? 'selected' : ''}>LATE SHIFT</option>
+                        </select>
+                    </td>
+                `;
+            }
+
             tbody.insertAdjacentHTML('beforeend', `
                 <tr>
                     <td style="width:80px"><b>${item.empNumber}</b>${unitTag}</td>
@@ -1295,6 +1355,7 @@
                             ${Object.keys(statuses).map(s => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
                         </select>
                     </td>
+                    ${shiftTd}
                     <td style="text-align:right; width:60px" class="mp-cud-control">
                         <button style="border:none; background:none; color:var(--primary); cursor:pointer; padding:0 4px; font-size:12px" onclick="openStaffModal(${idx})">✎</button>
                         <button style="border:none; background:none; color:#ccc; cursor:pointer; padding:0 4px; font-size:12px" onclick="deleteStaff(${idx})">✕</button>
@@ -1303,6 +1364,12 @@
         });
         updateDashboard();
         applyPermissions();
+    }
+
+    function updateStaffShift(idx, val) {
+        if (!isMPAuthorized()) return;
+        manpowerData[idx].shift = val;
+        saveDataToDB();
     }
 
     function updateDashboard() {
@@ -1322,17 +1389,30 @@
     function openStaffModal(idx = -1) {
         if (!isMPAuthorized()) return;
         document.getElementById('staffModal').style.display = 'flex';
+        const shiftGroup = document.getElementById('staffModalShiftGroup');
+        const showShift = ['TJN-5', 'TJN-6'].includes(currentUnit);
+        if (shiftGroup) shiftGroup.style.display = showShift ? 'flex' : 'none';
+
         if(idx > -1) {
             const item = manpowerData[idx];
             document.getElementById('empNumber').value = item.empNumber;
             document.getElementById('employee').value = item.employee;
             document.getElementById('surname').value = item.surname || '';
             document.getElementById('role').value = item.role;
+            if (showShift && document.getElementById('staffShift')) {
+                document.getElementById('staffShift').value = item.shift || 'MORNING SHIFT';
+            }
             document.getElementById('editIndex').value = idx;
         } else { resetStaffInputs(); }
     }
     function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
-    function resetStaffInputs() { document.getElementById('empNumber').value = ''; document.getElementById('employee').value = ''; document.getElementById('surname').value = ''; document.getElementById('editIndex').value = '-1'; }
+    function resetStaffInputs() { 
+        document.getElementById('empNumber').value = ''; 
+        document.getElementById('employee').value = ''; 
+        document.getElementById('surname').value = ''; 
+        if (document.getElementById('staffShift')) document.getElementById('staffShift').value = 'MORNING SHIFT';
+        document.getElementById('editIndex').value = '-1'; 
+    }
 
     function saveEmployee() {
         if (!isMPAuthorized()) return;
@@ -1340,10 +1420,19 @@
         const employee = document.getElementById('employee').value.trim().toUpperCase();
         const surname = document.getElementById('surname').value.trim().toUpperCase();
         const role = document.getElementById('role').value;
+        const showShift = ['TJN-5', 'TJN-6'].includes(currentUnit);
+        const shift = showShift && document.getElementById('staffShift') ? document.getElementById('staffShift').value : undefined;
         const editIdx = parseInt(document.getElementById('editIndex').value);
+
         if(empNumber && employee) {
-            if (editIdx > -1) manpowerData[editIdx] = {...manpowerData[editIdx], empNumber, employee, surname, role};
-            else manpowerData.push({ empNumber, employee, surname, role, status: "Available", unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) });
+            if (editIdx > -1) {
+                manpowerData[editIdx] = {...manpowerData[editIdx], empNumber, employee, surname, role};
+                if (showShift) manpowerData[editIdx].shift = shift;
+            } else {
+                const newStaff = { empNumber, employee, surname, role, status: "Available", unitSource: (currentUnit === 'ALL TJN' ? 'TJN-4' : currentUnit) };
+                if (showShift) newStaff.shift = shift || 'MORNING SHIFT';
+                manpowerData.push(newStaff);
+            }
             saveDataToDB(); closeStaffModal(); renderTable();
         }
     }
@@ -1539,7 +1628,13 @@
     }
 
     function renderAllTjnDistributionPanel() {
-        const total = manpowerData.length;
+        // Filter awal: HANYA menampilkan ref ID berawalan angka 5 dan 7 saja
+        const validPrefixMp = manpowerData.filter(m => {
+            const idStr = String(m.empNumber || "").trim();
+            return idStr.startsWith('5') || idStr.startsWith('7');
+        });
+
+        const total = validPrefixMp.length;
         const countByStatus = {
             "Available": 0,
             "Annual Leave": 0,
@@ -1551,7 +1646,7 @@
             "TANPA KETERANGAN": 0
         };
 
-        manpowerData.forEach(m => {
+        validPrefixMp.forEach(m => {
             const st = m.status || 'Available';
             if (countByStatus[st] !== undefined) countByStatus[st]++;
             else countByStatus["TANPA KETERANGAN"]++;
@@ -1581,14 +1676,18 @@
             </div>
         `).join('');
 
-        // Filter tabel detail berdasarkan (ALL, AVAILABLE, NOT AVAILABLE)
+        // Filter status (ALL, AVAILABLE, NOT AVAILABLE) & Text Search Nama / ID
         const filterSelect = document.getElementById('allTjnFilterSelect');
         const filterVal = filterSelect ? filterSelect.value : 'ALL';
+        const searchInput = document.getElementById('searchInputAllTjn');
+        const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-        let filteredMp = manpowerData.filter(m => {
-            if (filterVal === 'AVAILABLE') return m.status === 'Available';
-            if (filterVal === 'NOT_AVAILABLE') return m.status !== 'Available';
-            return true;
+        let filteredMp = validPrefixMp.filter(m => {
+            const matchesStatus = filterVal === 'ALL' || (filterVal === 'AVAILABLE' ? m.status === 'Available' : m.status !== 'Available');
+            const matchesSearch = !searchVal || 
+                (m.employee && m.employee.toLowerCase().includes(searchVal)) || 
+                (m.empNumber && m.empNumber.toLowerCase().includes(searchVal));
+            return matchesStatus && matchesSearch;
         });
 
         const detailBody = document.getElementById('allTjnDetailBody');
@@ -1837,7 +1936,7 @@
         const jcOpen = parseInt(document.getElementById('edit-jc-open').value) || 0;
         const jcClosed = parseInt(document.getElementById('edit-jc-closed').value) || 0;
         const mdrOpen = parseInt(document.getElementById('mdr-open').value) || 0;
-        const mdrClosed = parseInt(document.getElementById('edit-mdr-closed').value) || 0;
+        const mdrClosed = parseInt(document.getElementById('mdr-closed').value) || 0;
 
         const jcTotal = jcOpen + jcClosed;
         const mdrTotal = mdrOpen + mdrClosed;

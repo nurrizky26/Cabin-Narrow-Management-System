@@ -646,20 +646,20 @@
             </div>
         </header>
 
-        <div class="p-5 flex-1 flex flex-col gap-5 overflow-y-auto">
-            <!-- VIEW 1: SELEKSI REGISTRASI (TARIKAN DARI TJN-1 s/d TJN-6) -->
+        <div id="ppcScrollArea" class="p-5 flex-1 flex flex-col gap-5 overflow-y-auto">
+            <!-- VIEW 1: SELEKSI REGISTRASI (TARIKAN DARI TJN-1 s/d TJN-6 DALAM BENTUK LIST) -->
             <div id="ppcViewRegSelection" class="flex flex-col gap-4">
                 <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4 mb-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4 mb-3">
                         <div>
                             <h2 class="text-sm font-black uppercase text-gray-800 m-0 flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
                                 DAFTAR PESAWAT AKTIF (DISTRIBUTION MP TJN-1 S/D TJN-6)
                             </h2>
-                            <p class="text-xs text-gray-500 m-0 mt-0.5">Pilih salah satu registrasi pesawat untuk memantau atau mengedit status Job Card & MDR</p>
+                            <p class="text-xs text-gray-500 m-0 mt-0.5">Diurutkan otomatis berdasarkan jadwal Plan RTS terdekat dari atas ke bawah</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <input type="text" id="ppcRegSearch" placeholder="CARI REGISTRASI..." onkeyup="renderPpcAircraftCards()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500">
+                            <input type="text" id="ppcRegSearch" placeholder="CARI REGISTRASI / LINE..." onkeyup="renderPpcAircraftCards()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500">
                             <button onclick="loadPpcRegistrations()" class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-md text-xs font-bold transition">🔄 Refresh</button>
                         </div>
                     </div>
@@ -674,7 +674,8 @@
                         <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">⚪ Belum Set RTS</span>
                     </div>
 
-                    <div id="ppcAircraftCardGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                    <!-- Tampilan List Sederhana & Mudah Dibaca -->
+                    <div id="ppcAircraftCardGrid" class="flex flex-col gap-2">
                         <!-- Populated by JS -->
                     </div>
                 </div>
@@ -744,35 +745,50 @@
                 <div>
                     <div id="ppcChartsMainContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4 transition-all duration-300">
                         <!-- Donut 1: Status Pengerjaan (OPEN, PROGRESS, CLOSED, INTERUPT) -->
-                        <div id="ppcChartCardWork" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 280px;">
+                        <div id="ppcChartCardWork" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 295px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">1. STATUS PENGERJAAN</h3>
-                                <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
+                                <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
                             </div>
                             <div class="flex-1 relative flex items-center justify-center">
                                 <canvas id="ppcChartStatus"></canvas>
                             </div>
+                            <!-- Kotak Panah & Jumlah Status (Tampil saat diklik) -->
+                            <div id="ppcWorkCalloutBox" style="display:none;" class="mt-2 pt-2 border-t border-blue-200 flex items-center justify-between bg-blue-50 px-3 py-1.5 rounded-lg text-blue-900">
+                                <span class="text-[11px] font-black uppercase" id="ppcWorkCalloutText"></span>
+                                <span class="text-sm font-black text-blue-700">➔</span>
+                            </div>
                         </div>
 
                         <!-- Donut 2: Material & Logistic Status (13 Status Lengkap) -->
-                        <div id="ppcChartCardMaterial" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 280px;">
+                        <div id="ppcChartCardMaterial" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 295px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">2. STATUS MATERIAL & LOGISTIK</h3>
-                                <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
+                                <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
                             </div>
                             <div class="flex-1 relative flex items-center justify-center">
                                 <canvas id="ppcChartMaterial"></canvas>
                             </div>
+                            <!-- Kotak Panah & Jumlah Status (Tampil saat diklik) -->
+                            <div id="ppcMaterialCalloutBox" style="display:none;" class="mt-2 pt-2 border-t border-blue-200 flex items-center justify-between bg-blue-50 px-3 py-1.5 rounded-lg text-blue-900">
+                                <span class="text-[11px] font-black uppercase" id="ppcMaterialCalloutText"></span>
+                                <span class="text-sm font-black text-blue-700">➔</span>
+                            </div>
                         </div>
 
                         <!-- Donut 3: Rekapan Prioritas / Trade Area -->
-                        <div id="ppcChartCardSummary" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 280px;">
+                        <div id="ppcChartCardSummary" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 295px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">3. REKAPAN KELENGKAPAN</h3>
-                                <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
+                                <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
                             </div>
                             <div class="flex-1 relative flex items-center justify-center">
                                 <canvas id="ppcChartSummary"></canvas>
+                            </div>
+                            <!-- Kotak Panah & Jumlah Status (Tampil saat diklik) -->
+                            <div id="ppcSummaryCalloutBox" style="display:none;" class="mt-2 pt-2 border-t border-blue-200 flex items-center justify-between bg-blue-50 px-3 py-1.5 rounded-lg text-blue-900">
+                                <span class="text-[11px] font-black uppercase" id="ppcSummaryCalloutText"></span>
+                                <span class="text-sm font-black text-blue-700">➔</span>
                             </div>
                         </div>
                     </div>
@@ -1087,6 +1103,12 @@
             changeUnit(managerUnit); 
         } else {
             applyPermissions();
+            if (document.getElementById('ppc-dashboard').classList.contains('active')) {
+                renderPpcAircraftCards();
+                if (document.getElementById('ppcViewDetails').style.display === 'flex') {
+                    ppcRenderDataTable();
+                }
+            }
         }
     }
 
@@ -1098,6 +1120,12 @@
             localStorage.removeItem('managerUnit');
             updateAuthUI();
             applyPermissions();
+            if (document.getElementById('ppc-dashboard').classList.contains('active')) {
+                renderPpcAircraftCards();
+                if (document.getElementById('ppcViewDetails').style.display === 'flex') {
+                    ppcRenderDataTable();
+                }
+            }
         }
     }
 
@@ -1132,6 +1160,9 @@
             } else {
                 el.style.display = canEditPPC ? 'inline-flex' : 'none';
             }
+        });
+        document.querySelectorAll('.ppc-cud-input').forEach(el => {
+            el.disabled = !canEditPPC;
         });
 
         // Home Dashboard
@@ -2126,10 +2157,11 @@
     function addNewAcDistro() { if (!isMPAuthorized()) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
 
     // =========================================================================
-    // REVISED SCRIPTS FOR PPC DASHBOARD (MULTI-VIEW, EXCEL IMPORT, 3 DONUTS, RTS)
+    // REVISED SCRIPTS FOR PPC DASHBOARD (LIST VIEW, LINE-1..15/PCB, RTS SORT, LIVE RELOAD)
     // =========================================================================
     let ppcAllAircraftList = [];
-    let ppcAircraftRtsMap = {}; // Simpan PLAN RTS per registrasi pesawat: { "PK-GFA": "2026-11-28" }
+    let ppcAircraftRtsMap = {}; // { "PK-GFA": "2026-11-28" }
+    let ppcAircraftHandleLineMap = {}; // { "PK-GFA": "Line-1" | "PCB" }
     let ppcSelectedReg = null;
     let ppcSelectedCategory = null;
     let ppcActiveDataItems = [];
@@ -2171,18 +2203,41 @@
         try {
             const units = ['TJN-1', 'TJN-2', 'TJN-3', 'TJN-4', 'TJN-5', 'TJN-6'];
             const allRegsPromises = units.map(u => getStore(`${u}_aircraft_regs`, []));
-            const [allRegsResults, savedRtsMap] = await Promise.all([
+            const allLinesPromises = units.map(u => getStore(`${u}_aircraft_lines`, {}));
+            const [allRegsResults, allLinesResults, savedRtsMap, savedHandleLineMap] = await Promise.all([
                 Promise.all(allRegsPromises),
-                getStore('ppc_aircraft_rts_map', {})
+                Promise.all(allLinesPromises),
+                getStore('ppc_aircraft_rts_map', {}),
+                getStore('ppc_aircraft_handle_line_map', {})
             ]);
 
             ppcAircraftRtsMap = (savedRtsMap && typeof savedRtsMap === 'object') ? savedRtsMap : {};
+            ppcAircraftHandleLineMap = (savedHandleLineMap && typeof savedHandleLineMap === 'object') ? savedHandleLineMap : {};
+
+            // Tarik default line dari Distribution MP jika belum di-set manual di PPC
+            const distroLineFallback = {};
+            allLinesResults.forEach(lineObj => {
+                if (lineObj && typeof lineObj === 'object') {
+                    Object.keys(lineObj).forEach(r => {
+                        if (lineObj[r]) {
+                            const cleanNum = lineObj[r].replace(/[^0-9]/g, '');
+                            if (cleanNum) distroLineFallback[r.toUpperCase()] = `Line-${cleanNum}`;
+                        }
+                    });
+                }
+            });
 
             const regSet = new Set();
             allRegsResults.forEach((unitRegs) => {
                 if (Array.isArray(unitRegs)) {
                     unitRegs.forEach(r => {
-                        if (r && r.trim()) regSet.add(r.trim().toUpperCase());
+                        if (r && r.trim()) {
+                            const upReg = r.trim().toUpperCase();
+                            regSet.add(upReg);
+                            if (!ppcAircraftHandleLineMap[upReg] && distroLineFallback[upReg]) {
+                                ppcAircraftHandleLineMap[upReg] = distroLineFallback[upReg];
+                            }
+                        }
                     });
                 }
             });
@@ -2191,20 +2246,21 @@
                 ['PK-GFA', 'PK-GFB', 'PK-GFC', 'PK-GFD', 'PK-GFE', 'PK-GFF'].forEach(r => regSet.add(r));
             }
 
-            ppcAllAircraftList = Array.from(regSet).sort();
+            ppcAllAircraftList = Array.from(regSet);
             renderPpcAircraftCards();
         } catch(err) {
             console.error("Gagal load registrasi pesawat PPC:", err);
         }
     }
 
-    // Helper Hitung Status & Warna RTS per Registrasi
+    // Helper Hitung Status, Selisih Hari (untuk Sorting), & Warna RTS per Registrasi
     function getPpcRtsInfo(rtsDateStr) {
         if (!rtsDateStr) {
             return {
                 dateFormatted: 'BELUM DIATUR',
-                dayText: 'SET PLAN RTS',
-                cardClass: 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800',
+                dayText: 'BELUM SET RTS',
+                sortKey: 999999,
+                rowClass: 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800',
                 regBadgeClass: 'bg-slate-800 text-white',
                 pillClass: 'bg-slate-200 text-slate-700'
             };
@@ -2224,7 +2280,8 @@
             return {
                 dateFormatted: formattedDate,
                 dayText: `H-${diffDays} DAYS`,
-                cardClass: 'bg-emerald-50 hover:bg-emerald-100/90 border-emerald-500 text-emerald-950',
+                sortKey: diffDays,
+                rowClass: 'bg-emerald-50 hover:bg-emerald-100/90 border-emerald-500 text-emerald-950',
                 regBadgeClass: 'bg-emerald-800 text-white',
                 pillClass: 'bg-emerald-600 text-white'
             };
@@ -2233,7 +2290,8 @@
             return {
                 dateFormatted: formattedDate,
                 dayText: `H-${diffDays} DAYS`,
-                cardClass: 'bg-amber-50 hover:bg-amber-100/90 border-amber-500 text-amber-950',
+                sortKey: diffDays,
+                rowClass: 'bg-amber-50 hover:bg-amber-100/90 border-amber-500 text-amber-950',
                 regBadgeClass: 'bg-amber-800 text-white',
                 pillClass: 'bg-amber-500 text-slate-950'
             };
@@ -2242,16 +2300,18 @@
             return {
                 dateFormatted: formattedDate,
                 dayText: diffDays === 0 ? 'H-0 (TODAY)' : `H-${diffDays} DAYS`,
-                cardClass: 'bg-orange-100 hover:bg-orange-200/80 border-orange-600 text-orange-950',
+                sortKey: diffDays,
+                rowClass: 'bg-orange-100 hover:bg-orange-200/80 border-orange-600 text-orange-950',
                 regBadgeClass: 'bg-orange-900 text-white',
                 pillClass: 'bg-orange-600 text-white'
             };
         } else {
-            // Merah: melewati tanggal RTS
+            // Merah: melewati tanggal RTS (paling mendesak / terdekat di urutan atas)
             return {
                 dateFormatted: formattedDate,
                 dayText: `OVERDUE (+${Math.abs(diffDays)}D)`,
-                cardClass: 'bg-rose-100 hover:bg-rose-200/80 border-rose-600 text-rose-950',
+                sortKey: diffDays,
+                rowClass: 'bg-rose-100 hover:bg-rose-200/80 border-rose-600 text-rose-950',
                 regBadgeClass: 'bg-rose-900 text-white',
                 pillClass: 'bg-rose-600 text-white'
             };
@@ -2264,43 +2324,99 @@
         const searchVal = (document.getElementById('ppcRegSearch')?.value || '').trim().toUpperCase();
         const canEdit = isPPCAuthorized();
 
-        const filtered = ppcAllAircraftList.filter(r => !searchVal || r.includes(searchVal));
+        // Filter & Urutkan berdasarkan RTS paling dekat dari atas ke bawah
+        const filteredAndSorted = ppcAllAircraftList
+            .map(reg => {
+                const rtsVal = ppcAircraftRtsMap[reg] || '';
+                const rtsInfo = getPpcRtsInfo(rtsVal);
+                const handleLine = ppcAircraftHandleLineMap[reg] || '';
+                return { reg, rtsVal, rtsInfo, handleLine };
+            })
+            .filter(item => {
+                if (!searchVal) return true;
+                return item.reg.includes(searchVal) || item.handleLine.toUpperCase().includes(searchVal);
+            })
+            .sort((a, b) => {
+                if (a.rtsInfo.sortKey !== b.rtsInfo.sortKey) {
+                    return a.rtsInfo.sortKey - b.rtsInfo.sortKey;
+                }
+                return a.reg.localeCompare(b.reg);
+            });
 
-        if (filtered.length === 0) {
-            grid.innerHTML = `<div class="col-span-full py-8 text-center text-xs text-gray-400">Tidak ada registrasi pesawat yang cocok.</div>`;
+        if (filteredAndSorted.length === 0) {
+            grid.innerHTML = `<div class="py-8 text-center text-xs text-gray-400">Tidak ada registrasi pesawat yang cocok.</div>`;
             return;
         }
 
-        grid.innerHTML = filtered.map(reg => {
-            const rtsVal = ppcAircraftRtsMap[reg] || '';
-            const rtsInfo = getPpcRtsInfo(rtsVal);
+        const lineOptionsList = [''];
+        for (let i = 1; i <= 15; i++) lineOptionsList.push(`Line-${i}`);
+        lineOptionsList.push('PCB');
+
+        grid.innerHTML = filteredAndSorted.map(({ reg, rtsInfo, handleLine }) => {
+            const lineSelectHtml = canEdit
+                ? `<select onclick="event.stopPropagation()" onchange="ppcUpdateHandleLine(event, '${reg}', this.value)" class="px-2 py-1 text-[11px] font-black font-mono bg-white border border-gray-400 rounded-md text-gray-900 cursor-pointer shadow-xs outline-none focus:border-blue-600">
+                        <option value="">-- PILIH LINE --</option>
+                        ${lineOptionsList.slice(1).map(opt => `<option value="${opt}" ${handleLine === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                   </select>`
+                : `<span class="px-2.5 py-1 text-[11px] font-black font-mono bg-white/90 border border-black/15 rounded-md text-gray-900">
+                        ${handleLine || 'BELUM SET'}
+                   </span>`;
 
             return `
-                <div onclick="ppcSelectRegistration('${reg}')" class="relative ${rtsInfo.cardClass} border-2 rounded-xl p-3.5 text-center cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 flex flex-col items-center justify-between gap-2">
-                    ${canEdit ? `
-                        <button type="button" onclick="ppcOpenRtsModal(event, '${reg}')" title="Edit Plan RTS" class="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-800 border border-gray-300 rounded px-1.5 py-0.5 text-[10px] font-extrabold shadow-sm transition">
-                            ✎ RTS
-                        </button>
-                    ` : ''}
-
-                    <div class="w-full flex flex-col items-center mt-1">
-                        <span class="px-3 py-1 rounded-md font-mono font-black text-sm tracking-wider shadow-sm ${rtsInfo.regBadgeClass}">
+                <div onclick="ppcSelectRegistration('${reg}')" class="${rtsInfo.rowClass} border-2 rounded-xl px-4 py-2.5 cursor-pointer transition-all duration-150 shadow-xs hover:shadow-md flex flex-wrap items-center justify-between gap-3">
+                    <!-- Kiri: Badge Registrasi Kontras + Handle By Line -->
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span class="px-3.5 py-1.5 rounded-lg font-mono font-black text-sm tracking-wider shadow-sm ${rtsInfo.regBadgeClass}">
                             ${reg}
                         </span>
+
+                        <div class="flex items-center gap-1.5 bg-white/80 px-2.5 py-1 rounded-lg border border-black/10">
+                            <span class="text-[10px] font-extrabold uppercase opacity-75">Handle by:</span>
+                            ${lineSelectHtml}
+                        </div>
                     </div>
 
-                    <div class="w-full bg-white/85 rounded-lg p-2 border border-black/10 flex flex-col items-center gap-1">
-                        <div class="text-[9px] font-extrabold uppercase opacity-75">PLAN RTS</div>
-                        <div class="font-mono font-black text-xs">${rtsInfo.dateFormatted}</div>
-                        <span class="px-2 py-0.5 rounded-full text-[9.5px] font-black tracking-wide shadow-xs ${rtsInfo.pillClass}">
-                            ${rtsInfo.dayText}
-                        </span>
-                    </div>
+                    <!-- Tengah/Kanan: Plan RTS + Day Before RTS + Tombol Edit RTS -->
+                    <div class="flex items-center gap-3 flex-wrap ml-auto">
+                        <div class="flex items-center gap-2 bg-white/85 px-3 py-1 rounded-lg border border-black/10">
+                            <span class="text-[10px] font-extrabold uppercase opacity-75">PLAN RTS:</span>
+                            <span class="font-mono font-black text-xs">${rtsInfo.dateFormatted}</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide shadow-xs ${rtsInfo.pillClass}">
+                                ${rtsInfo.dayText}
+                            </span>
+                        </div>
 
-                    <span class="text-[9px] font-extrabold uppercase tracking-wider opacity-80">KLIK UNTUK AKSES ➔</span>
+                        ${canEdit ? `
+                            <button type="button" onclick="ppcOpenRtsModal(event, '${reg}')" title="Edit Plan RTS" class="bg-white hover:bg-gray-100 text-gray-900 border border-gray-400 rounded-lg px-2.5 py-1.5 text-[10px] font-black shadow-xs transition">
+                                ✎ SET RTS
+                            </button>
+                        ` : ''}
+
+                        <span class="text-xs font-black uppercase tracking-wider opacity-80 pl-1">BUKA ➔</span>
+                    </div>
                 </div>
             `;
         }).join('');
+    }
+
+    async function ppcUpdateHandleLine(event, reg, val) {
+        event.stopPropagation();
+        if (!isPPCAuthorized()) return;
+
+        if (val) {
+            ppcAircraftHandleLineMap[reg] = val;
+        } else {
+            delete ppcAircraftHandleLineMap[reg];
+        }
+
+        try {
+            await _supabase.from('app_store').upsert([{ key: 'ppc_aircraft_handle_line_map', value: ppcAircraftHandleLineMap }]);
+            showToastNotification();
+            await loadPpcRegistrations();
+        } catch(err) {
+            console.error("Gagal simpan Handle by Line:", err);
+            alert("Gagal menyimpan Handle by Line ke database.");
+        }
     }
 
     function ppcOpenRtsModal(event, reg) {
@@ -2329,11 +2445,11 @@
         }
 
         ppcCloseRtsModal();
-        renderPpcAircraftCards();
 
         try {
             await _supabase.from('app_store').upsert([{ key: 'ppc_aircraft_rts_map', value: ppcAircraftRtsMap }]);
             showToastNotification();
+            await loadPpcRegistrations();
         } catch(err) {
             console.error("Gagal simpan Plan RTS:", err);
             alert("Gagal menyimpan tanggal Plan RTS ke database.");
@@ -2364,14 +2480,12 @@
         document.getElementById('ppcActiveContextTag').innerText = `${ppcSelectedReg} - ${category}`;
         document.getElementById('ppcBreadcrumb').innerText = `${ppcSelectedReg} > ${category}`;
 
-        // Reset urutan kartu diagram ke default saat membuka kategori baru
         ppcResetChartOrder();
-
         await ppcLoadCategoryData();
         applyPermissions();
     }
 
-    function ppcNavigateBack() {
+    async function ppcNavigateBack() {
         ppcCloseDrilldown();
         if (document.getElementById('ppcViewDetails').style.display === 'flex') {
             document.getElementById('ppcViewDetails').style.display = 'none';
@@ -2384,7 +2498,7 @@
             document.getElementById('ppcBreadcrumb').innerText = `PILIH REGISTRASI`;
             ppcSelectedReg = null;
             ppcSelectedCategory = null;
-            renderPpcAircraftCards();
+            await loadPpcRegistrations();
         }
     }
 
@@ -2416,8 +2530,11 @@
         }
         const storeKey = `ppc_data_${ppcSelectedReg}_${ppcSelectedCategory}`;
         try {
-            await _supabase.from('app_store').upsert([{ key: storeKey, value: ppcActiveDataItems }]);
+            const { error } = await _supabase.from('app_store').upsert([{ key: storeKey, value: ppcActiveDataItems }]);
+            if (error) throw error;
             showToastNotification();
+            // Live reload ulang data dari database setelah simpan agar sinkron langsung
+            await ppcLoadCategoryData();
         } catch(err) {
             console.error("Gagal simpan data category PPC:", err);
             alert("Gagal menyimpan ke server database.");
@@ -2503,7 +2620,7 @@
         document.getElementById('ppcItemModal').style.display = 'none';
     }
 
-    function ppcSaveItem(e) {
+    async function ppcSaveItem(e) {
         e.preventDefault();
         if (!isPPCAuthorized()) return;
 
@@ -2530,19 +2647,19 @@
 
         ppcCloseItemModal();
         ppcRenderAll();
-        ppcSaveCategoryDataToDB();
+        await ppcSaveCategoryDataToDB();
     }
 
     function ppcEditItem(idx) {
         ppcOpenItemModal(idx);
     }
 
-    function ppcDeleteItem(idx) {
+    async function ppcDeleteItem(idx) {
         if (!isPPCAuthorized()) return;
         if (confirm("Hapus item data ini?")) {
             ppcActiveDataItems.splice(idx, 1);
             ppcRenderAll();
-            ppcSaveCategoryDataToDB();
+            await ppcSaveCategoryDataToDB();
         }
     }
 
@@ -2647,7 +2764,7 @@
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
@@ -2681,13 +2798,11 @@
                     return;
                 }
 
-                // Timpa data lama sepenuhnya dengan data murni hasil upload
                 if (confirm(`Smart Import mendeteksi ${newItems.length} baris data valid untuk ${ppcSelectedReg} (${ppcSelectedCategory}).\n\nData lama akan DITIMPA (diganti sepenuhnya) agar murni menampilkan data upload ini. Lanjutkan?`)) {
                     ppcActiveDataItems = newItems;
                     ppcCloseDrilldown();
                     ppcRenderAll();
-                    ppcSaveCategoryDataToDB();
-                    alert(`Berhasil menimpa dan menampilkan ${newItems.length} data hasil upload!`);
+                    await ppcSaveCategoryDataToDB();
                 }
             } catch(err) {
                 console.error("Error membaca Excel:", err);
@@ -2738,12 +2853,13 @@
         const ctx1 = document.getElementById('ppcChartStatus')?.getContext('2d');
         if (ctx1) {
             if (ppcChartInstanceStatus) ppcChartInstanceStatus.destroy();
+            const workCountsArr = [countWork['OPEN'], countWork['PROGRESS'], countWork['CLOSED'], countWork['INTERUPT']];
             ppcChartInstanceStatus = new Chart(ctx1, {
                 type: 'doughnut',
                 data: {
                     labels: ['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'],
                     datasets: [{
-                        data: [countWork['OPEN'], countWork['PROGRESS'], countWork['CLOSED'], countWork['INTERUPT']],
+                        data: workCountsArr,
                         backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#6366f1'],
                         borderWidth: 2,
                         hoverOffset: 6
@@ -2759,7 +2875,8 @@
                         if (elements && elements.length > 0) {
                             const clickedIdx = elements[0].index;
                             const statusLabel = ['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'][clickedIdx];
-                            ppcTriggerDrilldown('WORK_STATUS', statusLabel);
+                            const statusCount = workCountsArr[clickedIdx];
+                            ppcTriggerDrilldown('WORK_STATUS', statusLabel, statusCount);
                         }
                     }
                 }
@@ -2794,7 +2911,8 @@
                         if (elements && elements.length > 0 && activeMatLabels.length > 0) {
                             const clickedIdx = elements[0].index;
                             const matLabel = activeMatLabels[clickedIdx];
-                            ppcTriggerDrilldown('MATERIAL_STATUS', matLabel);
+                            const matCount = activeMatData[clickedIdx];
+                            ppcTriggerDrilldown('MATERIAL_STATUS', matLabel, matCount);
                         }
                     }
                 }
@@ -2806,13 +2924,14 @@
             if (ppcChartInstanceSummary) ppcChartInstanceSummary.destroy();
             const closedItems = countWork['CLOSED'];
             const openItems = totalCount - closedItems;
+            const summaryCountsArr = [closedItems, openItems];
 
             ppcChartInstanceSummary = new Chart(ctx3, {
                 type: 'doughnut',
                 data: {
                     labels: ['COMPLETED (CLOSED)', 'OUTSTANDING (OPEN/PROG/INT)'],
                     datasets: [{
-                        data: [closedItems, openItems],
+                        data: summaryCountsArr,
                         backgroundColor: ['#10b981', '#3b82f6'],
                         borderWidth: 2,
                         hoverOffset: 6
@@ -2828,7 +2947,8 @@
                         if (elements && elements.length > 0) {
                             const clickedIdx = elements[0].index;
                             const filterType = clickedIdx === 0 ? 'COMPLETED' : 'OUTSTANDING';
-                            ppcTriggerDrilldown('SUMMARY', filterType);
+                            const summaryCount = summaryCountsArr[clickedIdx];
+                            ppcTriggerDrilldown('SUMMARY', filterType, summaryCount);
                         }
                     }
                 }
@@ -2842,16 +2962,20 @@
         const c2 = document.getElementById('ppcChartCardMaterial');
         const c3 = document.getElementById('ppcChartCardSummary');
         if (chartsContainer && c1 && c2 && c3) {
-            c1.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200');
-            c2.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200');
-            c3.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200');
+            [c1, c2, c3].forEach(el => el.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200'));
             chartsContainer.appendChild(c1);
             chartsContainer.appendChild(c2);
             chartsContainer.appendChild(c3);
         }
+        const b1 = document.getElementById('ppcWorkCalloutBox');
+        const b2 = document.getElementById('ppcMaterialCalloutBox');
+        const b3 = document.getElementById('ppcSummaryCalloutBox');
+        if (b1) b1.style.display = 'none';
+        if (b2) b2.style.display = 'none';
+        if (b3) b3.style.display = 'none';
     }
 
-    function ppcTriggerDrilldown(type, value) {
+    function ppcTriggerDrilldown(type, value, countVal = 0) {
         const chartsContainer = document.getElementById('ppcChartsMainContainer');
         const drilldownWrapper = document.getElementById('ppcDrilldownWrapper');
         const drilldownTitle = document.getElementById('ppcDrilldownTitle');
@@ -2862,15 +2986,40 @@
         const c2 = document.getElementById('ppcChartCardMaterial');
         const c3 = document.getElementById('ppcChartCardSummary');
 
+        const b1 = document.getElementById('ppcWorkCalloutBox');
+        const b2 = document.getElementById('ppcMaterialCalloutBox');
+        const b3 = document.getElementById('ppcSummaryCalloutBox');
+
         if (!chartsContainer || !drilldownWrapper) return;
 
-        // Posisikan diagram yang diklik ke paling atas dari diagram lainnya
+        // Sembunyikan callout box sebelumnya
+        if (b1) b1.style.display = 'none';
+        if (b2) b2.style.display = 'none';
+        if (b3) b3.style.display = 'none';
+
+        // Posisikan diagram yang diklik ke paling atas & tampilkan panah + jumlah status di dalam kotak diagram
         if (c1 && c2 && c3) {
             [c1, c2, c3].forEach(el => el.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200'));
             let activeCard = c1;
-            if (type === 'WORK_STATUS') activeCard = c1;
-            else if (type === 'MATERIAL_STATUS') activeCard = c2;
-            else if (type === 'SUMMARY') activeCard = c3;
+            if (type === 'WORK_STATUS') {
+                activeCard = c1;
+                if (b1) {
+                    b1.style.display = 'flex';
+                    document.getElementById('ppcWorkCalloutText').innerText = `${value}: ${countVal} ITEM`;
+                }
+            } else if (type === 'MATERIAL_STATUS') {
+                activeCard = c2;
+                if (b2) {
+                    b2.style.display = 'flex';
+                    document.getElementById('ppcMaterialCalloutText').innerText = `${value}: ${countVal} ITEM`;
+                }
+            } else if (type === 'SUMMARY') {
+                activeCard = c3;
+                if (b3) {
+                    b3.style.display = 'flex';
+                    document.getElementById('ppcSummaryCalloutText').innerText = `${value}: ${countVal} ITEM`;
+                }
+            }
 
             activeCard.classList.add('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200');
             chartsContainer.prepend(activeCard);
@@ -2925,6 +3074,13 @@
                 `;
             }).join('');
         }
+
+        // Otomatis scroll screen menuju paling atas page
+        const ppcDash = document.getElementById('ppc-dashboard');
+        const ppcScroll = document.getElementById('ppcScrollArea');
+        if (ppcDash) ppcDash.scrollTo({ top: 0, behavior: 'smooth' });
+        if (ppcScroll) ppcScroll.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         setTimeout(() => {
             if (ppcChartInstanceStatus) ppcChartInstanceStatus.resize();

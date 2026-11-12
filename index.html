@@ -629,9 +629,6 @@
         <!-- PPC Navbar Top -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm px-6 py-3 flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
-                    <span class="text-lg">✈️</span>
-                </div>
                 <div>
                     <h1 class="text-sm font-black tracking-wider text-gray-800 m-0 uppercase">PPC CABIN MONITORING</h1>
                     <p class="text-[10px] text-gray-500 m-0 font-medium">Job Card & Material Discrepancy Reporting</p>
@@ -783,11 +780,11 @@
                             <table>
                                 <thead>
                                     <tr>
-                                        <th style="width:130px;">ITEM / TASK NO</th>
-                                        <th>DESCRIPTION</th>
-                                        <th style="width:110px;">WORK STATUS</th>
-                                        <th style="width:170px;">MATERIAL STATUS</th>
-                                        <th style="width:90px;">AREA / ZONE</th>
+                                        <th style="width:110px;">Status</th>
+                                        <th style="width:130px;">Order No</th>
+                                        <th>Description</th>
+                                        <th style="width:180px;" id="ppcDrilldownTrackHeader">Jobcard Track</th>
+                                        <th style="width:130px;">Remark</th>
                                     </tr>
                                 </thead>
                                 <tbody id="ppcDrilldownTableBody"></tbody>
@@ -800,18 +797,17 @@
                 <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-3">
                     <div class="flex flex-wrap justify-between items-center gap-3">
                         <h3 class="text-xs font-black uppercase text-gray-800 m-0">TABEL DATA LENGKAP</h3>
-                        <input type="text" id="ppcTableSearch" placeholder="CARI ITEM / DESKRIPSI..." onkeyup="ppcRenderDataTable()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500 w-56">
+                        <input type="text" id="ppcTableSearch" placeholder="CARI ORDER NO / DESKRIPSI..." onkeyup="ppcRenderDataTable()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500 w-56">
                     </div>
                     <div class="table-container" style="max-height: 380px;">
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="width:120px;">ITEM NUMBER</th>
-                                    <th>DESCRIPTION</th>
-                                    <th style="width:120px;">WORK STATUS</th>
-                                    <th style="width:200px;">MATERIAL / LOGISTIC STATUS</th>
-                                    <th style="width:100px;">ZONE / AREA</th>
-                                    <th style="width:100px;">REMARKS</th>
+                                    <th style="width:110px;">Status</th>
+                                    <th style="width:130px;">Order No</th>
+                                    <th>Description</th>
+                                    <th style="width:210px;" id="ppcMasterTrackHeader">Jobcard Track</th>
+                                    <th style="width:140px;">Remark</th>
                                     <th style="width:70px; text-align:right;" class="ppc-cud-control" style="display:none;">AKSI</th>
                                 </tr>
                             </thead>
@@ -832,16 +828,8 @@
                 <form id="ppcItemForm" onsubmit="ppcSaveItem(event)">
                     <input type="hidden" id="ppcEditItemIndex" value="-1">
                     <div class="form-grid">
-                        <div class="form-group full">
-                            <label>ITEM / TASK CARD NUMBER</label>
-                            <input type="text" id="ppcInputItemNo" required class="wo-input uppercase font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                        </div>
-                        <div class="form-group full">
-                            <label>DESCRIPTION</label>
-                            <textarea id="ppcInputDesc" required rows="2" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-family:inherit;"></textarea>
-                        </div>
                         <div class="form-group">
-                            <label>STATUS PENGERJAAN</label>
+                            <label>STATUS</label>
                             <select id="ppcInputWorkStatus" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-weight:700;">
                                 <option value="OPEN">OPEN</option>
                                 <option value="PROGRESS">PROGRESS</option>
@@ -850,11 +838,15 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>ZONE / AREA</label>
-                            <input type="text" id="ppcInputZone" placeholder="Contoh: FWD CABIN" class="wo-input uppercase" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                            <label>ORDER NO</label>
+                            <input type="text" id="ppcInputItemNo" required class="wo-input uppercase font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                         <div class="form-group full">
-                            <label>STATUS MATERIAL & LOGISTIK</label>
+                            <label>DESCRIPTION</label>
+                            <textarea id="ppcInputDesc" required rows="2" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-family:inherit;"></textarea>
+                        </div>
+                        <div class="form-group full">
+                            <label id="ppcModalTrackLabel">JOBCARD TRACK</label>
                             <select id="ppcInputMaterialStatus" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                                 <option value="Waiting Payment">Waiting Payment</option>
                                 <option value="Available at GMF Central Store">Available at GMF Central Store</option>
@@ -872,7 +864,7 @@
                             </select>
                         </div>
                         <div class="form-group full">
-                            <label>REMARKS / KETERANGAN</label>
+                            <label>REMARK</label>
                             <input type="text" id="ppcInputRemarks" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                     </div>
@@ -1099,7 +1091,11 @@
 
         // PPC Dashboard
         document.querySelectorAll('.ppc-cud-control').forEach(el => {
-            el.style.display = canEditPPC ? 'inline-flex' : 'none';
+            if (el.tagName === 'TH' || el.tagName === 'TD') {
+                el.style.display = canEditPPC ? 'table-cell' : 'none';
+            } else {
+                el.style.display = canEditPPC ? 'inline-flex' : 'none';
+            }
         });
 
         // Home Dashboard
@@ -2174,7 +2170,6 @@
 
         grid.innerHTML = filtered.map(reg => `
             <div onclick="ppcSelectRegistration('${reg}')" class="bg-white hover:bg-blue-50/70 border-2 border-gray-200 hover:border-blue-500 rounded-xl p-3 text-center cursor-pointer transition shadow-sm hover:shadow group flex flex-col items-center justify-center gap-1.5">
-                <span class="text-xl">✈️</span>
                 <span class="font-mono font-black text-sm text-gray-800 group-hover:text-blue-600">${reg}</span>
                 <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">KLIK UNTUK AKSES</span>
             </div>
@@ -2196,6 +2191,11 @@
         ppcSelectedCategory = category;
         document.getElementById('ppcViewOptionSelection').style.display = 'none';
         document.getElementById('ppcViewDetails').style.display = 'flex';
+
+        const trackLabel = category === 'MDR' ? 'MDR Track' : 'Jobcard Track';
+        document.getElementById('ppcMasterTrackHeader').innerText = trackLabel;
+        document.getElementById('ppcDrilldownTrackHeader').innerText = trackLabel;
+        document.getElementById('ppcModalTrackLabel').innerText = trackLabel.toUpperCase();
 
         document.getElementById('ppcActiveContextTag').innerText = `${ppcSelectedReg} - ${category}`;
         document.getElementById('ppcBreadcrumb').innerText = `${ppcSelectedReg} > ${category}`;
@@ -2223,11 +2223,11 @@
     async function ppcLoadCategoryData() {
         const storeKey = `ppc_data_${ppcSelectedReg}_${ppcSelectedCategory}`;
         const defaultSample = [
-            { itemNo: `${ppcSelectedCategory}-001`, desc: "Inspection passenger seat covers row 1-12", workStatus: "OPEN", materialStatus: "Available at Hangar Local Store", zone: "ZONE A", remarks: "Routine Check" },
-            { itemNo: `${ppcSelectedCategory}-002`, desc: "Replacement carpet forward galley area", workStatus: "PROGRESS", materialStatus: "Delivered to Production", zone: "FWD GALLEY", remarks: "Urgent" },
-            { itemNo: `${ppcSelectedCategory}-003`, desc: "Repair lavatory D flush valve assembly", workStatus: "CLOSED", materialStatus: "Work Done", zone: "AFT LAV", remarks: "Rectified" },
-            { itemNo: `${ppcSelectedCategory}-004`, desc: "Overhaul cabin attendant seat harness", workStatus: "INTERUPT", materialStatus: "Waiting Shipment From Vendor", zone: "CABIN MID", remarks: "Awaiting Part" },
-            { itemNo: `${ppcSelectedCategory}-005`, desc: "Refurbish overhead bin latch row 24", workStatus: "OPEN", materialStatus: "Available at GMF Central Store", zone: "AFT CABIN", remarks: "Normal" }
+            { itemNo: `${ppcSelectedCategory}-001`, desc: "Inspection passenger seat covers row 1-12", workStatus: "OPEN", materialStatus: "Available at Hangar Local Store", remarks: "Routine Check" },
+            { itemNo: `${ppcSelectedCategory}-002`, desc: "Replacement carpet forward galley area", workStatus: "PROGRESS", materialStatus: "Delivered to Production", remarks: "Urgent" },
+            { itemNo: `${ppcSelectedCategory}-003`, desc: "Repair lavatory D flush valve assembly", workStatus: "CLOSED", materialStatus: "Work Done", remarks: "Rectified" },
+            { itemNo: `${ppcSelectedCategory}-004`, desc: "Overhaul cabin attendant seat harness", workStatus: "INTERUPT", materialStatus: "Waiting Shipment From Vendor", remarks: "Awaiting Part" },
+            { itemNo: `${ppcSelectedCategory}-005`, desc: "Refurbish overhead bin latch row 24", workStatus: "OPEN", materialStatus: "Available at GMF Central Store", remarks: "Normal" }
         ];
 
         try {
@@ -2272,12 +2272,12 @@
             return !search || 
                 (item.itemNo && item.itemNo.toLowerCase().includes(search)) ||
                 (item.desc && item.desc.toLowerCase().includes(search)) ||
-                (item.zone && item.zone.toLowerCase().includes(search)) ||
+                (item.remarks && item.remarks.toLowerCase().includes(search)) ||
                 (item.materialStatus && item.materialStatus.toLowerCase().includes(search));
         });
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:#94a3b8;">Belum ada data tersedia.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#94a3b8;">Belum ada data tersedia.</td></tr>`;
             return;
         }
 
@@ -2287,16 +2287,15 @@
 
             return `
                 <tr>
-                    <td class="font-mono font-bold text-blue-700">${item.itemNo || '-'}</td>
-                    <td style="white-space:normal; line-height:1.3; font-weight:500;">${item.desc || '-'}</td>
                     <td>
                         <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:8.5px; font-weight:800; color:white; background:${wColor};">
                             ${item.workStatus || 'OPEN'}
                         </span>
                     </td>
+                    <td class="font-mono font-bold text-blue-700">${item.itemNo || '-'}</td>
+                    <td style="white-space:normal; line-height:1.3; font-weight:500;">${item.desc || '-'}</td>
                     <td style="white-space:normal; line-height:1.2; font-weight:600; color:#334155;">${item.materialStatus || 'Status Not Defined Yet'}</td>
-                    <td style="font-size:9.5px; font-weight:700; color:#475569;">${item.zone || '-'}</td>
-                    <td style="color:#64748b; font-size:9.5px;">${item.remarks || '-'}</td>
+                    <td style="white-space:normal; color:#64748b; font-size:9.5px;">${item.remarks || '-'}</td>
                     <td style="text-align:right; ${canEdit ? 'display:table-cell;' : 'display:none;'}" class="ppc-cud-control">
                         <button onclick="ppcEditItem(${origIdx})" title="Edit" style="border:none; background:none; color:var(--primary); cursor:pointer; font-size:12px; padding:0 3px;">✎</button>
                         <button onclick="ppcDeleteItem(${origIdx})" title="Hapus" style="border:none; background:none; color:var(--danger); cursor:pointer; font-size:12px; padding:0 3px;">✕</button>
@@ -2314,15 +2313,15 @@
         document.getElementById('ppcEditItemIndex').value = idx;
         const modal = document.getElementById('ppcItemModal');
         const titleEl = document.getElementById('ppcItemModalTitle');
+        document.getElementById('ppcModalTrackLabel').innerText = ppcSelectedCategory === 'MDR' ? 'MDR TRACK' : 'JOBCARD TRACK';
 
         if (idx > -1) {
             const itm = ppcActiveDataItems[idx];
             titleEl.innerText = `EDIT DATA ${ppcSelectedCategory}`;
+            document.getElementById('ppcInputWorkStatus').value = itm.workStatus || 'OPEN';
             document.getElementById('ppcInputItemNo').value = itm.itemNo || '';
             document.getElementById('ppcInputDesc').value = itm.desc || '';
-            document.getElementById('ppcInputWorkStatus').value = itm.workStatus || 'OPEN';
             document.getElementById('ppcInputMaterialStatus').value = itm.materialStatus || 'Status Not Defined Yet';
-            document.getElementById('ppcInputZone').value = itm.zone || '';
             document.getElementById('ppcInputRemarks').value = itm.remarks || '';
         } else {
             titleEl.innerText = `TAMBAH DATA ${ppcSelectedCategory} BARU`;
@@ -2342,11 +2341,10 @@
 
         const idx = parseInt(document.getElementById('ppcEditItemIndex').value);
         const newItem = {
+            workStatus: document.getElementById('ppcInputWorkStatus').value,
             itemNo: document.getElementById('ppcInputItemNo').value.trim().toUpperCase(),
             desc: document.getElementById('ppcInputDesc').value.trim(),
-            workStatus: document.getElementById('ppcInputWorkStatus').value,
             materialStatus: document.getElementById('ppcInputMaterialStatus').value,
-            zone: document.getElementById('ppcInputZone').value.trim().toUpperCase(),
             remarks: document.getElementById('ppcInputRemarks').value.trim()
         };
 
@@ -2374,6 +2372,84 @@
         }
     }
 
+    // ========================================================
+    // SMART DATA NORMALIZER UNTUK HASIL UPLOAD EXCEL / CSV
+    // ========================================================
+    function smartNormalizeWorkStatus(rawVal) {
+        if (!rawVal) return 'OPEN';
+        const val = rawVal.toString().toUpperCase().trim();
+        if (val.includes('CLOS') || val.includes('DONE') || val.includes('COMP') || val === 'C' || val === 'SELESAI' || val === 'FINISH') return 'CLOSED';
+        if (val.includes('PROG') || val.includes('ONGOING') || val.includes('WIP') || val.includes('WORK') || val === 'P' || val === 'PROSES') return 'PROGRESS';
+        if (val.includes('INT') || val.includes('HOLD') || val.includes('PEND') || val.includes('WAIT') || val.includes('STOP') || val === 'I') return 'INTERUPT';
+        if (val.includes('OPEN') || val.includes('NEW') || val === 'O' || val === 'BARU') return 'OPEN';
+        return 'OPEN';
+    }
+
+    function smartNormalizeTrackStatus(rawVal) {
+        if (!rawVal) return 'Status Not Defined Yet';
+        const val = rawVal.toString().toLowerCase().trim();
+        if (!val || val === '-' || val === 'n/a' || val === 'null') return 'Status Not Defined Yet';
+
+        // Exact match check
+        const exact = PPC_MATERIAL_STATUS_LIST.find(s => s.toLowerCase() === val);
+        if (exact) return exact;
+
+        // Smart keyword mapping
+        if (val.includes('work done') || val === 'done' || val.includes('selesai')) return 'Work Done';
+        if (val.includes('payment') || val.includes('bayar')) return 'Waiting Payment';
+        if (val.includes('central store') || val.includes('gmf central') || val.includes('central')) return 'Available at GMF Central Store';
+        if (val.includes('local store') || val.includes('hangar') || val.includes('local')) return 'Available at Hangar Local Store';
+        if (val.includes('deliver') || val.includes('production') || val.includes('kirim ke prod')) return 'Delivered to Production';
+        if (val.includes('no source') || val.includes('kosong') || val.includes('not found')) return 'No Source';
+        if (val.includes('inspect') || val.includes('receiving') || val.includes('recceiving')) return 'Progress Inspect in Recceiving Area';
+        if (val.includes('repair') || val.includes('shop')) return 'Progress Repair in Shop';
+        if (val.includes('shipment') || val.includes('custom') || val.includes('bea cukai')) return 'Shipment / Customs Process';
+        if (val.includes('distribution') || val.includes('distribusi')) return 'Waiting for Distribution';
+        if (val.includes('purchase') || val === 'po' || val.includes('waiting po')) return 'Waiting Purchase Order';
+        if (val.includes('vendor')) return 'Waiting Shipment From Vendor';
+
+        return 'Status Not Defined Yet';
+    }
+
+    function smartExtractRowFields(row, index) {
+        // Buat map kunci lowercase tanpa spasi/simbol berlebih untuk pencocokan cerdas
+        const keys = Object.keys(row);
+        const findColVal = (patterns) => {
+            for (const p of patterns) {
+                const matchedKey = keys.find(k => {
+                    const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return cleanK === p || cleanK.includes(p);
+                });
+                if (matchedKey && row[matchedKey] !== undefined && row[matchedKey].toString().trim() !== '') {
+                    return row[matchedKey].toString().trim();
+                }
+            }
+            return '';
+        };
+
+        // 1. Smart Order No / Item No
+        const rawOrder = findColVal(['orderno', 'ordernumber', 'order', 'wonumber', 'wo', 'itemno', 'itemnumber', 'taskno', 'taskcard', 'mdrno', 'jcno', 'cardno', 'no']);
+        const itemNo = rawOrder ? rawOrder.toUpperCase() : `${ppcSelectedCategory}-${String(index + 1).padStart(3, '0')}`;
+
+        // 2. Smart Description
+        const rawDesc = findColVal(['description', 'taskdescription', 'desc', 'discrepancy', 'defect', 'subject', 'title', 'uraian', 'pekerjaan', 'detail']);
+        const desc = rawDesc || '-';
+
+        // 3. Smart Status (Open / Progress / Closed / Interupt)
+        const rawStatus = findColVal(['status', 'workstatus', 'taskstatus', 'jcstatus', 'mdrstatus', 'state', 'kondisi']);
+        const workStatus = smartNormalizeWorkStatus(rawStatus);
+
+        // 4. Smart Jobcard Track / MDR Track / Material Status
+        const rawTrack = findColVal(['mdrtrack', 'jobcardtrack', 'jctrack', 'track', 'materialstatus', 'logisticstatus', 'material', 'logistik', 'partstatus', 'supply']);
+        const materialStatus = smartNormalizeTrackStatus(rawTrack);
+
+        // 5. Smart Remark
+        const rawRemark = findColVal(['remark', 'remarks', 'note', 'notes', 'keterangan', 'ket', 'comment', 'hilite', 'info']);
+        const remarks = rawRemark || '-';
+
+        return { workStatus, itemNo, desc, materialStatus, remarks };
+    }
+
     function ppcHandleExcelUpload(event) {
         if (!isPPCAuthorized()) {
             alert('Akses Ditolak: Anda harus login sebagai PPC atau Admin.');
@@ -2389,36 +2465,39 @@
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                // Deteksi baris header otomatis jika baris pertama berisi judul laporan
+                const rawMatrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+                let headerRowIdx = 0;
+                for (let r = 0; r < Math.min(10, rawMatrix.length); r++) {
+                    const rowStr = rawMatrix[r].join(' ').toLowerCase();
+                    if (rowStr.includes('order') || rowStr.includes('desc') || rowStr.includes('status') || rowStr.includes('track') || rowStr.includes('item')) {
+                        headerRowIdx = r;
+                        break;
+                    }
+                }
+
+                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIdx, defval: "" });
 
                 if (!jsonRows || jsonRows.length === 0) {
-                    alert('File excel tidak memiliki baris data!');
+                    alert('File excel tidak memiliki baris data yang valid!');
                     return;
                 }
 
-                const newItems = jsonRows.map((row, i) => {
-                    const itemNo = row['ITEM NO'] || row['Item No'] || row['TASK NO'] || row['Task No'] || row['NO'] || `${ppcSelectedCategory}-${i + 1}`;
-                    const desc = row['DESCRIPTION'] || row['Description'] || row['TASK DESCRIPTION'] || row['DESC'] || '-';
-                    let workStatus = (row['WORK STATUS'] || row['Work Status'] || row['STATUS'] || 'OPEN').toString().toUpperCase().trim();
-                    if (!['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'].includes(workStatus)) {
-                        workStatus = 'OPEN';
-                    }
+                // Filter baris kosong sepenuhnya lalu olah secara cerdas
+                const validRows = jsonRows.filter(row => Object.values(row).some(v => v !== null && v.toString().trim() !== ''));
+                const newItems = validRows.map((row, i) => smartExtractRowFields(row, i));
 
-                    let materialStatus = row['MATERIAL STATUS'] || row['Material Status'] || row['LOGISTIC STATUS'] || 'Status Not Defined Yet';
-                    const matchedMat = PPC_MATERIAL_STATUS_LIST.find(s => s.toLowerCase() === materialStatus.toString().toLowerCase().trim());
-                    if (matchedMat) materialStatus = matchedMat;
+                if (newItems.length === 0) {
+                    alert('Tidak ditemukan baris data yang dapat diolah.');
+                    return;
+                }
 
-                    const zone = (row['ZONE'] || row['Zone'] || row['AREA'] || '').toString().toUpperCase();
-                    const remarks = (row['REMARKS'] || row['Remarks'] || row['NOTE'] || '').toString();
-
-                    return { itemNo, desc, workStatus, materialStatus, zone, remarks };
-                });
-
-                if (confirm(`Impor ${newItems.length} baris data ke dalam ${ppcSelectedReg} - ${ppcSelectedCategory}? Data saat ini akan digabungkan.`)) {
+                if (confirm(`Smart Import mendeteksi ${newItems.length} baris data valid untuk ${ppcSelectedReg} (${ppcSelectedCategory}). Gabungkan ke tabel sekarang?`)) {
                     ppcActiveDataItems = newItems.concat(ppcActiveDataItems);
                     ppcRenderAll();
                     ppcSaveCategoryDataToDB();
-                    alert(`Berhasil mengimpor ${newItems.length} data!`);
+                    alert(`Berhasil mengolah dan mengimpor ${newItems.length} data!`);
                 }
             } catch(err) {
                 console.error("Error membaca Excel:", err);
@@ -2435,13 +2514,13 @@
             alert('Tidak ada data untuk diexport!');
             return;
         }
+        const trackColName = ppcSelectedCategory === 'MDR' ? 'MDR Track' : 'Jobcard Track';
         const exportData = ppcActiveDataItems.map(item => ({
-            "ITEM NO": item.itemNo,
-            "DESCRIPTION": item.desc,
-            "WORK STATUS": item.workStatus,
-            "MATERIAL STATUS": item.materialStatus,
-            "ZONE / AREA": item.zone,
-            "REMARKS": item.remarks
+            "Status": item.workStatus,
+            "Order No": item.itemNo,
+            "Description": item.desc,
+            [trackColName]: item.materialStatus,
+            "Remark": item.remarks
         }));
 
         const ws = XLSX.utils.json_to_sheet(exportData);
@@ -2592,7 +2671,7 @@
             drilldownTitle.innerText = `DETAIL PENGERJAAN: ${value}`;
             filteredItems = ppcActiveDataItems.filter(i => (i.workStatus || 'OPEN').toUpperCase() === value.toUpperCase());
         } else if (type === 'MATERIAL_STATUS') {
-            drilldownTitle.innerText = `DETAIL LOGISTIK: ${value}`;
+            drilldownTitle.innerText = `DETAIL TRACK: ${value}`;
             filteredItems = ppcActiveDataItems.filter(i => (i.materialStatus || 'Status Not Defined Yet') === value);
         } else if (type === 'SUMMARY') {
             drilldownTitle.innerText = `DETAIL REKAPAN: ${value}`;
@@ -2612,15 +2691,15 @@
                 const wColor = PPC_WORK_STATUS_COLORS[itm.workStatus] || '#64748b';
                 return `
                     <tr>
-                        <td class="font-mono font-bold text-blue-700">${itm.itemNo}</td>
-                        <td style="white-space:normal; line-height:1.2;">${itm.desc}</td>
                         <td>
                             <span style="display:inline-block; padding:1px 5px; border-radius:3px; font-size:8px; font-weight:800; color:white; background:${wColor};">
                                 ${itm.workStatus}
                             </span>
                         </td>
+                        <td class="font-mono font-bold text-blue-700">${itm.itemNo}</td>
+                        <td style="white-space:normal; line-height:1.2;">${itm.desc}</td>
                         <td style="white-space:normal; line-height:1.2; font-size:9.5px;">${itm.materialStatus}</td>
-                        <td style="font-weight:700; color:#475569;">${itm.zone || '-'}</td>
+                        <td style="white-space:normal; color:#475569;">${itm.remarks || '-'}</td>
                     </tr>
                 `;
             }).join('');

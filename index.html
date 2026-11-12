@@ -10,6 +10,8 @@
     <!-- Libraries for PPC Dashboard -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS for Excel Upload/Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -144,7 +146,7 @@
 
         .aircraft-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
             grid-auto-rows: min-content;
             gap: 6px; 
             max-height: 45%; 
@@ -216,7 +218,7 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         thead th { position: sticky; top: 0; z-index: 10; text-align: left; background: #f8fafc; padding: 8px 12px; color: var(--text-muted); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; cursor: pointer; }
 
-        tbody td { padding: 2px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10.5px; height: 24px; line-height: 1; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        tbody td { padding: 4px 8px; border-bottom: 1px solid #f1f5f9; font-size: 10.5px; line-height: 1.2; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .btn { padding: 4px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 10px; height: 28px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
@@ -288,7 +290,7 @@
 
         /* PPC Dashboard Custom Styles */
         #ppc-dashboard { overflow-y: auto; background-color: #f9fafb; }
-        #ppc-dashboard.active { display: block; }
+        #ppc-dashboard.active { display: flex; flex-direction: column; }
 
         #loadingOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -372,7 +374,7 @@
 <div id="saveToastPopup" class="toast-popup">
     <div style="font-size: 28px;">✅</div>
     <div style="font-size: 14px; font-weight: 800; color: #2ec4b6; letter-spacing: 0.5px;">DATA BERHASIL DISIMPAN!</div>
-    <div style="font-size: 11px; color: #cbd5e1; text-align: center;">Perubahan Manpower dan Distribution telah tersimpan.</div>
+    <div style="font-size: 11px; color: #cbd5e1; text-align: center;">Perubahan data telah tersimpan ke sistem.</div>
 </div>
 
 <nav class="sidebar-nav">
@@ -418,29 +420,23 @@
                     <h2 style="margin:0; font-size: 16px; color: var(--primary);">🏠 DASHBOARD CABIN</h2>
                     <p style="margin: 3px 0 0 0; color: var(--text-muted); font-size: 11px;">Informasi, Inovasi, dan Pengumuman Terkini</p>
                 </div>
-                <!-- Button Add Info hanya untuk Admin/Dashboard -->
                 <button class="btn btn-primary home-cud-control" style="display:none;" onclick="document.getElementById('add-info-modal').style.display='flex'">+ ADD INFO</button>
             </div>
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; flex: 1; overflow: hidden; min-height: 400px;">
-                <!-- Kolom Kiri (View Besar) -->
                 <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; background: #fdfdfd; display: flex; flex-direction: column; overflow-y: auto;">
                     <img id="main-info-image" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 6px; display: none; margin-bottom: 15px;" src="" alt="Info Image">
                     <h3 id="main-info-title" style="margin: 0 0 10px 0; font-size: 18px; color: var(--dark);">Pilih informasi di sebelah kanan</h3>
                     <p id="main-info-text" style="white-space: pre-wrap; font-size: 13px; color: #4a5568; line-height: 1.6;"></p>
                 </div>
 
-                <!-- Kolom Kanan (Daftar List) -->
-                <div id="info-list-container" style="border: 1px solid #e2e8f0; border-radius: 8px; background: #fdfdfd; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px;">
-                    <!-- Diisi lewat Javascript -->
-                </div>
+                <div id="info-list-container" style="border: 1px solid #e2e8f0; border-radius: 8px; background: #fdfdfd; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
             </div>
         </div>
     </div>
 
     <!-- TAB 1: AVAILABILITY -->
     <div id="distribution" class="sheet-content">
-        <!-- MODE 1: Tabel Standar untuk TJN 1-4 & ALL TJN -->
         <div id="standardAvailabilityCard" class="data-card">
             <div class="header-action" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                 <div style="display:flex; align-items:center; gap: 12px;">
@@ -480,9 +476,7 @@
             </div>
         </div>
 
-        <!-- MODE 2: Khusus TJN-5 & TJN-6 (Dua Tabel Atas & Bawah, Drag-and-Drop Shift) -->
         <div id="splitShiftAvailabilityCard" style="display:none; flex:1; flex-direction:column; gap:10px; height:100%; overflow:hidden;">
-            <!-- Header Kontrol Bersama TJN-5 & 6 -->
             <div class="data-card" style="padding:8px 12px; flex:0 0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <h2 style="margin:0; font-size:13px; font-weight:800; color:var(--dark);">RESOURCE MANAGEMENT (DUAL SHIFT)</h2>
@@ -499,7 +493,6 @@
                 </div>
             </div>
 
-            <!-- Tabel Atas: Morning Shift -->
             <div class="data-card shift-table-card" style="flex:1; padding:10px; display:flex; flex-direction:column; overflow:hidden;"
                  ondragover="handleShiftTableDragOver(event)" ondragleave="handleShiftTableDragLeave(event)" ondrop="handleShiftTableDrop(event, 'MORNING SHIFT')">
                 <div style="font-size:11px; font-weight:800; color:#0369a1; margin-bottom:6px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
@@ -523,7 +516,6 @@
                 </div>
             </div>
 
-            <!-- Tabel Bawah: Late Shift -->
             <div class="data-card shift-table-card" style="flex:1; padding:10px; display:flex; flex-direction:column; overflow:hidden;"
                  ondragover="handleShiftTableDragOver(event)" ondragleave="handleShiftTableDragLeave(event)" ondrop="handleShiftTableDrop(event, 'LATE SHIFT')">
                 <div style="font-size:11px; font-weight:800; color:#b45309; margin-bottom:6px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
@@ -560,13 +552,10 @@
                 <div class="pool-summary" id="poolAvailabilitySummary"></div>
             </div>
 
-            <!-- Panel Khusus ALL TJN: Tampilan Vertikal Berdampingan (Rekapan di Kiri, Detail di Kanan) Tanpa MP Pool -->
             <div id="allTjnRightPanel" style="display:none; flex:1; gap:12px; height:100%; overflow:hidden;">
-                <!-- Kolom Kiri: REKAPAN MANPOWER (ALL TJN) dengan Selektor Shift -->
                 <div class="data-card" style="width: 320px; min-width: 300px; max-width: 350px; padding: 12px; display: flex; flex-direction: column; overflow-y: auto;">
                     <div style="font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
                         <span>📊 REKAPAN MANPOWER</span>
-                        <!-- Filter Shift Option ALL TJN dipindahkan ke kolom kiri/rekapan -->
                         <div style="display: flex; align-items: center; gap: 4px;">
                             <label style="font-size: 8.5px; font-weight: 700; color: var(--text-muted);">SHIFT:</label>
                             <select id="allTjnShiftFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 22px; font-size: 8.5px; padding: 0 4px; font-weight: 800; color: var(--primary); background: white;">
@@ -579,7 +568,6 @@
                     <div id="allTjnSummaryGrid" style="display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
 
-                <!-- Kolom Kanan: DETAIL NAMA & STATUS (Filter by Status & Text Search) -->
                 <div class="data-card" style="flex: 1; padding: 12px; display: flex; flex-direction: column; overflow: hidden;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                         <div style="font-size: 11px; font-weight: 800; color: var(--dark); text-transform: uppercase;">
@@ -588,8 +576,6 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                             <input type="text" id="searchInputAllTjn" placeholder="SEARCH NAMA / ID..." onkeyup="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 8px; border-radius: 4px; border: 1px solid #e2e8f0; width: 140px; text-transform: uppercase; outline:none;">
-                            
-                            <!-- Filter Status ALL TJN -->
                             <label style="font-size: 9px; font-weight: 700; color: var(--text-muted);">STATUS:</label>
                             <select id="allTjnFilterSelect" class="filter-select" onchange="renderAllTjnDistributionPanel()" style="height: 24px; font-size: 9px; padding: 0 6px;">
                                 <option value="ALL">ALL STATUS</option>
@@ -616,7 +602,6 @@
                 </div>
             </div>
 
-            <!-- Panel Default: Aircraft Grid + Workload -->
             <div class="distribution-content" id="standardDistroContent">
                 <div class="aircraft-grid" id="aircraftGrid"></div>
                 <div class="workload-column">
@@ -625,194 +610,275 @@
                         <button type="button" id="btnNextloadView" class="btn" onclick="switchWorkloadMode('NEXT LOAD')" style="background: var(--warning); color: #1e1e2d; border: 1px solid rgba(255,255,255,0.4); font-weight: 800; height: 24px; padding: 0 14px; font-size: 10px; border-radius: 4px; cursor: pointer; opacity: 0.5;">NEXT LOAD</button>
                     </div>
                     <div class="workload-master-container" id="workloadContainerCurrent">
-                        <div class="workload-pane">
-                            <div class="pane-title"></div>
-                            <textarea id="workload_col1" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
-                        </div>
-                        <div class="workload-pane">
-                            <div class="pane-title"></div>
-                            <textarea id="workload_col2" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
-                        </div>
-                        <div class="workload-pane">
-                            <div class="pane-title"></div>
-                            <textarea id="workload_col3" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea>
-                        </div>
+                        <div class="workload-pane"><div class="pane-title"></div><textarea id="workload_col1" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea></div>
+                        <div class="workload-pane"><div class="pane-title"></div><textarea id="workload_col2" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea></div>
+                        <div class="workload-pane"><div class="pane-title"></div><textarea id="workload_col3" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveGeneralWorkload()"></textarea></div>
                     </div>
                     <div class="workload-master-container" id="workloadContainerNext" style="display: none;">
-                        <div class="workload-pane">
-                            <div class="pane-title"></div>
-                            <textarea id="nextload_col1" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea>
-                        </div>
-                        <div class="workload-pane">
-                            <div class="pane-title"></div>
-                            <textarea id="nextload_col2" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea>
-                        </div>
-                        <div class="workload-pane">
-                            <div class="pane-title"></div>
-                            <textarea id="nextload_col3" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea>
-                        </div>
+                        <div class="workload-pane"><div class="pane-title"></div><textarea id="nextload_col1" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea></div>
+                        <div class="workload-pane"><div class="pane-title"></div><textarea id="nextload_col2" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea></div>
+                        <div class="workload-pane"><div class="pane-title"></div><textarea id="nextload_col3" class="workload-direct-edit mp-cud-input" placeholder="Type here..." oninput="saveNextWorkload()"></textarea></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- TAB 3: PPC DASHBOARD -->
-    <div id="ppc-dashboard" class="sheet-content relative font-sans text-gray-900 tracking-normal selection:bg-blue-500 selection:text-white">
-        <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-            <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20 text-white">
-                        <span class="text-xl">✈️</span>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold tracking-wider text-gray-800 m-0 leading-tight">PPC CABIN DASHBOARD</h1>
-                        <p class="text-xs text-gray-500 m-0">Cabin Status Monitoring</p>
-                    </div>
+    <!-- TAB 3: REVISED PPC DASHBOARD -->
+    <div id="ppc-dashboard" class="sheet-content font-sans text-gray-900 tracking-normal">
+        <!-- PPC Navbar Top -->
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm px-6 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+                    <span class="text-lg">✈️</span>
                 </div>
-                <div id="current-date" class="text-xs font-mono bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-lg shadow-inner"></div>
+                <div>
+                    <h1 class="text-sm font-black tracking-wider text-gray-800 m-0 uppercase">PPC CABIN MONITORING</h1>
+                    <p class="text-[10px] text-gray-500 m-0 font-medium">Job Card & Material Discrepancy Reporting</p>
+                </div>
+            </div>
+
+            <!-- Global Action Bar on Top -->
+            <div class="flex items-center gap-3">
+                <button id="ppcBackBtn" onclick="ppcNavigateBack()" style="display:none;" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md font-bold text-xs flex items-center gap-1 border border-gray-300 transition">
+                    <span>◀</span> Kembali
+                </button>
+                <div class="text-[11px] font-mono bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1 rounded-md" id="ppcBreadcrumb">
+                    PILIH REGISTRASI
+                </div>
             </div>
         </header>
 
-        <main class="container mx-auto px-6 py-8 pb-24">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 overflow-x-auto flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-lg font-bold text-gray-800 tracking-wide flex items-center gap-2 m-0">
+        <div class="p-5 flex-1 flex flex-col gap-5 overflow-y-auto">
+            <!-- VIEW 1: SELEKSI REGISTRASI (TARIKAN DARI TJN-1 s/d TJN-6) -->
+            <div id="ppcViewRegSelection" class="flex flex-col gap-4">
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4 mb-4">
+                        <div>
+                            <h2 class="text-sm font-black uppercase text-gray-800 m-0 flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-                                A/C Status Monitoring
+                                DAFTAR PESAWAT AKTIF (DISTRIBUTION MP TJN-1 S/D TJN-6)
                             </h2>
+                            <p class="text-xs text-gray-500 m-0 mt-0.5">Pilih salah satu registrasi pesawat untuk memantau atau mengedit status Job Card & MDR</p>
                         </div>
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="ppcRegSearch" placeholder="CARI REGISTRASI..." onkeyup="renderPpcAircraftCards()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500">
+                            <button onclick="loadPpcRegistrations()" class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-md text-xs font-bold transition">🔄 Refresh</button>
+                        </div>
+                    </div>
+
+                    <div id="ppcAircraftCardGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: PILIHAN TIPE DATA (JC ATAU MDR) -->
+            <div id="ppcViewOptionSelection" style="display:none;" class="flex flex-col gap-4">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-center">
+                    <div class="inline-block px-4 py-1.5 bg-blue-600 text-white font-mono font-bold text-sm rounded-md mb-2" id="ppcSelectedRegBadge">
+                        REGISTRASI: PK-XXX
+                    </div>
+                    <h2 class="text-base font-black text-gray-800 uppercase mb-6">PILIH KATEGORI DATA UNTUK DITAMPILKAN</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                        <!-- Kartu Opsi JC -->
+                        <div onclick="ppcSelectCategory('JC')" class="group cursor-pointer bg-gradient-to-br from-blue-50 to-indigo-50/50 hover:from-blue-600 hover:to-indigo-600 border-2 border-blue-200 hover:border-transparent rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:-translate-y-1">
+                            <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-white group-hover:bg-white/20 flex items-center justify-center text-3xl shadow-sm transition">
+                                📋
+                            </div>
+                            <h3 class="text-base font-black text-blue-900 group-hover:text-white uppercase tracking-wider mb-1">JOB CARD (JC)</h3>
+                            <p class="text-xs text-blue-700 group-hover:text-blue-100 leading-relaxed">Monitoring pengerjaan paket kartu kerja kabin, progress open, interupt, dan status material.</p>
+                            <div class="mt-4 inline-flex items-center text-xs font-bold text-blue-600 group-hover:text-white">
+                                Buka Data JC & Rekapan ➔
+                            </div>
+                        </div>
+
+                        <!-- Kartu Opsi MDR -->
+                        <div onclick="ppcSelectCategory('MDR')" class="group cursor-pointer bg-gradient-to-br from-amber-50 to-orange-50/50 hover:from-amber-500 hover:to-orange-600 border-2 border-amber-200 hover:border-transparent rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:-translate-y-1">
+                            <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-white group-hover:bg-white/20 flex items-center justify-center text-3xl shadow-sm transition">
+                                🛠️
+                            </div>
+                            <h3 class="text-base font-black text-amber-900 group-hover:text-white uppercase tracking-wider mb-1">MAINTENANCE DISCREPANCY (MDR)</h3>
+                            <p class="text-xs text-amber-800 group-hover:text-amber-100 leading-relaxed">Monitoring temuan defect kabin, tindak lanjut penutupan, part supply, dan flow logistik.</p>
+                            <div class="mt-4 inline-flex items-center text-xs font-bold text-amber-700 group-hover:text-white">
+                                Buka Data MDR & Rekapan ➔
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: DATA LENGKAP & REKAPAN 3 DIAGRAM DONUT -->
+            <div id="ppcViewDetails" style="display:none;" class="flex flex-col gap-5">
+                <!-- Toolbar Atas: Upload Excel & Tambah Data -->
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <span id="ppcActiveContextTag" class="px-3 py-1 bg-gray-900 text-white rounded font-mono font-black text-xs uppercase tracking-wide"></span>
+                        <span id="ppcDataCounterBadge" class="text-xs font-semibold text-gray-500">0 Data Item</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap ppc-cud-control" style="display:none;">
+                        <!-- Upload Excel Input -->
+                        <label class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-md cursor-pointer flex items-center gap-1 shadow-sm transition">
+                            <span>📥</span> UPLOAD EXCEL / CSV
+                            <input type="file" id="ppcExcelUploadInput" accept=".xlsx, .xls, .csv" onchange="ppcHandleExcelUpload(event)" class="hidden">
+                        </label>
+                        <button onclick="ppcOpenItemModal()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-md flex items-center gap-1 shadow-sm transition">
+                            <span>+</span> TAMBAH ITEM
+                        </button>
+                        <button onclick="ppcExportToExcel()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-md flex items-center gap-1 border border-gray-300 transition">
+                            <span>📤</span> EXPORT
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bagian 3 Donut Diagram & Dynamic Right Panel Drilldown -->
+                <div>
+                    <div id="ppcChartsMainContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4 transition-all duration-300">
+                        <!-- Donut 1: Status Pengerjaan (OPEN, PROGRESS, CLOSED, INTERUPT) -->
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between" style="min-height: 280px;">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">1. STATUS PENGERJAAN</h3>
+                                <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
+                            </div>
+                            <div class="flex-1 relative flex items-center justify-center">
+                                <canvas id="ppcChartStatus"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Donut 2: Material & Logistic Status (13 Status Lengkap) -->
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between" style="min-height: 280px;">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">2. STATUS MATERIAL & LOGISTIK</h3>
+                                <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
+                            </div>
+                            <div class="flex-1 relative flex items-center justify-center">
+                                <canvas id="ppcChartMaterial"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Donut 3: Rekapan Prioritas / Trade Area -->
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between" style="min-height: 280px;">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">3. REKAPAN KELENGKAPAN</h3>
+                                <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
+                            </div>
+                            <div class="flex-1 relative flex items-center justify-center">
+                                <canvas id="ppcChartSummary"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Drilldown Kanan (Muncul Saat Slice Donut Diklik) -->
+                    <div id="ppcDrilldownWrapper" style="display:none;" class="bg-white p-4 rounded-xl border-2 border-blue-500 shadow-md flex flex-col gap-3 w-full">
+                        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-black uppercase text-blue-700" id="ppcDrilldownTitle">DETAIL FILTERED DATA</span>
+                                <span id="ppcDrilldownCount" class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full"></span>
+                            </div>
+                            <button onclick="ppcCloseDrilldown()" class="text-gray-400 hover:text-rose-600 font-black text-sm px-2">✕ Tutup Drilldown</button>
+                        </div>
+                        <div class="table-container" style="max-height: 550px;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width:130px;">ITEM / TASK NO</th>
+                                        <th>DESCRIPTION</th>
+                                        <th style="width:110px;">WORK STATUS</th>
+                                        <th style="width:170px;">MATERIAL STATUS</th>
+                                        <th style="width:90px;">AREA / ZONE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ppcDrilldownTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabel Data Lengkap & Editable -->
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-3">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <h3 class="text-xs font-black uppercase text-gray-800 m-0">TABEL DATA LENGKAP</h3>
+                        <input type="text" id="ppcTableSearch" placeholder="CARI ITEM / DESKRIPSI..." onkeyup="ppcRenderDataTable()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500 w-56">
+                    </div>
+                    <div class="table-container" style="max-height: 380px;">
+                        <table>
                             <thead>
-                                <tr class="text-gray-500 font-mono text-[11px] bg-gray-50">
-                                    <th class="px-3 py-3 text-left uppercase tracking-wider">Registration</th>
-                                    <th class="px-3 py-3 text-left uppercase tracking-wider">JC %</th>
-                                    <th class="px-3 py-3 text-left uppercase tracking-wider">MDR %</th>
-                                    <th class="px-3 py-3 text-left uppercase tracking-wider">Plan RTS</th>
-                                    <th class="px-3 py-3 text-left uppercase tracking-wider">H- RTS</th>
-                                    <th class="px-3 py-3 text-left uppercase tracking-wider">Hilite</th>
-                                    <th class="px-3 py-3 text-center uppercase tracking-wider ppc-cud-control" style="display:none;">Actions</th>
+                                <tr>
+                                    <th style="width:120px;">ITEM NUMBER</th>
+                                    <th>DESCRIPTION</th>
+                                    <th style="width:120px;">WORK STATUS</th>
+                                    <th style="width:200px;">MATERIAL / LOGISTIC STATUS</th>
+                                    <th style="width:100px;">ZONE / AREA</th>
+                                    <th style="width:100px;">REMARKS</th>
+                                    <th style="width:70px; text-align:right;" class="ppc-cud-control" style="display:none;">AKSI</th>
                                 </tr>
                             </thead>
-                            <tbody id="plane-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                            <tbody id="ppcMasterTableBody"></tbody>
                         </table>
                     </div>
                 </div>
-
-                <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 flex flex-col justify-between">
-                    <h2 class="text-lg font-bold mb-4 text-gray-800 tracking-wide m-0">Grafik JC & MDR per Registrasi</h2>
-                    <div class="w-full h-80 relative">
-                        <canvas id="planeChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <div class="absolute bottom-6 left-6 z-40 ppc-cud-control" style="display:none;">
-            <button onclick="toggleAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center text-3xl font-bold transition-all transform hover:scale-110 focus:outline-none">
-                +
-            </button>
-        </div>
-
-        <!-- Modals for PPC -->
-        <div id="add-modal" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-            <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
-                    <h3 class="text-lg font-bold text-blue-600 m-0">Tambah Data Pesawat</h3>
-                    <button type="button" onclick="toggleAddModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
-                </div>
-                <form id="plane-form">
-                    <div class="mb-4">
-                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">A/C Reg.</label>
-                        <input type="text" id="reg" placeholder="Contoh: PK-ABC" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase font-mono">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC Open</label>
-                            <input type="number" id="jc-open" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC Closed</label>
-                            <input type="number" id="jc-closed" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR Open</label>
-                            <input type="number" id="mdr-open" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR Closed</label>
-                            <input type="number" id="mdr-closed" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Plan RTS</label>
-                        <input type="date" id="rts" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Hilite Notes</label>
-                        <textarea id="hilite" rows="3" placeholder="Tulis catatan atau keterangan..." required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="toggleAddModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm transition">Batal</button>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg text-sm transition shadow-md shadow-blue-500/20 border-none cursor-pointer">Simpan Data</button>
-                    </div>
-                </form>
             </div>
         </div>
 
-        <div id="edit-modal" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-            <div class="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
-                    <h3 class="text-lg font-bold text-blue-600 m-0">Edit Data Pesawat</h3>
-                    <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+        <!-- Modal Tambah/Edit Data Item PPC -->
+        <div id="ppcItemModal" class="modal-overlay">
+            <div class="modal-content" style="max-width: 520px;">
+                <div class="modal-header">
+                    <h3 style="margin:0; font-size:14px; color:var(--primary);" id="ppcItemModalTitle">TAMBAH DATA ITEM</h3>
+                    <button type="button" style="background:none; border:none; cursor:pointer; font-size:16px" onclick="ppcCloseItemModal()">✕</button>
                 </div>
-                <form id="edit-form">
-                    <input type="hidden" id="edit-index">
-                    <div class="mb-4">
-                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">A/C Reg.</label>
-                        <input type="text" id="edit-reg" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-400 cursor-not-allowed uppercase font-mono">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC Open</label>
-                            <input type="number" id="edit-jc-open" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                <form id="ppcItemForm" onsubmit="ppcSaveItem(event)">
+                    <input type="hidden" id="ppcEditItemIndex" value="-1">
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>ITEM / TASK CARD NUMBER</label>
+                            <input type="text" id="ppcInputItemNo" required class="wo-input uppercase font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                         </div>
-                        <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">JC Closed</label>
-                            <input type="number" id="edit-jc-closed" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
+                        <div class="form-group full">
+                            <label>DESCRIPTION</label>
+                            <textarea id="ppcInputDesc" required rows="2" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-family:inherit;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>STATUS PENGERJAAN</label>
+                            <select id="ppcInputWorkStatus" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-weight:700;">
+                                <option value="OPEN">OPEN</option>
+                                <option value="PROGRESS">PROGRESS</option>
+                                <option value="CLOSED">CLOSED</option>
+                                <option value="INTERUPT">INTERUPT</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ZONE / AREA</label>
+                            <input type="text" id="ppcInputZone" placeholder="Contoh: FWD CABIN" class="wo-input uppercase" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                        </div>
+                        <div class="form-group full">
+                            <label>STATUS MATERIAL & LOGISTIK</label>
+                            <select id="ppcInputMaterialStatus" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                <option value="Waiting Payment">Waiting Payment</option>
+                                <option value="Available at GMF Central Store">Available at GMF Central Store</option>
+                                <option value="Available at Hangar Local Store">Available at Hangar Local Store</option>
+                                <option value="Delivered to Production">Delivered to Production</option>
+                                <option value="No Source">No Source</option>
+                                <option value="Progress Inspect in Recceiving Area">Progress Inspect in Recceiving Area</option>
+                                <option value="Progress Repair in Shop">Progress Repair in Shop</option>
+                                <option value="Shipment / Customs Process">Shipment / Customs Process</option>
+                                <option value="Status Not Defined Yet">Status Not Defined Yet</option>
+                                <option value="Waiting for Distribution">Waiting for Distribution</option>
+                                <option value="Waiting Purchase Order">Waiting Purchase Order</option>
+                                <option value="Waiting Shipment From Vendor">Waiting Shipment From Vendor</option>
+                                <option value="Work Done">Work Done</option>
+                            </select>
+                        </div>
+                        <div class="form-group full">
+                            <label>REMARKS / KETERANGAN</label>
+                            <input type="text" id="ppcInputRemarks" class="wo-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR Open</label>
-                            <input type="number" id="edit-mdr-open" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono uppercase text-gray-600 mb-1">MDR Closed</label>
-                            <input type="number" id="edit-mdr-closed" required min="0" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Plan RTS</label>
-                        <input type="date" id="edit-rts" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono">
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-xs font-mono uppercase text-gray-600 mb-1">Hilite Notes</label>
-                        <textarea id="edit-hilite" rows="3" required class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeEditModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm transition">Batal</button>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg text-sm transition shadow-md shadow-blue-500/20 border-none cursor-pointer">Simpan Perubahan</button>
+                    <div class="modal-footer" style="margin-top:20px;">
+                        <button type="button" class="btn" style="background:#eee" onclick="ppcCloseItemModal()">BATAL</button>
+                        <button type="submit" class="btn btn-primary">SIMPAN DATA</button>
                     </div>
                 </form>
             </div>
@@ -857,6 +923,7 @@
                         <option>SENIOR AIRCRAFT CABIN TECHNICIAN</option>
                         <option>AIRCRAFT CABIN TECHNICIAN</option>
                         <option>TECHNICIAN ASSISTANCE</option>
+                        <option>TECHNICAL CABIN ASSISTANCE</option>
                     </select>
                 </div>
                 <div class="form-group" id="staffModalShiftGroup" style="display:none;"><label>SHIFT</label>
@@ -934,6 +1001,10 @@
         return (currentUserRole === 'manager' && currentUnit === managerUnit);
     }
 
+    function isPPCAuthorized() {
+        return ['admin', 'ppc'].includes(currentUserRole);
+    }
+
     function updateAuthUI() {
         const roleDisplay = document.getElementById('roleDisplay');
         const loginBtn = document.getElementById('loginBtn');
@@ -1004,7 +1075,7 @@
 
     function applyPermissions() {
         const canEditMP = isMPAuthorized();
-        const canEditPPC = ['admin', 'ppc'].includes(currentUserRole);
+        const canEditPPC = isPPCAuthorized();
         const canEditHome = ['admin', 'dashboard'].includes(currentUserRole);
 
         // Manpower Pro (Tabs 1 & 2)
@@ -1021,18 +1092,17 @@
             }
         });
 
-        // Set draggable pada baris tabel shift TJN-5 & 6
         document.querySelectorAll('.shift-row-drag').forEach(el => {
             el.setAttribute('draggable', canEditMP ? 'true' : 'false');
             el.style.cursor = canEditMP ? 'grab' : 'default';
         });
 
-        // PPC Dashboard (Tab 3)
+        // PPC Dashboard
         document.querySelectorAll('.ppc-cud-control').forEach(el => {
-            el.style.display = canEditPPC ? '' : 'none';
+            el.style.display = canEditPPC ? 'inline-flex' : 'none';
         });
 
-        // Home Dashboard (Tab 0)
+        // Home Dashboard
         document.querySelectorAll('.home-cud-control').forEach(el => {
             if(canEditHome) {
                 if(el.tagName === 'BUTTON') el.style.display = 'inline-block';
@@ -1089,7 +1159,6 @@
             div.onclick = () => setMainInfo(index);
 
             let imgHtml = item.image ? `<img src="${item.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; flex-shrink:0;">` : `<div style="width:60px; height:60px; background:#f1f5f9; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#cbd5e1; font-size:20px;">📄</div>`;
-
             let snippet = item.text.length > 50 ? item.text.substring(0, 50) + '...' : item.text;
 
             div.innerHTML = `
@@ -1138,7 +1207,6 @@
         }
 
         homeData.unshift({ title, text, image: base64Image, timestamp: new Date().getTime() });
-
         document.getElementById('info-form').reset();
         document.getElementById('add-info-modal').style.display = 'none';
 
@@ -1225,9 +1293,6 @@
         } catch (err) { console.error("Error simpan data:", err); }
     }
 
-    // ==========================================
-    // FUNGSI SAVE UPDATE DATA LANGSUNG (TANPA RELOAD PAGE) & TOAST NOTIF
-    // ==========================================
     function updateSaveButtonVisibility() {
         const btn = document.getElementById('btnSaveUpdateData');
         if (!btn) return;
@@ -1340,10 +1405,6 @@
 
                 units.forEach((u, i) => {
                     const unitDefaultShift = allShiftsRes[i] || 'MORNING SHIFT';
-                    
-                    // Ketentuan shift ALL TJN:
-                    // TJN-1 s.d. TJN-4: ambil dari option shift unit di sebelah Resource Management
-                    // TJN-5 & TJN-6: ambil dari penempatan shift individual (Morning / Late Table)
                     const isDualTableUnit = ['TJN-5', 'TJN-6'].includes(u);
 
                     const list = (allMpRes[i] || []).map(item => {
@@ -1351,11 +1412,11 @@
                         if (isDualTableUnit) {
                             finalShift = item.shift || 'MORNING SHIFT';
                         } else {
-                            finalShift = unitDefaultShift; // Override mengikuti shift unit terkini
+                            finalShift = unitDefaultShift;
                         }
                         return { 
                             ...item, 
-                            unitSource: u,
+                            unitSource: u, 
                             shift: finalShift
                         };
                     });
@@ -1389,7 +1450,6 @@
                     getStore(`${currentUnit}_shift_status`, "MORNING SHIFT")
                 ]);
 
-                // Sinkronisasi shift per unit
                 const isDual = ['TJN-5', 'TJN-6'].includes(currentUnit);
                 manpowerData = manpowerData.map(m => ({
                     ...m,
@@ -1399,7 +1459,6 @@
 
             document.getElementById('globalUnitSelect').value = currentUnit;
 
-            // Toggle Tampilan Tab Availability
             const isSplitShiftUnit = ['TJN-5', 'TJN-6'].includes(currentUnit);
             const standardCard = document.getElementById('standardAvailabilityCard');
             const splitCard = document.getElementById('splitShiftAvailabilityCard');
@@ -1555,7 +1614,9 @@
 
         if(id === 'schedule') renderDistro();
         if(id === 'distribution') renderTable();
-        if(id === 'ppc-dashboard') { if(planeChartInstance) planeChartInstance.resize(); }
+        if(id === 'ppc-dashboard') {
+            loadPpcRegistrations();
+        }
 
         updateSaveButtonVisibility();
     }
@@ -1667,9 +1728,6 @@
         applyPermissions();
     }
 
-    // ==========================================
-    // LOGIKA DRAG AND DROP SHIFT ANTAR TABEL (TJN-5 & 6)
-    // ==========================================
     function handleShiftRowDragStart(e, empNumber) {
         if (!isMPAuthorized()) { e.preventDefault(); return; }
         e.dataTransfer.setData('text/plain', empNumber);
@@ -1775,7 +1833,6 @@
         const allTjnRight = document.getElementById('allTjnRightPanel');
         const poolSidebar = document.getElementById('poolSidebar');
 
-        // Handling khusus tampilan ALL TJN: Tanpa MP Pool, Vertikal berdampingan (Kiri Rekapan, Kanan Detail)
         if (currentUnit === 'ALL TJN') {
             if (standardDistro) standardDistro.style.display = 'none';
             if (allTjnRight) allTjnRight.style.display = 'flex';
@@ -1889,7 +1946,6 @@
             return idStr.startsWith('5') || idStr.startsWith('7');
         });
 
-        // Baca Shift Filter yang terletak di kolom kiri/rekapan
         const shiftFilterSelect = document.getElementById('allTjnShiftFilterSelect');
         const selectedShift = shiftFilterSelect ? shiftFilterSelect.value : 'ALL';
 
@@ -1900,14 +1956,8 @@
 
         const total = shiftFilteredMp.length;
         const countByStatus = {
-            "Available": 0,
-            "Annual Leave": 0,
-            "Change Shift": 0,
-            "Sick Leave": 0,
-            "Training": 0,
-            "Extra Leave/Special Leave": 0,
-            "OFF": 0,
-            "TANPA KETERANGAN": 0
+            "Available": 0, "Annual Leave": 0, "Change Shift": 0, "Sick Leave": 0,
+            "Training": 0, "Extra Leave/Special Leave": 0, "OFF": 0, "TANPA KETERANGAN": 0
         };
 
         shiftFilteredMp.forEach(m => {
@@ -2007,7 +2057,6 @@
         }
     }
 
-    let draggedCard = null;
     function handleAcDragStart(e, reg) { if (!isMPAuthorized()) { e.preventDefault(); return; } e.dataTransfer.setData('ac_reg', reg); }
     function handleAcDragOver(e) { e.preventDefault(); }
     function handleAcDragLeave(e) {}
@@ -2044,197 +2093,566 @@
     function directUpdateLine(reg, val) { if (!isMPAuthorized()) return; aircraftLines[reg] = val; saveDataToDB(); }
     function addNewAcDistro() { if (!isMPAuthorized()) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
 
-    // ==========================================
-    // SCRIPTS FOR PPC DASHBOARD (SUPABASE)
-    // ==========================================
-    let planeData = [];
-    let planeChartInstance = null;
+    // =========================================================================
+    // REVISED SCRIPTS FOR PPC DASHBOARD (MULTI-VIEW, EXCEL IMPORT, 3 DONUTS)
+    // =========================================================================
+    let ppcAllAircraftList = [];
+    let ppcSelectedReg = null;
+    let ppcSelectedCategory = null;
+    let ppcActiveDataItems = [];
 
-    async function loadPlaneData() {
+    let ppcChartInstanceStatus = null;
+    let ppcChartInstanceMaterial = null;
+    let ppcChartInstanceSummary = null;
+
+    const PPC_MATERIAL_STATUS_LIST = [
+        "Waiting Payment",
+        "Available at GMF Central Store",
+        "Available at Hangar Local Store",
+        "Delivered to Production",
+        "No Source",
+        "Progress Inspect in Recceiving Area",
+        "Progress Repair in Shop",
+        "Shipment / Customs Process",
+        "Status Not Defined Yet",
+        "Waiting for Distribution",
+        "Waiting Purchase Order",
+        "Waiting Shipment From Vendor",
+        "Work Done"
+    ];
+
+    const PPC_WORK_STATUS_COLORS = {
+        "OPEN": "#ef4444",
+        "PROGRESS": "#f59e0b",
+        "CLOSED": "#10b981",
+        "INTERUPT": "#6366f1"
+    };
+
+    const PPC_MATERIAL_STATUS_COLORS = [
+        "#94a3b8", "#3b82f6", "#0ea5e9", "#10b981", "#ef4444",
+        "#8b5cf6", "#ec4899", "#f97316", "#64748b", "#14b8a6",
+        "#eab308", "#a855f7", "#059669"
+    ];
+
+    async function loadPpcRegistrations() {
         try {
-            const defaultPlaneData = [
-                { reg: 'PK-GAA', jcOpen: 8, jcClosed: 2, jc: 20.0, mdrOpen: 19, mdrClosed: 1, mdr: 5.0, rts: '2026-06-15', hilite: 'Normal\nCheck Cabin A' },
-                { reg: 'PK-GAB', jcOpen: 29, jcClosed: 1, jc: 3.3, mdrOpen: 9, mdrClosed: 1, mdr: 10.0, rts: '2026-06-20', hilite: 'Check Engine\nPending Part' }
-            ];
-            planeData = await getStore('ppc_plane_data', defaultPlaneData);
-            renderApp();
-        } catch(err) { console.error("Load PPC err:", err); }
+            const units = ['TJN-1', 'TJN-2', 'TJN-3', 'TJN-4', 'TJN-5', 'TJN-6'];
+            const allRegsPromises = units.map(u => getStore(`${u}_aircraft_regs`, []));
+            const allRegsResults = await Promise.all(allRegsPromises);
+
+            const regSet = new Set();
+            allRegsResults.forEach((unitRegs) => {
+                if (Array.isArray(unitRegs)) {
+                    unitRegs.forEach(r => {
+                        if (r && r.trim()) regSet.add(r.trim().toUpperCase());
+                    });
+                }
+            });
+
+            if (regSet.size === 0) {
+                ['PK-GFA', 'PK-GFB', 'PK-GFC', 'PK-GFD', 'PK-GFE', 'PK-GFF'].forEach(r => regSet.add(r));
+            }
+
+            ppcAllAircraftList = Array.from(regSet).sort();
+            renderPpcAircraftCards();
+        } catch(err) {
+            console.error("Gagal load registrasi pesawat PPC:", err);
+        }
     }
 
-    async function savePlaneDataToDB() {
-        if (!['admin', 'ppc'].includes(currentUserRole)) return;
-        try { await _supabase.from('app_store').upsert([{ key: 'ppc_plane_data', value: planeData }]); } 
-        catch (err) { console.error(err); }
+    function renderPpcAircraftCards() {
+        const grid = document.getElementById('ppcAircraftCardGrid');
+        if (!grid) return;
+        const searchVal = (document.getElementById('ppcRegSearch')?.value || '').trim().toUpperCase();
+
+        const filtered = ppcAllAircraftList.filter(r => !searchVal || r.includes(searchVal));
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div class="col-span-full py-8 text-center text-xs text-gray-400">Tidak ada registrasi pesawat yang cocok.</div>`;
+            return;
+        }
+
+        grid.innerHTML = filtered.map(reg => `
+            <div onclick="ppcSelectRegistration('${reg}')" class="bg-white hover:bg-blue-50/70 border-2 border-gray-200 hover:border-blue-500 rounded-xl p-3 text-center cursor-pointer transition shadow-sm hover:shadow group flex flex-col items-center justify-center gap-1.5">
+                <span class="text-xl">✈️</span>
+                <span class="font-mono font-black text-sm text-gray-800 group-hover:text-blue-600">${reg}</span>
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">KLIK UNTUK AKSES</span>
+            </div>
+        `).join('');
     }
 
-    function calculateHCountdown(rtsDateStr) {
-        if (!rtsDateStr) return '-';
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const rtsDate = new Date(rtsDateStr); rtsDate.setHours(0, 0, 0, 0);
-        const diffDays = Math.ceil((rtsDate - today) / (1000 * 60 * 60 * 24));
-
-        if (diffDays > 0) return `<span class="bg-blue-50 border border-blue-200 text-blue-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">H-${diffDays}</span>`;
-        else if (diffDays === 0) return `<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">H-0 (TODAY)</span>`;
-        else return `<span class="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md shadow-sm">OVERDUE</span>`;
+    function ppcSelectRegistration(reg) {
+        ppcSelectedReg = reg;
+        document.getElementById('ppcSelectedRegBadge').innerText = `REGISTRASI: ${reg}`;
+        document.getElementById('ppcViewRegSelection').style.display = 'none';
+        document.getElementById('ppcViewOptionSelection').style.display = 'block';
+        document.getElementById('ppcViewDetails').style.display = 'none';
+        
+        document.getElementById('ppcBackBtn').style.display = 'inline-flex';
+        document.getElementById('ppcBreadcrumb').innerText = `${reg} > PILIH KATEGORI`;
     }
 
-    function formatDateDisplay(dateStr) {
-        if (!dateStr) return '-'; const parts = dateStr.split('-');
-        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        return dateStr;
-    }
+    async function ppcSelectCategory(category) {
+        ppcSelectedCategory = category;
+        document.getElementById('ppcViewOptionSelection').style.display = 'none';
+        document.getElementById('ppcViewDetails').style.display = 'flex';
 
-    function renderApp() {
-        const tbody = document.getElementById('plane-table-body');
-        if (!tbody) return; tbody.innerHTML = '';
+        document.getElementById('ppcActiveContextTag').innerText = `${ppcSelectedReg} - ${category}`;
+        document.getElementById('ppcBreadcrumb').innerText = `${ppcSelectedReg} > ${category}`;
 
-        const regs = [], jcData = [], mdrData = [];
-
-        planeData.forEach((item, index) => {
-            regs.push(item.reg); 
-
-            const jcOpen = item.jcOpen !== undefined ? item.jcOpen : 0;
-            const jcClosed = item.jcClosed !== undefined ? item.jcClosed : 0;
-            const mdrOpen = item.mdrOpen !== undefined ? item.mdrOpen : 0;
-            const mdrClosed = item.mdrClosed !== undefined ? item.mdrClosed : 0;
-
-            const jcTotal = jcOpen + jcClosed;
-            const mdrTotal = mdrOpen + mdrClosed;
-
-            const jcPerc = item.jc || 0;
-            const mdrPerc = item.mdr || 0;
-
-            jcData.push(jcPerc); 
-            mdrData.push(mdrPerc);
-
-            const row = document.createElement('tr');
-            row.className = "hover:bg-blue-50/40 transition-colors";
-            row.innerHTML = `
-                <td class="px-3 py-3.5 whitespace-nowrap font-mono font-bold text-blue-600">${item.reg}</td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${jcPerc}% <br><span class="text-xs text-gray-400">(${jcClosed}/${jcTotal})</span></td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono">${mdrPerc}% <br><span class="text-xs text-gray-400">(${mdrClosed}/${mdrTotal})</span></td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-gray-700 font-mono text-xs">${formatDateDisplay(item.rts)}</td>
-                <td class="px-3 py-3.5 whitespace-nowrap">${calculateHCountdown(item.rts)}</td>
-                <td class="px-3 py-3.5 text-gray-600 text-xs max-w-xs" style="white-space: pre-line;">${item.hilite}</td>
-                <td class="px-3 py-3.5 whitespace-nowrap text-center space-x-2 ppc-cud-control" style="display:none;">
-                    <button onclick="openEditModal(${index})" title="Edit" class="text-blue-600 hover:text-blue-800 p-1 rounded transition">✎ Edit</button>
-                    <button onclick="deleteData(${index})" title="Hapus" class="text-rose-600 hover:text-rose-800 p-1 rounded transition">✕ Del</button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-
-        updateChart(regs, jcData, mdrData);
+        await ppcLoadCategoryData();
         applyPermissions();
     }
 
-    function updateChart(regs, jc, mdr) {
-        const canvas = document.getElementById('planeChart');
-        if (!canvas) return; const ctx = canvas.getContext('2d');
-        if (planeChartInstance) planeChartInstance.destroy();
-
-        planeChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: regs,
-                datasets: [
-                    { label: 'JC (%)', data: jc, backgroundColor: 'rgba(37, 99, 235, 0.8)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1, borderRadius: 4 },
-                    { label: 'MDR (%)', data: mdr, backgroundColor: 'rgba(225, 29, 72, 0.8)', borderColor: 'rgba(225, 29, 72, 1)', borderWidth: 1, borderRadius: 4 }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    }
-
-    function toggleAddModal() { 
-        if (!['admin', 'ppc'].includes(currentUserRole)) return;
-        document.getElementById('add-modal').classList.toggle('hidden'); 
-    }
-
-    document.getElementById('plane-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (!['admin', 'ppc'].includes(currentUserRole)) return;
-
-        const reg = document.getElementById('reg').value.toUpperCase().trim();
-        if (planeData.some(item => item.reg === reg)) { alert('Registrasi pesawat sudah ada!'); return; }
-
-        const jcOpen = parseInt(document.getElementById('jc-open').value) || 0;
-        const jcClosed = parseInt(document.getElementById('jc-closed').value) || 0;
-        const mdrOpen = parseInt(document.getElementById('mdr-open').value) || 0;
-        const mdrClosed = parseInt(document.getElementById('mdr-closed').value) || 0;
-
-        const jcTotal = jcOpen + jcClosed;
-        const mdrTotal = mdrOpen + mdrClosed;
-
-        const jc = jcTotal > 0 ? parseFloat(((jcClosed / jcTotal) * 100).toFixed(1)) : 0;
-        const mdr = mdrTotal > 0 ? parseFloat(((mdrClosed / mdrTotal) * 100).toFixed(1)) : 0;
-
-        planeData.push({ 
-            reg, 
-            jcOpen, jcClosed, jc,
-            mdrOpen, mdrClosed, mdr,
-            rts: document.getElementById('rts').value, 
-            hilite: document.getElementById('hilite').value.trim() 
-        });
-
-        document.getElementById('plane-form').reset();
-        toggleAddModal();
-        savePlaneDataToDB();
-        renderApp();
-    });
-
-    function openEditModal(index) {
-        if (!['admin', 'ppc'].includes(currentUserRole)) return;
-        const data = planeData[index];
-        document.getElementById('edit-index').value = index;
-        document.getElementById('edit-reg').value = data.reg;
-        document.getElementById('edit-jc-open').value = data.jcOpen !== undefined ? data.jcOpen : 0;
-        document.getElementById('edit-jc-closed').value = data.jcClosed !== undefined ? data.jcClosed : 0;
-        document.getElementById('edit-mdr-open').value = data.mdrOpen !== undefined ? data.mdrOpen : 0;
-        document.getElementById('edit-mdr-closed').value = data.mdrClosed !== undefined ? data.mdrClosed : 0;
-        document.getElementById('edit-rts').value = data.rts || '';
-        document.getElementById('edit-hilite').value = data.hilite;
-        document.getElementById('edit-modal').classList.remove('hidden');
-    }
-
-    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
-
-    document.getElementById('edit-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (!['admin', 'ppc'].includes(currentUserRole)) return;
-
-        const index = document.getElementById('edit-index').value;
-        const jcOpen = parseInt(document.getElementById('edit-jc-open').value) || 0;
-        const jcClosed = parseInt(document.getElementById('edit-jc-closed').value) || 0;
-        const mdrOpen = parseInt(document.getElementById('mdr-open').value) || 0;
-        const mdrClosed = parseInt(document.getElementById('mdr-closed').value) || 0;
-
-        const jcTotal = jcOpen + jcClosed;
-        const mdrTotal = mdrOpen + mdrClosed;
-
-        planeData[index].jcOpen = jcOpen;
-        planeData[index].jcClosed = jcClosed;
-        planeData[index].jc = jcTotal > 0 ? parseFloat(((jcClosed / jcTotal) * 100).toFixed(1)) : 0;
-
-        planeData[index].mdrOpen = mdrOpen;
-        planeData[index].mdrClosed = mdrClosed;
-        planeData[index].mdr = mdrTotal > 0 ? parseFloat(((mdrClosed / mdrTotal) * 100).toFixed(1)) : 0;
-
-        planeData[index].rts = document.getElementById('edit-rts').value;
-        planeData[index].hilite = document.getElementById('edit-hilite').value.trim();
-
-        closeEditModal();
-        savePlaneDataToDB();
-        renderApp();
-    });
-
-    function deleteData(index) {
-        if (!['admin', 'ppc'].includes(currentUserRole)) return;
-        if (confirm('Konfirmasi penghapusan data pesawat ini?')) {
-            planeData.splice(index, 1);
-            savePlaneDataToDB();
-            renderApp();
+    function ppcNavigateBack() {
+        ppcCloseDrilldown();
+        if (document.getElementById('ppcViewDetails').style.display === 'flex') {
+            document.getElementById('ppcViewDetails').style.display = 'none';
+            document.getElementById('ppcViewOptionSelection').style.display = 'block';
+            document.getElementById('ppcBreadcrumb').innerText = `${ppcSelectedReg} > PILIH KATEGORI`;
+        } else if (document.getElementById('ppcViewOptionSelection').style.display === 'block') {
+            document.getElementById('ppcViewOptionSelection').style.display = 'none';
+            document.getElementById('ppcViewRegSelection').style.display = 'flex';
+            document.getElementById('ppcBackBtn').style.display = 'none';
+            document.getElementById('ppcBreadcrumb').innerText = `PILIH REGISTRASI`;
+            ppcSelectedReg = null;
+            ppcSelectedCategory = null;
         }
+    }
+
+    async function ppcLoadCategoryData() {
+        const storeKey = `ppc_data_${ppcSelectedReg}_${ppcSelectedCategory}`;
+        const defaultSample = [
+            { itemNo: `${ppcSelectedCategory}-001`, desc: "Inspection passenger seat covers row 1-12", workStatus: "OPEN", materialStatus: "Available at Hangar Local Store", zone: "ZONE A", remarks: "Routine Check" },
+            { itemNo: `${ppcSelectedCategory}-002`, desc: "Replacement carpet forward galley area", workStatus: "PROGRESS", materialStatus: "Delivered to Production", zone: "FWD GALLEY", remarks: "Urgent" },
+            { itemNo: `${ppcSelectedCategory}-003`, desc: "Repair lavatory D flush valve assembly", workStatus: "CLOSED", materialStatus: "Work Done", zone: "AFT LAV", remarks: "Rectified" },
+            { itemNo: `${ppcSelectedCategory}-004`, desc: "Overhaul cabin attendant seat harness", workStatus: "INTERUPT", materialStatus: "Waiting Shipment From Vendor", zone: "CABIN MID", remarks: "Awaiting Part" },
+            { itemNo: `${ppcSelectedCategory}-005`, desc: "Refurbish overhead bin latch row 24", workStatus: "OPEN", materialStatus: "Available at GMF Central Store", zone: "AFT CABIN", remarks: "Normal" }
+        ];
+
+        try {
+            ppcActiveDataItems = await getStore(storeKey, defaultSample);
+            if (!Array.isArray(ppcActiveDataItems)) ppcActiveDataItems = [];
+        } catch(e) {
+            console.error("Gagal load data category PPC:", e);
+            ppcActiveDataItems = defaultSample;
+        }
+
+        ppcRenderAll();
+    }
+
+    async function ppcSaveCategoryDataToDB() {
+        if (!isPPCAuthorized()) {
+            alert('Akses Ditolak: Anda harus login sebagai PPC atau Admin untuk mengubah data.');
+            return;
+        }
+        const storeKey = `ppc_data_${ppcSelectedReg}_${ppcSelectedCategory}`;
+        try {
+            await _supabase.from('app_store').upsert([{ key: storeKey, value: ppcActiveDataItems }]);
+            showToastNotification();
+        } catch(err) {
+            console.error("Gagal simpan data category PPC:", err);
+            alert("Gagal menyimpan ke server database.");
+        }
+    }
+
+    function ppcRenderAll() {
+        document.getElementById('ppcDataCounterBadge').innerText = `${ppcActiveDataItems.length} Data Item`;
+        ppcRenderDataTable();
+        ppcRenderCharts();
+    }
+
+    function ppcRenderDataTable() {
+        const tbody = document.getElementById('ppcMasterTableBody');
+        if (!tbody) return;
+        const search = (document.getElementById('ppcTableSearch')?.value || '').trim().toLowerCase();
+        const canEdit = isPPCAuthorized();
+
+        const filtered = ppcActiveDataItems.filter(item => {
+            return !search || 
+                (item.itemNo && item.itemNo.toLowerCase().includes(search)) ||
+                (item.desc && item.desc.toLowerCase().includes(search)) ||
+                (item.zone && item.zone.toLowerCase().includes(search)) ||
+                (item.materialStatus && item.materialStatus.toLowerCase().includes(search));
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:#94a3b8;">Belum ada data tersedia.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map((item) => {
+            const origIdx = ppcActiveDataItems.indexOf(item);
+            const wColor = PPC_WORK_STATUS_COLORS[item.workStatus] || '#64748b';
+
+            return `
+                <tr>
+                    <td class="font-mono font-bold text-blue-700">${item.itemNo || '-'}</td>
+                    <td style="white-space:normal; line-height:1.3; font-weight:500;">${item.desc || '-'}</td>
+                    <td>
+                        <span style="display:inline-block; padding:2px 6px; border-radius:4px; font-size:8.5px; font-weight:800; color:white; background:${wColor};">
+                            ${item.workStatus || 'OPEN'}
+                        </span>
+                    </td>
+                    <td style="white-space:normal; line-height:1.2; font-weight:600; color:#334155;">${item.materialStatus || 'Status Not Defined Yet'}</td>
+                    <td style="font-size:9.5px; font-weight:700; color:#475569;">${item.zone || '-'}</td>
+                    <td style="color:#64748b; font-size:9.5px;">${item.remarks || '-'}</td>
+                    <td style="text-align:right; ${canEdit ? 'display:table-cell;' : 'display:none;'}" class="ppc-cud-control">
+                        <button onclick="ppcEditItem(${origIdx})" title="Edit" style="border:none; background:none; color:var(--primary); cursor:pointer; font-size:12px; padding:0 3px;">✎</button>
+                        <button onclick="ppcDeleteItem(${origIdx})" title="Hapus" style="border:none; background:none; color:var(--danger); cursor:pointer; font-size:12px; padding:0 3px;">✕</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function ppcOpenItemModal(idx = -1) {
+        if (!isPPCAuthorized()) {
+            alert('Akses Ditolak: Anda harus login sebagai PPC atau Admin.');
+            return;
+        }
+        document.getElementById('ppcEditItemIndex').value = idx;
+        const modal = document.getElementById('ppcItemModal');
+        const titleEl = document.getElementById('ppcItemModalTitle');
+
+        if (idx > -1) {
+            const itm = ppcActiveDataItems[idx];
+            titleEl.innerText = `EDIT DATA ${ppcSelectedCategory}`;
+            document.getElementById('ppcInputItemNo').value = itm.itemNo || '';
+            document.getElementById('ppcInputDesc').value = itm.desc || '';
+            document.getElementById('ppcInputWorkStatus').value = itm.workStatus || 'OPEN';
+            document.getElementById('ppcInputMaterialStatus').value = itm.materialStatus || 'Status Not Defined Yet';
+            document.getElementById('ppcInputZone').value = itm.zone || '';
+            document.getElementById('ppcInputRemarks').value = itm.remarks || '';
+        } else {
+            titleEl.innerText = `TAMBAH DATA ${ppcSelectedCategory} BARU`;
+            document.getElementById('ppcItemForm').reset();
+            document.getElementById('ppcInputItemNo').value = `${ppcSelectedCategory}-${String(ppcActiveDataItems.length + 1).padStart(3, '0')}`;
+        }
+        modal.style.display = 'flex';
+    }
+
+    function ppcCloseItemModal() {
+        document.getElementById('ppcItemModal').style.display = 'none';
+    }
+
+    function ppcSaveItem(e) {
+        e.preventDefault();
+        if (!isPPCAuthorized()) return;
+
+        const idx = parseInt(document.getElementById('ppcEditItemIndex').value);
+        const newItem = {
+            itemNo: document.getElementById('ppcInputItemNo').value.trim().toUpperCase(),
+            desc: document.getElementById('ppcInputDesc').value.trim(),
+            workStatus: document.getElementById('ppcInputWorkStatus').value,
+            materialStatus: document.getElementById('ppcInputMaterialStatus').value,
+            zone: document.getElementById('ppcInputZone').value.trim().toUpperCase(),
+            remarks: document.getElementById('ppcInputRemarks').value.trim()
+        };
+
+        if (idx > -1) {
+            ppcActiveDataItems[idx] = newItem;
+        } else {
+            ppcActiveDataItems.unshift(newItem);
+        }
+
+        ppcCloseItemModal();
+        ppcRenderAll();
+        ppcSaveCategoryDataToDB();
+    }
+
+    function ppcEditItem(idx) {
+        ppcOpenItemModal(idx);
+    }
+
+    function ppcDeleteItem(idx) {
+        if (!isPPCAuthorized()) return;
+        if (confirm("Hapus item data ini?")) {
+            ppcActiveDataItems.splice(idx, 1);
+            ppcRenderAll();
+            ppcSaveCategoryDataToDB();
+        }
+    }
+
+    function ppcHandleExcelUpload(event) {
+        if (!isPPCAuthorized()) {
+            alert('Akses Ditolak: Anda harus login sebagai PPC atau Admin.');
+            return;
+        }
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                if (!jsonRows || jsonRows.length === 0) {
+                    alert('File excel tidak memiliki baris data!');
+                    return;
+                }
+
+                const newItems = jsonRows.map((row, i) => {
+                    const itemNo = row['ITEM NO'] || row['Item No'] || row['TASK NO'] || row['Task No'] || row['NO'] || `${ppcSelectedCategory}-${i + 1}`;
+                    const desc = row['DESCRIPTION'] || row['Description'] || row['TASK DESCRIPTION'] || row['DESC'] || '-';
+                    let workStatus = (row['WORK STATUS'] || row['Work Status'] || row['STATUS'] || 'OPEN').toString().toUpperCase().trim();
+                    if (!['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'].includes(workStatus)) {
+                        workStatus = 'OPEN';
+                    }
+
+                    let materialStatus = row['MATERIAL STATUS'] || row['Material Status'] || row['LOGISTIC STATUS'] || 'Status Not Defined Yet';
+                    const matchedMat = PPC_MATERIAL_STATUS_LIST.find(s => s.toLowerCase() === materialStatus.toString().toLowerCase().trim());
+                    if (matchedMat) materialStatus = matchedMat;
+
+                    const zone = (row['ZONE'] || row['Zone'] || row['AREA'] || '').toString().toUpperCase();
+                    const remarks = (row['REMARKS'] || row['Remarks'] || row['NOTE'] || '').toString();
+
+                    return { itemNo, desc, workStatus, materialStatus, zone, remarks };
+                });
+
+                if (confirm(`Impor ${newItems.length} baris data ke dalam ${ppcSelectedReg} - ${ppcSelectedCategory}? Data saat ini akan digabungkan.`)) {
+                    ppcActiveDataItems = newItems.concat(ppcActiveDataItems);
+                    ppcRenderAll();
+                    ppcSaveCategoryDataToDB();
+                    alert(`Berhasil mengimpor ${newItems.length} data!`);
+                }
+            } catch(err) {
+                console.error("Error membaca Excel:", err);
+                alert("Format file Excel/CSV tidak valid.");
+            } finally {
+                event.target.value = '';
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function ppcExportToExcel() {
+        if (!ppcActiveDataItems || ppcActiveDataItems.length === 0) {
+            alert('Tidak ada data untuk diexport!');
+            return;
+        }
+        const exportData = ppcActiveDataItems.map(item => ({
+            "ITEM NO": item.itemNo,
+            "DESCRIPTION": item.desc,
+            "WORK STATUS": item.workStatus,
+            "MATERIAL STATUS": item.materialStatus,
+            "ZONE / AREA": item.zone,
+            "REMARKS": item.remarks
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, `${ppcSelectedCategory}_Data`);
+        XLSX.writeFile(wb, `${ppcSelectedReg}_${ppcSelectedCategory}_REPORT.xlsx`);
+    }
+
+    function ppcRenderCharts() {
+        const countWork = { "OPEN": 0, "PROGRESS": 0, "CLOSED": 0, "INTERUPT": 0 };
+        const countMat = {};
+        PPC_MATERIAL_STATUS_LIST.forEach(s => countMat[s] = 0);
+        let totalCount = ppcActiveDataItems.length;
+
+        ppcActiveDataItems.forEach(item => {
+            const ws = (item.workStatus || 'OPEN').toUpperCase();
+            if (countWork[ws] !== undefined) countWork[ws]++;
+            else countWork["OPEN"]++;
+
+            const ms = item.materialStatus || "Status Not Defined Yet";
+            if (countMat[ms] !== undefined) countMat[ms]++;
+            else countMat["Status Not Defined Yet"] = (countMat["Status Not Defined Yet"] || 0) + 1;
+        });
+
+        const ctx1 = document.getElementById('ppcChartStatus')?.getContext('2d');
+        if (ctx1) {
+            if (ppcChartInstanceStatus) ppcChartInstanceStatus.destroy();
+            ppcChartInstanceStatus = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'],
+                    datasets: [{
+                        data: [countWork['OPEN'], countWork['PROGRESS'], countWork['CLOSED'], countWork['INTERUPT']],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#6366f1'],
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: '700' } } }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements && elements.length > 0) {
+                            const clickedIdx = elements[0].index;
+                            const statusLabel = ['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'][clickedIdx];
+                            ppcTriggerDrilldown('WORK_STATUS', statusLabel);
+                        }
+                    }
+                }
+            });
+        }
+
+        const ctx2 = document.getElementById('ppcChartMaterial')?.getContext('2d');
+        if (ctx2) {
+            if (ppcChartInstanceMaterial) ppcChartInstanceMaterial.destroy();
+            const activeMatLabels = PPC_MATERIAL_STATUS_LIST.filter(s => countMat[s] > 0);
+            const activeMatData = activeMatLabels.map(s => countMat[s]);
+            const activeMatColors = activeMatLabels.map(s => PPC_MATERIAL_STATUS_COLORS[PPC_MATERIAL_STATUS_LIST.indexOf(s) % PPC_MATERIAL_STATUS_COLORS.length]);
+
+            ppcChartInstanceMaterial = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: activeMatLabels.length > 0 ? activeMatLabels : ['No Data'],
+                    datasets: [{
+                        data: activeMatData.length > 0 ? activeMatData : [1],
+                        backgroundColor: activeMatColors.length > 0 ? activeMatColors : ['#cbd5e1'],
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 8 } } }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements && elements.length > 0 && activeMatLabels.length > 0) {
+                            const clickedIdx = elements[0].index;
+                            const matLabel = activeMatLabels[clickedIdx];
+                            ppcTriggerDrilldown('MATERIAL_STATUS', matLabel);
+                        }
+                    }
+                }
+            });
+        }
+
+        const ctx3 = document.getElementById('ppcChartSummary')?.getContext('2d');
+        if (ctx3) {
+            if (ppcChartInstanceSummary) ppcChartInstanceSummary.destroy();
+            const closedItems = countWork['CLOSED'];
+            const openItems = totalCount - closedItems;
+
+            ppcChartInstanceSummary = new Chart(ctx3, {
+                type: 'doughnut',
+                data: {
+                    labels: ['COMPLETED (CLOSED)', 'OUTSTANDING (OPEN/PROG/INT)'],
+                    datasets: [{
+                        data: [closedItems, openItems],
+                        backgroundColor: ['#10b981', '#3b82f6'],
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: '700' } } }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements && elements.length > 0) {
+                            const clickedIdx = elements[0].index;
+                            const filterType = clickedIdx === 0 ? 'COMPLETED' : 'OUTSTANDING';
+                            ppcTriggerDrilldown('SUMMARY', filterType);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    function ppcTriggerDrilldown(type, value) {
+        const chartsContainer = document.getElementById('ppcChartsMainContainer');
+        const drilldownWrapper = document.getElementById('ppcDrilldownWrapper');
+        const drilldownTitle = document.getElementById('ppcDrilldownTitle');
+        const drilldownCount = document.getElementById('ppcDrilldownCount');
+        const drilldownTbody = document.getElementById('ppcDrilldownTableBody');
+
+        if (!chartsContainer || !drilldownWrapper) return;
+
+        chartsContainer.classList.remove('md:grid-cols-3');
+        chartsContainer.classList.add('md:grid-cols-1', 'lg:w-1/3');
+        
+        drilldownWrapper.style.display = 'flex';
+        drilldownWrapper.classList.add('flex-1');
+
+        const parentFlex = chartsContainer.parentElement;
+        if (!parentFlex.classList.contains('ppc-split-layout')) {
+            parentFlex.classList.add('ppc-split-layout', 'flex', 'flex-col', 'lg:flex-row', 'items-start', 'gap-4');
+        }
+
+        let filteredItems = [];
+        if (type === 'WORK_STATUS') {
+            drilldownTitle.innerText = `DETAIL PENGERJAAN: ${value}`;
+            filteredItems = ppcActiveDataItems.filter(i => (i.workStatus || 'OPEN').toUpperCase() === value.toUpperCase());
+        } else if (type === 'MATERIAL_STATUS') {
+            drilldownTitle.innerText = `DETAIL LOGISTIK: ${value}`;
+            filteredItems = ppcActiveDataItems.filter(i => (i.materialStatus || 'Status Not Defined Yet') === value);
+        } else if (type === 'SUMMARY') {
+            drilldownTitle.innerText = `DETAIL REKAPAN: ${value}`;
+            if (value === 'COMPLETED') {
+                filteredItems = ppcActiveDataItems.filter(i => (i.workStatus || '').toUpperCase() === 'CLOSED');
+            } else {
+                filteredItems = ppcActiveDataItems.filter(i => (i.workStatus || '').toUpperCase() !== 'CLOSED');
+            }
+        }
+
+        drilldownCount.innerText = `${filteredItems.length} Item`;
+
+        if (filteredItems.length === 0) {
+            drilldownTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:#94a3b8;">Tidak ada data item pada status ini.</td></tr>`;
+        } else {
+            drilldownTbody.innerHTML = filteredItems.map(itm => {
+                const wColor = PPC_WORK_STATUS_COLORS[itm.workStatus] || '#64748b';
+                return `
+                    <tr>
+                        <td class="font-mono font-bold text-blue-700">${itm.itemNo}</td>
+                        <td style="white-space:normal; line-height:1.2;">${itm.desc}</td>
+                        <td>
+                            <span style="display:inline-block; padding:1px 5px; border-radius:3px; font-size:8px; font-weight:800; color:white; background:${wColor};">
+                                ${itm.workStatus}
+                            </span>
+                        </td>
+                        <td style="white-space:normal; line-height:1.2; font-size:9.5px;">${itm.materialStatus}</td>
+                        <td style="font-weight:700; color:#475569;">${itm.zone || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        setTimeout(() => {
+            if (ppcChartInstanceStatus) ppcChartInstanceStatus.resize();
+            if (ppcChartInstanceMaterial) ppcChartInstanceMaterial.resize();
+            if (ppcChartInstanceSummary) ppcChartInstanceSummary.resize();
+        }, 150);
+    }
+
+    function ppcCloseDrilldown() {
+        const chartsContainer = document.getElementById('ppcChartsMainContainer');
+        const drilldownWrapper = document.getElementById('ppcDrilldownWrapper');
+        if (!chartsContainer || !drilldownWrapper) return;
+
+        chartsContainer.classList.remove('md:grid-cols-1', 'lg:w-1/3');
+        chartsContainer.classList.add('md:grid-cols-3');
+
+        drilldownWrapper.style.display = 'none';
+
+        const parentFlex = chartsContainer.parentElement;
+        if (parentFlex && parentFlex.classList.contains('ppc-split-layout')) {
+            parentFlex.classList.remove('ppc-split-layout', 'flex', 'flex-col', 'lg:flex-row', 'items-start', 'gap-4');
+        }
+
+        setTimeout(() => {
+            if (ppcChartInstanceStatus) ppcChartInstanceStatus.resize();
+            if (ppcChartInstanceMaterial) ppcChartInstanceMaterial.resize();
+            if (ppcChartInstanceSummary) ppcChartInstanceSummary.resize();
+        }, 150);
     }
 
     // ==========================================
@@ -2262,7 +2680,7 @@
     window.addEventListener('DOMContentLoaded', async () => {
         initActiveTab();
         try {
-            await Promise.all([loadData(), loadPlaneData(), loadHomeData()]);
+            await Promise.all([loadData(), loadHomeData(), loadPpcRegistrations()]);
         } catch(err) { console.error("Init err:", err); } 
         finally { 
             const overlay = document.getElementById('loadingOverlay');

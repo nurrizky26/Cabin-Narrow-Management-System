@@ -657,7 +657,7 @@
             <div class="flex items-center space-x-3">
                 <div>
                     <h1 class="text-sm font-black tracking-wider text-gray-800 m-0 uppercase">PPC CABIN MONITORING</h1>
-                    <p class="text-[10px] text-gray-500 m-0 font-medium">Job Card & Material Discrepancy Reporting</p>
+                    <p class="text-[10px] text-gray-500 m-0 font-medium">Job Card & Maintenance Discrepancy Rectification</p>
                 </div>
             </div>
 
@@ -680,7 +680,7 @@
                         <div>
                             <h2 class="text-sm font-black uppercase text-gray-800 m-0 flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-                                DAFTAR PESAWAT AKTIF (DISTRIBUTION MP TJN-1 S/D TJN-6)
+                                DAFTAR PESAWAT AKTIF MAINTENANCE TJN
                             </h2>
                             <p class="text-xs text-gray-500 m-0 mt-0.5">Diurutkan otomatis berdasarkan jadwal Plan RTS terdekat dari atas ke bawah</p>
                         </div>
@@ -751,9 +751,9 @@
                                 📋
                             </div>
                             <h3 class="text-base font-black text-blue-900 group-hover:text-white uppercase tracking-wider mb-1">JOB CARD (JC)</h3>
-                            <p class="text-xs text-blue-700 group-hover:text-blue-100 leading-relaxed">Monitoring pengerjaan paket kartu kerja kabin, progress open, interupt, dan status material.</p>
+                            <p class="text-xs text-blue-700 group-hover:text-blue-100 leading-relaxed">Monitoring Pekerjaan Cabin, Progress, Open, Interupt, dan status material.</p>
                             <div class="mt-4 inline-flex items-center text-xs font-bold text-blue-600 group-hover:text-white">
-                                Buka Data JC & Rekapan ➔
+                                Buka Data JC ➔
                             </div>
                         </div>
 
@@ -763,9 +763,9 @@
                                 🛠️
                             </div>
                             <h3 class="text-base font-black text-amber-900 group-hover:text-white uppercase tracking-wider mb-1">MAINTENANCE DISCREPANCY (MDR)</h3>
-                            <p class="text-xs text-amber-800 group-hover:text-amber-100 leading-relaxed">Monitoring temuan defect kabin, tindak lanjut penutupan, part supply, dan flow logistik.</p>
+                            <p class="text-xs text-amber-800 group-hover:text-amber-100 leading-relaxed">Monitoring Finding Defect Cabin, Rectification, Part Monitoring, dan Catatan.</p>
                             <div class="mt-4 inline-flex items-center text-xs font-bold text-amber-700 group-hover:text-white">
-                                Buka Data MDR & Rekapan ➔
+                                Buka Data MDR ➔
                             </div>
                         </div>
                     </div>
@@ -802,7 +802,7 @@
                         <!-- Donut 1: Status Pengerjaan (OPEN, PROGRESS, CLOSED, INTERUPT) -->
                         <div id="ppcChartCardWork" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
                             <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">1. STATUS PENGERJAAN</h3>
+                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">1. STATUS MAINTENANCE</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
                             </div>
                             <div class="flex-1 relative flex items-center justify-center">
@@ -818,7 +818,7 @@
                         <!-- Donut 2: Material & Logistic Status (13 Status Lengkap) -->
                         <div id="ppcChartCardMaterial" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
                             <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">2. STATUS MATERIAL & LOGISTIK</h3>
+                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">2. STATUS MATERIAL </h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
                             </div>
                             <div class="flex-1 relative flex items-center justify-center">
@@ -834,7 +834,7 @@
                         <!-- Donut 3: Rekapan Prioritas / Trade Area -->
                         <div id="ppcChartCardSummary" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
                             <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">3. REKAPAN KELENGKAPAN</h3>
+                                <h3 class="text-xs font-black uppercase text-gray-700 m-0">3. Summary</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
                             </div>
                             <div class="flex-1 relative flex items-center justify-center">
@@ -855,7 +855,7 @@
                                 <span class="text-xs font-black uppercase text-blue-700" id="ppcDrilldownTitle">DETAIL FILTERED DATA</span>
                                 <span id="ppcDrilldownCount" class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full"></span>
                             </div>
-                            <button onclick="ppcCloseDrilldown()" class="text-gray-400 hover:text-rose-600 font-black text-sm px-2">✕ Tutup Drilldown</button>
+                            <button onclick="ppcCloseDrilldown()" class="text-gray-400 hover:text-rose-600 font-black text-sm px-2">✕ Minimize </button>
                         </div>
                         <div class="table-container" style="max-height: 550px;">
                             <table>

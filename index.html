@@ -838,8 +838,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>ORDER NO</label>
-                            <input type="text" id="ppcInputItemNo" required class="wo-input uppercase font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                            <label>ORDER NO (9 ANGKA AWALAN 8)</label>
+                            <input type="text" id="ppcInputItemNo" pattern="8[0-9]{8}" maxlength="9" placeholder="Contoh: 800123456" title="Harus terdiri dari 9 digit angka diawali angka 8" required class="wo-input uppercase font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                         <div class="form-group full">
                             <label>DESCRIPTION</label>
@@ -2223,11 +2223,11 @@
     async function ppcLoadCategoryData() {
         const storeKey = `ppc_data_${ppcSelectedReg}_${ppcSelectedCategory}`;
         const defaultSample = [
-            { itemNo: `${ppcSelectedCategory}-001`, desc: "Inspection passenger seat covers row 1-12", workStatus: "OPEN", materialStatus: "Available at Hangar Local Store", remarks: "Routine Check" },
-            { itemNo: `${ppcSelectedCategory}-002`, desc: "Replacement carpet forward galley area", workStatus: "PROGRESS", materialStatus: "Delivered to Production", remarks: "Urgent" },
-            { itemNo: `${ppcSelectedCategory}-003`, desc: "Repair lavatory D flush valve assembly", workStatus: "CLOSED", materialStatus: "Work Done", remarks: "Rectified" },
-            { itemNo: `${ppcSelectedCategory}-004`, desc: "Overhaul cabin attendant seat harness", workStatus: "INTERUPT", materialStatus: "Waiting Shipment From Vendor", remarks: "Awaiting Part" },
-            { itemNo: `${ppcSelectedCategory}-005`, desc: "Refurbish overhead bin latch row 24", workStatus: "OPEN", materialStatus: "Available at GMF Central Store", remarks: "Normal" }
+            { itemNo: `800100001`, desc: "Inspection passenger seat covers row 1-12", workStatus: "OPEN", materialStatus: "Available at Hangar Local Store", remarks: "Routine Check" },
+            { itemNo: `800100002`, desc: "Replacement carpet forward galley area", workStatus: "PROGRESS", materialStatus: "Delivered to Production", remarks: "Urgent" },
+            { itemNo: `800100003`, desc: "Repair lavatory D flush valve assembly", workStatus: "CLOSED", materialStatus: "Work Done", remarks: "Rectified" },
+            { itemNo: `800100004`, desc: "Overhaul cabin attendant seat harness", workStatus: "INTERUPT", materialStatus: "Waiting Shipment From Vendor", remarks: "Awaiting Part" },
+            { itemNo: `800100005`, desc: "Refurbish overhead bin latch row 24", workStatus: "OPEN", materialStatus: "Available at GMF Central Store", remarks: "Normal" }
         ];
 
         try {
@@ -2326,7 +2326,7 @@
         } else {
             titleEl.innerText = `TAMBAH DATA ${ppcSelectedCategory} BARU`;
             document.getElementById('ppcItemForm').reset();
-            document.getElementById('ppcInputItemNo').value = `${ppcSelectedCategory}-${String(ppcActiveDataItems.length + 1).padStart(3, '0')}`;
+            document.getElementById('ppcInputItemNo').value = `8${String(ppcActiveDataItems.length + 1).padStart(8, '0')}`;
         }
         modal.style.display = 'flex';
     }
@@ -2339,10 +2339,16 @@
         e.preventDefault();
         if (!isPPCAuthorized()) return;
 
+        const orderNoVal = document.getElementById('ppcInputItemNo').value.trim();
+        if (!/^8\d{8}$/.test(orderNoVal)) {
+            alert('Order No wajib terdiri dari 9 digit angka dan berawalan angka 8 (contoh: 800123456)!');
+            return;
+        }
+
         const idx = parseInt(document.getElementById('ppcEditItemIndex').value);
         const newItem = {
             workStatus: document.getElementById('ppcInputWorkStatus').value,
-            itemNo: document.getElementById('ppcInputItemNo').value.trim().toUpperCase(),
+            itemNo: orderNoVal,
             desc: document.getElementById('ppcInputDesc').value.trim(),
             materialStatus: document.getElementById('ppcInputMaterialStatus').value,
             remarks: document.getElementById('ppcInputRemarks').value.trim()
@@ -2385,66 +2391,92 @@
         return 'OPEN';
     }
 
-    function smartNormalizeTrackStatus(rawVal) {
-        if (!rawVal) return 'Status Not Defined Yet';
-        const val = rawVal.toString().toLowerCase().trim();
-        if (!val || val === '-' || val === 'n/a' || val === 'null') return 'Status Not Defined Yet';
+    function smartDetectMdrTrack(row) {
+        const values = Object.values(row);
+        // Cek seluruh sel di baris ini apakah cocok dengan salah satu dari 13 MDR TRACK
+        for (const v of values) {
+            if (v === null || v === undefined) continue;
+            const strVal = v.toString().trim();
+            if (!strVal) continue;
+            const exactMatch = PPC_MATERIAL_STATUS_LIST.find(
+                status => status.toLowerCase() === strVal.toLowerCase()
+            );
+            if (exactMatch) return exactMatch;
+        }
+        return null;
+    }
 
-        // Exact match check
-        const exact = PPC_MATERIAL_STATUS_LIST.find(s => s.toLowerCase() === val);
-        if (exact) return exact;
-
-        // Smart keyword mapping
-        if (val.includes('work done') || val === 'done' || val.includes('selesai')) return 'Work Done';
-        if (val.includes('payment') || val.includes('bayar')) return 'Waiting Payment';
-        if (val.includes('central store') || val.includes('gmf central') || val.includes('central')) return 'Available at GMF Central Store';
-        if (val.includes('local store') || val.includes('hangar') || val.includes('local')) return 'Available at Hangar Local Store';
-        if (val.includes('deliver') || val.includes('production') || val.includes('kirim ke prod')) return 'Delivered to Production';
-        if (val.includes('no source') || val.includes('kosong') || val.includes('not found')) return 'No Source';
-        if (val.includes('inspect') || val.includes('receiving') || val.includes('recceiving')) return 'Progress Inspect in Recceiving Area';
-        if (val.includes('repair') || val.includes('shop')) return 'Progress Repair in Shop';
-        if (val.includes('shipment') || val.includes('custom') || val.includes('bea cukai')) return 'Shipment / Customs Process';
-        if (val.includes('distribution') || val.includes('distribusi')) return 'Waiting for Distribution';
-        if (val.includes('purchase') || val === 'po' || val.includes('waiting po')) return 'Waiting Purchase Order';
-        if (val.includes('vendor')) return 'Waiting Shipment From Vendor';
-
-        return 'Status Not Defined Yet';
+    function smartDetectOrderNo(row) {
+        const values = Object.values(row);
+        // Cari pola 9 digit angka berawalan angka 8 di seluruh sel pada baris tersebut
+        for (const v of values) {
+            if (v === null || v === undefined) continue;
+            const strVal = v.toString().trim();
+            if (!strVal) continue;
+            // Cek jika tepat 9 angka berawalan 8
+            if (/^8\d{8}$/.test(strVal)) {
+                return strVal;
+            }
+            // Cek jika terdapat 9 angka berawalan 8 di dalam teks sel
+            const match = strVal.match(/\b8\d{8}\b/);
+            if (match) {
+                return match[0];
+            }
+        }
+        return null;
     }
 
     function smartExtractRowFields(row, index) {
-        // Buat map kunci lowercase tanpa spasi/simbol berlebih untuk pencocokan cerdas
         const keys = Object.keys(row);
-        const findColVal = (patterns) => {
+        const findColVal = (patterns, excludeVals = []) => {
             for (const p of patterns) {
                 const matchedKey = keys.find(k => {
                     const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
                     return cleanK === p || cleanK.includes(p);
                 });
                 if (matchedKey && row[matchedKey] !== undefined && row[matchedKey].toString().trim() !== '') {
-                    return row[matchedKey].toString().trim();
+                    const val = row[matchedKey].toString().trim();
+                    if (!excludeVals.includes(val)) return val;
                 }
             }
             return '';
         };
 
-        // 1. Smart Order No / Item No
-        const rawOrder = findColVal(['orderno', 'ordernumber', 'order', 'wonumber', 'wo', 'itemno', 'itemnumber', 'taskno', 'taskcard', 'mdrno', 'jcno', 'cardno', 'no']);
-        const itemNo = rawOrder ? rawOrder.toUpperCase() : `${ppcSelectedCategory}-${String(index + 1).padStart(3, '0')}`;
+        // 1. Deteksi ORDER NO (9 angka berawalan angka 8)
+        const detectedOrderNo = smartDetectOrderNo(row);
 
-        // 2. Smart Description
-        const rawDesc = findColVal(['description', 'taskdescription', 'desc', 'discrepancy', 'defect', 'subject', 'title', 'uraian', 'pekerjaan', 'detail']);
-        const desc = rawDesc || '-';
+        // 2. Deteksi MDR TRACK / Jobcard Track (salah satu dari 13 item)
+        const detectedTrack = smartDetectMdrTrack(row);
+
+        // Baris hanya valid dimunculkan di tabel jika memiliki Order No (9 digit awalan 8) atau MDR Track yang cocok
+        if (!detectedOrderNo && !detectedTrack) {
+            return null;
+        }
+
+        const itemNo = detectedOrderNo || '-';
+        const materialStatus = detectedTrack || 'Status Not Defined Yet';
 
         // 3. Smart Status (Open / Progress / Closed / Interupt)
-        const rawStatus = findColVal(['status', 'workstatus', 'taskstatus', 'jcstatus', 'mdrstatus', 'state', 'kondisi']);
+        const rawStatus = findColVal(['status', 'workstatus', 'taskstatus', 'jcstatus', 'mdrstatus', 'state', 'kondisi'], [itemNo, materialStatus]);
         const workStatus = smartNormalizeWorkStatus(rawStatus);
 
-        // 4. Smart Jobcard Track / MDR Track / Material Status
-        const rawTrack = findColVal(['mdrtrack', 'jobcardtrack', 'jctrack', 'track', 'materialstatus', 'logisticstatus', 'material', 'logistik', 'partstatus', 'supply']);
-        const materialStatus = smartNormalizeTrackStatus(rawTrack);
+        // 4. Smart Description
+        let desc = findColVal(['description', 'taskdescription', 'desc', 'discrepancy', 'defect', 'subject', 'title', 'uraian', 'pekerjaan', 'detail'], [itemNo, materialStatus]);
+        if (!desc) {
+            // Ambil teks deskriptif terpanjang dari sel yang bukan Order No dan bukan Track
+            const textCandidates = Object.values(row)
+                .map(v => (v !== null && v !== undefined) ? v.toString().trim() : '')
+                .filter(v => v && v !== itemNo && v.toLowerCase() !== materialStatus.toLowerCase() && !['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'].includes(v.toUpperCase()));
+            if (textCandidates.length > 0) {
+                textCandidates.sort((a, b) => b.length - a.length);
+                desc = textCandidates[0];
+            } else {
+                desc = '-';
+            }
+        }
 
         // 5. Smart Remark
-        const rawRemark = findColVal(['remark', 'remarks', 'note', 'notes', 'keterangan', 'ket', 'comment', 'hilite', 'info']);
+        const rawRemark = findColVal(['remark', 'remarks', 'note', 'notes', 'keterangan', 'ket', 'comment', 'hilite', 'info'], [itemNo, materialStatus, desc]);
         const remarks = rawRemark || '-';
 
         return { workStatus, itemNo, desc, materialStatus, remarks };
@@ -2466,7 +2498,6 @@
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
 
-                // Deteksi baris header otomatis jika baris pertama berisi judul laporan
                 const rawMatrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
                 let headerRowIdx = 0;
                 for (let r = 0; r < Math.min(10, rawMatrix.length); r++) {
@@ -2484,12 +2515,13 @@
                     return;
                 }
 
-                // Filter baris kosong sepenuhnya lalu olah secara cerdas
                 const validRows = jsonRows.filter(row => Object.values(row).some(v => v !== null && v.toString().trim() !== ''));
-                const newItems = validRows.map((row, i) => smartExtractRowFields(row, i));
+                const newItems = validRows
+                    .map((row, i) => smartExtractRowFields(row, i))
+                    .filter(item => item !== null);
 
                 if (newItems.length === 0) {
-                    alert('Tidak ditemukan baris data yang dapat diolah.');
+                    alert('Tidak ditemukan data yang sesuai kriteria (Order No 9 digit awalan 8 atau status MDR Track yang valid).');
                     return;
                 }
 

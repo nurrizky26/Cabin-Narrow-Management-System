@@ -664,7 +664,17 @@
                         </div>
                     </div>
 
-                    <div id="ppcAircraftCardGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <!-- Legenda Warna RTS -->
+                    <div class="flex flex-wrap items-center gap-2 mb-4 text-[10px] font-bold">
+                        <span class="text-gray-500 uppercase mr-1">Indikator RTS:</span>
+                        <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-400">🟢 &gt; 14 Hari (H-15+)</span>
+                        <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-400">🟡 H-14 s/d H-4</span>
+                        <span class="px-2 py-0.5 rounded bg-orange-200 text-orange-950 border border-orange-500">🟠 H-3 s/d Hari H (H-0)</span>
+                        <span class="px-2 py-0.5 rounded bg-rose-200 text-rose-950 border border-rose-500">🔴 Lewat Tanggal RTS</span>
+                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">⚪ Belum Set RTS</span>
+                    </div>
+
+                    <div id="ppcAircraftCardGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
                         <!-- Populated by JS -->
                     </div>
                 </div>
@@ -718,7 +728,7 @@
                     <div class="flex items-center gap-2 flex-wrap ppc-cud-control" style="display:none;">
                         <!-- Upload Excel Input -->
                         <label class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-md cursor-pointer flex items-center gap-1 shadow-sm transition">
-                            <span>📥</span> UPLOAD EXCEL / CSV
+                            <span>📥</span> UPLOAD EXCEL / CSV (TIMPA)
                             <input type="file" id="ppcExcelUploadInput" accept=".xlsx, .xls, .csv" onchange="ppcHandleExcelUpload(event)" class="hidden">
                         </label>
                         <button onclick="ppcOpenItemModal()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-md flex items-center gap-1 shadow-sm transition">
@@ -734,7 +744,7 @@
                 <div>
                     <div id="ppcChartsMainContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4 transition-all duration-300">
                         <!-- Donut 1: Status Pengerjaan (OPEN, PROGRESS, CLOSED, INTERUPT) -->
-                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between" style="min-height: 280px;">
+                        <div id="ppcChartCardWork" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 280px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">1. STATUS PENGERJAAN</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
@@ -745,7 +755,7 @@
                         </div>
 
                         <!-- Donut 2: Material & Logistic Status (13 Status Lengkap) -->
-                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between" style="min-height: 280px;">
+                        <div id="ppcChartCardMaterial" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 280px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">2. STATUS MATERIAL & LOGISTIK</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
@@ -756,7 +766,7 @@
                         </div>
 
                         <!-- Donut 3: Rekapan Prioritas / Trade Area -->
-                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between" style="min-height: 280px;">
+                        <div id="ppcChartCardSummary" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 280px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">3. REKAPAN KELENGKAPAN</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik slice</span>
@@ -815,6 +825,32 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Modal Edit PLAN RTS Pesawat (Khusus Login PPC / Admin) -->
+        <div id="ppcRtsModal" class="modal-overlay">
+            <div class="modal-content" style="max-width: 380px;">
+                <div class="modal-header">
+                    <h3 style="margin:0; font-size:14px; color:var(--primary);">SET PLAN RTS PESAWAT</h3>
+                    <button type="button" style="background:none; border:none; cursor:pointer; font-size:16px" onclick="ppcCloseRtsModal()">✕</button>
+                </div>
+                <form onsubmit="ppcSaveRtsDate(event)">
+                    <input type="hidden" id="ppcRtsTargetReg">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label>REGISTRASI PESAWAT</label>
+                        <input type="text" id="ppcRtsDisplayReg" readonly class="wo-input font-mono font-bold" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; background:#f1f5f9;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label>TANGGAL PLAN RTS</label>
+                        <input type="date" id="ppcRtsInputDate" class="wo-input font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                        <span style="font-size:10px; color:#64748b; margin-top:4px;">Kosongkan tanggal jika ingin menghapus jadwal RTS.</span>
+                    </div>
+                    <div class="modal-footer" style="margin-top:0;">
+                        <button type="button" class="btn" style="background:#eee" onclick="ppcCloseRtsModal()">BATAL</button>
+                        <button type="submit" class="btn btn-primary">SIMPAN PLAN RTS</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -2090,9 +2126,10 @@
     function addNewAcDistro() { if (!isMPAuthorized()) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
 
     // =========================================================================
-    // REVISED SCRIPTS FOR PPC DASHBOARD (MULTI-VIEW, EXCEL IMPORT, 3 DONUTS)
+    // REVISED SCRIPTS FOR PPC DASHBOARD (MULTI-VIEW, EXCEL IMPORT, 3 DONUTS, RTS)
     // =========================================================================
     let ppcAllAircraftList = [];
+    let ppcAircraftRtsMap = {}; // Simpan PLAN RTS per registrasi pesawat: { "PK-GFA": "2026-11-28" }
     let ppcSelectedReg = null;
     let ppcSelectedCategory = null;
     let ppcActiveDataItems = [];
@@ -2134,7 +2171,12 @@
         try {
             const units = ['TJN-1', 'TJN-2', 'TJN-3', 'TJN-4', 'TJN-5', 'TJN-6'];
             const allRegsPromises = units.map(u => getStore(`${u}_aircraft_regs`, []));
-            const allRegsResults = await Promise.all(allRegsPromises);
+            const [allRegsResults, savedRtsMap] = await Promise.all([
+                Promise.all(allRegsPromises),
+                getStore('ppc_aircraft_rts_map', {})
+            ]);
+
+            ppcAircraftRtsMap = (savedRtsMap && typeof savedRtsMap === 'object') ? savedRtsMap : {};
 
             const regSet = new Set();
             allRegsResults.forEach((unitRegs) => {
@@ -2156,10 +2198,71 @@
         }
     }
 
+    // Helper Hitung Status & Warna RTS per Registrasi
+    function getPpcRtsInfo(rtsDateStr) {
+        if (!rtsDateStr) {
+            return {
+                dateFormatted: 'BELUM DIATUR',
+                dayText: 'SET PLAN RTS',
+                cardClass: 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800',
+                regBadgeClass: 'bg-slate-800 text-white',
+                pillClass: 'bg-slate-200 text-slate-700'
+            };
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const rtsDate = new Date(rtsDateStr + 'T00:00:00');
+        rtsDate.setHours(0, 0, 0, 0);
+
+        const diffDays = Math.ceil((rtsDate - today) / (1000 * 60 * 60 * 24));
+        const parts = rtsDateStr.split('-');
+        const formattedDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rtsDateStr;
+
+        if (diffDays > 14) {
+            // Hijau: melebihi range -14 hari (H-15 ke atas)
+            return {
+                dateFormatted: formattedDate,
+                dayText: `H-${diffDays} DAYS`,
+                cardClass: 'bg-emerald-50 hover:bg-emerald-100/90 border-emerald-500 text-emerald-950',
+                regBadgeClass: 'bg-emerald-800 text-white',
+                pillClass: 'bg-emerald-600 text-white'
+            };
+        } else if (diffDays >= 4) {
+            // Kuning: range H-14 s/d H-4 (-7 hari masuk di sini)
+            return {
+                dateFormatted: formattedDate,
+                dayText: `H-${diffDays} DAYS`,
+                cardClass: 'bg-amber-50 hover:bg-amber-100/90 border-amber-500 text-amber-950',
+                regBadgeClass: 'bg-amber-800 text-white',
+                pillClass: 'bg-amber-500 text-slate-950'
+            };
+        } else if (diffDays >= 0) {
+            // Orange: -3 hari sampai hari H (H-3, H-2, H-1, H-0)
+            return {
+                dateFormatted: formattedDate,
+                dayText: diffDays === 0 ? 'H-0 (TODAY)' : `H-${diffDays} DAYS`,
+                cardClass: 'bg-orange-100 hover:bg-orange-200/80 border-orange-600 text-orange-950',
+                regBadgeClass: 'bg-orange-900 text-white',
+                pillClass: 'bg-orange-600 text-white'
+            };
+        } else {
+            // Merah: melewati tanggal RTS
+            return {
+                dateFormatted: formattedDate,
+                dayText: `OVERDUE (+${Math.abs(diffDays)}D)`,
+                cardClass: 'bg-rose-100 hover:bg-rose-200/80 border-rose-600 text-rose-950',
+                regBadgeClass: 'bg-rose-900 text-white',
+                pillClass: 'bg-rose-600 text-white'
+            };
+        }
+    }
+
     function renderPpcAircraftCards() {
         const grid = document.getElementById('ppcAircraftCardGrid');
         if (!grid) return;
         const searchVal = (document.getElementById('ppcRegSearch')?.value || '').trim().toUpperCase();
+        const canEdit = isPPCAuthorized();
 
         const filtered = ppcAllAircraftList.filter(r => !searchVal || r.includes(searchVal));
 
@@ -2168,12 +2271,73 @@
             return;
         }
 
-        grid.innerHTML = filtered.map(reg => `
-            <div onclick="ppcSelectRegistration('${reg}')" class="bg-white hover:bg-blue-50/70 border-2 border-gray-200 hover:border-blue-500 rounded-xl p-3 text-center cursor-pointer transition shadow-sm hover:shadow group flex flex-col items-center justify-center gap-1.5">
-                <span class="font-mono font-black text-sm text-gray-800 group-hover:text-blue-600">${reg}</span>
-                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">KLIK UNTUK AKSES</span>
-            </div>
-        `).join('');
+        grid.innerHTML = filtered.map(reg => {
+            const rtsVal = ppcAircraftRtsMap[reg] || '';
+            const rtsInfo = getPpcRtsInfo(rtsVal);
+
+            return `
+                <div onclick="ppcSelectRegistration('${reg}')" class="relative ${rtsInfo.cardClass} border-2 rounded-xl p-3.5 text-center cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 flex flex-col items-center justify-between gap-2">
+                    ${canEdit ? `
+                        <button type="button" onclick="ppcOpenRtsModal(event, '${reg}')" title="Edit Plan RTS" class="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-800 border border-gray-300 rounded px-1.5 py-0.5 text-[10px] font-extrabold shadow-sm transition">
+                            ✎ RTS
+                        </button>
+                    ` : ''}
+
+                    <div class="w-full flex flex-col items-center mt-1">
+                        <span class="px-3 py-1 rounded-md font-mono font-black text-sm tracking-wider shadow-sm ${rtsInfo.regBadgeClass}">
+                            ${reg}
+                        </span>
+                    </div>
+
+                    <div class="w-full bg-white/85 rounded-lg p-2 border border-black/10 flex flex-col items-center gap-1">
+                        <div class="text-[9px] font-extrabold uppercase opacity-75">PLAN RTS</div>
+                        <div class="font-mono font-black text-xs">${rtsInfo.dateFormatted}</div>
+                        <span class="px-2 py-0.5 rounded-full text-[9.5px] font-black tracking-wide shadow-xs ${rtsInfo.pillClass}">
+                            ${rtsInfo.dayText}
+                        </span>
+                    </div>
+
+                    <span class="text-[9px] font-extrabold uppercase tracking-wider opacity-80">KLIK UNTUK AKSES ➔</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function ppcOpenRtsModal(event, reg) {
+        event.stopPropagation();
+        if (!isPPCAuthorized()) return;
+        document.getElementById('ppcRtsTargetReg').value = reg;
+        document.getElementById('ppcRtsDisplayReg').value = reg;
+        document.getElementById('ppcRtsInputDate').value = ppcAircraftRtsMap[reg] || '';
+        document.getElementById('ppcRtsModal').style.display = 'flex';
+    }
+
+    function ppcCloseRtsModal() {
+        document.getElementById('ppcRtsModal').style.display = 'none';
+    }
+
+    async function ppcSaveRtsDate(e) {
+        e.preventDefault();
+        if (!isPPCAuthorized()) return;
+        const reg = document.getElementById('ppcRtsTargetReg').value;
+        const dateVal = document.getElementById('ppcRtsInputDate').value;
+
+        if (dateVal) {
+            ppcAircraftRtsMap[reg] = dateVal;
+        } else {
+            delete ppcAircraftRtsMap[reg];
+        }
+
+        ppcCloseRtsModal();
+        renderPpcAircraftCards();
+
+        try {
+            await _supabase.from('app_store').upsert([{ key: 'ppc_aircraft_rts_map', value: ppcAircraftRtsMap }]);
+            showToastNotification();
+        } catch(err) {
+            console.error("Gagal simpan Plan RTS:", err);
+            alert("Gagal menyimpan tanggal Plan RTS ke database.");
+        }
     }
 
     function ppcSelectRegistration(reg) {
@@ -2200,6 +2364,9 @@
         document.getElementById('ppcActiveContextTag').innerText = `${ppcSelectedReg} - ${category}`;
         document.getElementById('ppcBreadcrumb').innerText = `${ppcSelectedReg} > ${category}`;
 
+        // Reset urutan kartu diagram ke default saat membuka kategori baru
+        ppcResetChartOrder();
+
         await ppcLoadCategoryData();
         applyPermissions();
     }
@@ -2217,6 +2384,7 @@
             document.getElementById('ppcBreadcrumb').innerText = `PILIH REGISTRASI`;
             ppcSelectedReg = null;
             ppcSelectedCategory = null;
+            renderPpcAircraftCards();
         }
     }
 
@@ -2393,7 +2561,6 @@
 
     function smartDetectMdrTrack(row) {
         const values = Object.values(row);
-        // Cek seluruh sel di baris ini apakah cocok dengan salah satu dari 13 MDR TRACK
         for (const v of values) {
             if (v === null || v === undefined) continue;
             const strVal = v.toString().trim();
@@ -2408,16 +2575,13 @@
 
     function smartDetectOrderNo(row) {
         const values = Object.values(row);
-        // Cari pola 9 digit angka berawalan angka 8 di seluruh sel pada baris tersebut
         for (const v of values) {
             if (v === null || v === undefined) continue;
             const strVal = v.toString().trim();
             if (!strVal) continue;
-            // Cek jika tepat 9 angka berawalan 8
             if (/^8\d{8}$/.test(strVal)) {
                 return strVal;
             }
-            // Cek jika terdapat 9 angka berawalan 8 di dalam teks sel
             const match = strVal.match(/\b8\d{8}\b/);
             if (match) {
                 return match[0];
@@ -2442,13 +2606,9 @@
             return '';
         };
 
-        // 1. Deteksi ORDER NO (9 angka berawalan angka 8)
         const detectedOrderNo = smartDetectOrderNo(row);
-
-        // 2. Deteksi MDR TRACK / Jobcard Track (salah satu dari 13 item)
         const detectedTrack = smartDetectMdrTrack(row);
 
-        // Baris hanya valid dimunculkan di tabel jika memiliki Order No (9 digit awalan 8) atau MDR Track yang cocok
         if (!detectedOrderNo && !detectedTrack) {
             return null;
         }
@@ -2456,14 +2616,11 @@
         const itemNo = detectedOrderNo || '-';
         const materialStatus = detectedTrack || 'Status Not Defined Yet';
 
-        // 3. Smart Status (Open / Progress / Closed / Interupt)
         const rawStatus = findColVal(['status', 'workstatus', 'taskstatus', 'jcstatus', 'mdrstatus', 'state', 'kondisi'], [itemNo, materialStatus]);
         const workStatus = smartNormalizeWorkStatus(rawStatus);
 
-        // 4. Smart Description
         let desc = findColVal(['description', 'taskdescription', 'desc', 'discrepancy', 'defect', 'subject', 'title', 'uraian', 'pekerjaan', 'detail'], [itemNo, materialStatus]);
         if (!desc) {
-            // Ambil teks deskriptif terpanjang dari sel yang bukan Order No dan bukan Track
             const textCandidates = Object.values(row)
                 .map(v => (v !== null && v !== undefined) ? v.toString().trim() : '')
                 .filter(v => v && v !== itemNo && v.toLowerCase() !== materialStatus.toLowerCase() && !['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'].includes(v.toUpperCase()));
@@ -2475,7 +2632,6 @@
             }
         }
 
-        // 5. Smart Remark
         const rawRemark = findColVal(['remark', 'remarks', 'note', 'notes', 'keterangan', 'ket', 'comment', 'hilite', 'info'], [itemNo, materialStatus, desc]);
         const remarks = rawRemark || '-';
 
@@ -2525,11 +2681,13 @@
                     return;
                 }
 
-                if (confirm(`Smart Import mendeteksi ${newItems.length} baris data valid untuk ${ppcSelectedReg} (${ppcSelectedCategory}). Gabungkan ke tabel sekarang?`)) {
-                    ppcActiveDataItems = newItems.concat(ppcActiveDataItems);
+                // Timpa data lama sepenuhnya dengan data murni hasil upload
+                if (confirm(`Smart Import mendeteksi ${newItems.length} baris data valid untuk ${ppcSelectedReg} (${ppcSelectedCategory}).\n\nData lama akan DITIMPA (diganti sepenuhnya) agar murni menampilkan data upload ini. Lanjutkan?`)) {
+                    ppcActiveDataItems = newItems;
+                    ppcCloseDrilldown();
                     ppcRenderAll();
                     ppcSaveCategoryDataToDB();
-                    alert(`Berhasil mengolah dan mengimpor ${newItems.length} data!`);
+                    alert(`Berhasil menimpa dan menampilkan ${newItems.length} data hasil upload!`);
                 }
             } catch(err) {
                 console.error("Error membaca Excel:", err);
@@ -2678,6 +2836,21 @@
         }
     }
 
+    function ppcResetChartOrder() {
+        const chartsContainer = document.getElementById('ppcChartsMainContainer');
+        const c1 = document.getElementById('ppcChartCardWork');
+        const c2 = document.getElementById('ppcChartCardMaterial');
+        const c3 = document.getElementById('ppcChartCardSummary');
+        if (chartsContainer && c1 && c2 && c3) {
+            c1.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200');
+            c2.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200');
+            c3.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200');
+            chartsContainer.appendChild(c1);
+            chartsContainer.appendChild(c2);
+            chartsContainer.appendChild(c3);
+        }
+    }
+
     function ppcTriggerDrilldown(type, value) {
         const chartsContainer = document.getElementById('ppcChartsMainContainer');
         const drilldownWrapper = document.getElementById('ppcDrilldownWrapper');
@@ -2685,7 +2858,23 @@
         const drilldownCount = document.getElementById('ppcDrilldownCount');
         const drilldownTbody = document.getElementById('ppcDrilldownTableBody');
 
+        const c1 = document.getElementById('ppcChartCardWork');
+        const c2 = document.getElementById('ppcChartCardMaterial');
+        const c3 = document.getElementById('ppcChartCardSummary');
+
         if (!chartsContainer || !drilldownWrapper) return;
+
+        // Posisikan diagram yang diklik ke paling atas dari diagram lainnya
+        if (c1 && c2 && c3) {
+            [c1, c2, c3].forEach(el => el.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200'));
+            let activeCard = c1;
+            if (type === 'WORK_STATUS') activeCard = c1;
+            else if (type === 'MATERIAL_STATUS') activeCard = c2;
+            else if (type === 'SUMMARY') activeCard = c3;
+
+            activeCard.classList.add('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200');
+            chartsContainer.prepend(activeCard);
+        }
 
         chartsContainer.classList.remove('md:grid-cols-3');
         chartsContainer.classList.add('md:grid-cols-1', 'lg:w-1/3');
@@ -2748,6 +2937,8 @@
         const chartsContainer = document.getElementById('ppcChartsMainContainer');
         const drilldownWrapper = document.getElementById('ppcDrilldownWrapper');
         if (!chartsContainer || !drilldownWrapper) return;
+
+        ppcResetChartOrder();
 
         chartsContainer.classList.remove('md:grid-cols-1', 'lg:w-1/3');
         chartsContainer.classList.add('md:grid-cols-3');

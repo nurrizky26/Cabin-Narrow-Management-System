@@ -61,7 +61,7 @@
         #clockDate { font-size: 9px; font-weight: 600; text-transform: uppercase; opacity: 0.8; }
         #clockTime { font-size: 14px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
 
-        .nav-tabs { display: flex; height: 100%; flex: 1; justify-content: flex-end; }
+        .nav-tabs { display: flex; height: 100%; flex: 1; justify-content: flex-end; align-items: center; }
         .nav-tab {
             padding: 0 18px; color: #a2a3b7; border: none; background: none;
             cursor: pointer; font-weight: 600; font-size: 11px; transition: var(--transition);
@@ -69,6 +69,28 @@
         }
         .nav-tab:hover { color: white; background: rgba(255,255,255,0.05); }
         .nav-tab.active { color: white; border-bottom-color: var(--primary); background: rgba(255,255,255,0.05); }
+
+        .btn-fullscreen {
+            background: rgba(255, 255, 255, 0.12);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-right: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .btn-fullscreen:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
 
         .main-wrapper { flex: 1; display: flex; flex-direction: column; padding: 10px 15px; overflow: hidden; }
 
@@ -185,7 +207,6 @@
         .aircraft-card:hover {
             border-color: var(--primary);
             box-shadow: 0 4px 12px rgba(67, 97, 238, 0.15);
-            background-color: #fcfdfe;
             transform: translateY(-1px);
         }
 
@@ -196,7 +217,7 @@
 
         .assignment-slots { 
             display: flex; flex-wrap: wrap; gap: 2px; min-height: 18px; 
-            margin-top: 2px; padding-top: 4px; border-top: 1px solid #f8fafc; 
+            margin-top: 2px; padding-top: 4px; border-top: 1px solid rgba(0,0,0,0.06); 
         }
 
         .workload-direct-edit {
@@ -241,7 +262,7 @@
         .drag-item.not-avail { opacity: 0.6; cursor: not-allowed; background: #f8fafc; }
 
         .ac-actions { position: absolute; right: 4px; top: 4px; display: flex; gap: 2px; }
-        .ac-btn { background: none; border: none; color: #cbd5e0; cursor: pointer; font-size: 8px; }
+        .ac-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 8px; }
 
         .sheet-content { height: 100%; display: none; flex-direction: column; overflow: hidden; }
         .sheet-content.active { display: flex; }
@@ -263,7 +284,7 @@
             border-radius: 4px; 
             text-align: center; 
             padding: 0 4px; 
-            background: #fdfdfd;
+            background: rgba(255,255,255,0.9);
             color: var(--primary);
             text-transform: uppercase;
         }
@@ -404,6 +425,7 @@
     <div class="nav-clock"><div id="clockDate">LOADING...</div><div id="clockTime">00:00:00</div></div>
 
     <div class="nav-tabs">
+        <button type="button" id="btnFullscreenToggle" class="btn-fullscreen" onclick="toggleFullScreen()" title="Toggle Fullscreen">⛶ FULLSCREEN</button>
         <button class="nav-tab active" onclick="switchTab(event, 'home-dashboard')"> DASHBOARD CABIN</button>
         <button class="nav-tab" onclick="switchTab(event, 'distribution')">AVAILABILITY</button>
         <button class="nav-tab" onclick="switchTab(event, 'schedule')">DISTRIBUTION MP</button>
@@ -566,6 +588,10 @@
                         </div>
                     </div>
                     <div id="allTjnSummaryGrid" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                    <!-- Catatan Filter Pegawai dan PKWT -->
+                    <div style="margin-top: 10px; padding: 6px 8px; background: #fffbeb; border: 1px solid #f59e0b; border-left: 4px solid #d97706; border-radius: 5px; font-size: 9px; font-weight: 800; color: #92400e; line-height: 1.35; letter-spacing: 0.2px;">
+                        ℹ️ DATA YANG DITAMPILKAN SUDAH DI FILTER HANYA MUNCUL PEGAWAI DAN PKWT
+                    </div>
                 </div>
 
                 <div class="data-card" style="flex: 1; padding: 12px; display: flex; flex-direction: column; overflow: hidden;">
@@ -664,14 +690,43 @@
                         </div>
                     </div>
 
-                    <!-- Legenda Warna RTS -->
-                    <div class="flex flex-wrap items-center gap-2 mb-4 text-[10px] font-bold">
-                        <span class="text-gray-500 uppercase mr-1">Indikator RTS:</span>
-                        <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-400">🟢 &gt; 14 Hari (H-15+)</span>
-                        <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-400">🟡 H-14 s/d H-4</span>
-                        <span class="px-2 py-0.5 rounded bg-orange-200 text-orange-950 border border-orange-500">🟠 H-3 s/d Hari H (H-0)</span>
-                        <span class="px-2 py-0.5 rounded bg-rose-200 text-rose-950 border border-rose-500">🔴 Lewat Tanggal RTS</span>
-                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">⚪ Belum Set RTS</span>
+                    <!-- Legenda Warna RTS (Clickable Filter) + Filter/Sort Handle by Line -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <div class="flex flex-wrap items-center gap-2 text-[10px] font-bold">
+                            <span class="text-gray-500 uppercase mr-1">Indikator RTS (Klik Filter):</span>
+                            <button type="button" id="ppcRtsChip_GREEN" onclick="ppcToggleRtsColorFilter('GREEN')" class="px-2 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-400 cursor-pointer transition">🟢 &gt; 14 Hari (H-15+)</button>
+                            <button type="button" id="ppcRtsChip_YELLOW" onclick="ppcToggleRtsColorFilter('YELLOW')" class="px-2 py-0.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-400 cursor-pointer transition">🟡 H-14 s/d H-4</button>
+                            <button type="button" id="ppcRtsChip_ORANGE" onclick="ppcToggleRtsColorFilter('ORANGE')" class="px-2 py-0.5 rounded bg-orange-200 hover:bg-orange-300 text-orange-950 border border-orange-500 cursor-pointer transition">🟠 H-3 s/d Hari H (H-0)</button>
+                            <button type="button" id="ppcRtsChip_RED" onclick="ppcToggleRtsColorFilter('RED')" class="px-2 py-0.5 rounded bg-rose-200 hover:bg-rose-300 text-rose-950 border border-rose-500 cursor-pointer transition">🔴 Lewat Tanggal RTS</button>
+                            <button type="button" id="ppcRtsChip_GRAY" onclick="ppcToggleRtsColorFilter('GRAY')" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 cursor-pointer transition">⚪ Belum Set RTS</button>
+                            <button type="button" id="ppcRtsChipReset" onclick="ppcToggleRtsColorFilter('ALL')" style="display:none;" class="px-2 py-0.5 rounded bg-gray-800 text-white border border-gray-900 cursor-pointer transition">✕ Reset Filter</button>
+                        </div>
+
+                        <!-- Sort / Filter Handle by Line -->
+                        <div class="flex items-center gap-2 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                            <label for="ppcLineFilterSelect" class="text-[10px] font-black text-gray-600 uppercase">Handle by Line:</label>
+                            <select id="ppcLineFilterSelect" onchange="renderPpcAircraftCards()" class="px-2 py-1 text-[11px] font-black font-mono bg-white border border-gray-300 rounded text-gray-800 cursor-pointer outline-none focus:border-blue-500">
+                                <option value="ALL">ALL LINE (SORT RTS)</option>
+                                <option value="SORT_LINE">URUTKAN BY LINE (1-15 / PCB)</option>
+                                <option value="Line-1">Line-1</option>
+                                <option value="Line-2">Line-2</option>
+                                <option value="Line-3">Line-3</option>
+                                <option value="Line-4">Line-4</option>
+                                <option value="Line-5">Line-5</option>
+                                <option value="Line-6">Line-6</option>
+                                <option value="Line-7">Line-7</option>
+                                <option value="Line-8">Line-8</option>
+                                <option value="Line-9">Line-9</option>
+                                <option value="Line-10">Line-10</option>
+                                <option value="Line-11">Line-11</option>
+                                <option value="Line-12">Line-12</option>
+                                <option value="Line-13">Line-13</option>
+                                <option value="Line-14">Line-14</option>
+                                <option value="Line-15">Line-15</option>
+                                <option value="PCB">PCB</option>
+                                <option value="UNSET">BELUM SET LINE</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Tampilan List Sederhana & Mudah Dibaca -->
@@ -745,7 +800,7 @@
                 <div>
                     <div id="ppcChartsMainContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4 transition-all duration-300">
                         <!-- Donut 1: Status Pengerjaan (OPEN, PROGRESS, CLOSED, INTERUPT) -->
-                        <div id="ppcChartCardWork" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 295px;">
+                        <div id="ppcChartCardWork" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">1. STATUS PENGERJAAN</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
@@ -761,7 +816,7 @@
                         </div>
 
                         <!-- Donut 2: Material & Logistic Status (13 Status Lengkap) -->
-                        <div id="ppcChartCardMaterial" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 295px;">
+                        <div id="ppcChartCardMaterial" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">2. STATUS MATERIAL & LOGISTIK</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
@@ -777,7 +832,7 @@
                         </div>
 
                         <!-- Donut 3: Rekapan Prioritas / Trade Area -->
-                        <div id="ppcChartCardSummary" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 295px;">
+                        <div id="ppcChartCardSummary" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">3. REKAPAN KELENGKAPAN</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
@@ -1023,6 +1078,32 @@
 </div>
 
 <script>
+    // ==========================================
+    // FULLSCREEN TOGGLE CONTROLLER
+    // ==========================================
+    function toggleFullScreen() {
+        const btn = document.getElementById('btnFullscreenToggle');
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+        const btn = document.getElementById('btnFullscreenToggle');
+        if (!btn) return;
+        if (document.fullscreenElement) {
+            btn.innerHTML = '⛶ EXIT FULLSCREEN';
+        } else {
+            btn.innerHTML = '⛶ FULLSCREEN';
+        }
+    });
+
     // ==========================================
     // SISTEM OTORISASI / LOGIN (CLIENT-SIDE)
     // ==========================================
@@ -1502,7 +1583,7 @@
                 generalWorkload = { col1: "", col2: "", col3: "" };
                 nextWorkload = { col1: "", col2: "", col3: "" };
             } else {
-                [manpowerData, aircraftRegs, assignments, aircraftPhases, aircraftLines, generalWorkload, nextWorkload, unitShiftStatus] = await Promise.all([
+                const [mpRes, regsRes, assignRes, phasesRes, linesRes, gwRes, nwRes, shiftRes, savedRtsMap] = await Promise.all([
                     getStore(`${currentUnit}_manpower_data`, []),
                     getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
                     getStore(`${currentUnit}_assignments`, {}),
@@ -1510,8 +1591,21 @@
                     getStore(`${currentUnit}_aircraft_lines`, {}),
                     getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" }),
                     getStore(`${currentUnit}_next_workload`, { col1: "", col2: "", col3: "" }),
-                    getStore(`${currentUnit}_shift_status`, "MORNING SHIFT")
+                    getStore(`${currentUnit}_shift_status`, "MORNING SHIFT"),
+                    getStore('ppc_aircraft_rts_map', {})
                 ]);
+
+                manpowerData = mpRes;
+                aircraftRegs = regsRes;
+                assignments = assignRes;
+                aircraftPhases = phasesRes;
+                aircraftLines = linesRes;
+                generalWorkload = gwRes;
+                nextWorkload = nwRes;
+                unitShiftStatus = shiftRes;
+                if (savedRtsMap && typeof savedRtsMap === 'object') {
+                    ppcAircraftRtsMap = savedRtsMap;
+                }
 
                 const isDual = ['TJN-5', 'TJN-6'].includes(currentUnit);
                 manpowerData = manpowerData.map(m => ({
@@ -1654,7 +1748,7 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
-    function switchTab(e, id) {
+    async function switchTab(e, id) {
         document.querySelectorAll('.sheet-content').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
@@ -1675,7 +1769,12 @@
         const unitSel = document.getElementById('unitSelectorWrapper');
         if (unitSel) unitSel.style.display = (id === 'ppc-dashboard' || id === 'home-dashboard') ? 'none' : 'flex';
 
-        if(id === 'schedule') renderDistro();
+        if(id === 'schedule') {
+            // Pastikan data RTS terbaru dari PPC Dashboard tersinkron untuk mewarnai kotak pesawat
+            const latestRts = await getStore('ppc_aircraft_rts_map', ppcAircraftRtsMap);
+            if (latestRts && typeof latestRts === 'object') ppcAircraftRtsMap = latestRts;
+            renderDistro();
+        }
         if(id === 'distribution') renderTable();
         if(id === 'ppc-dashboard') {
             loadPpcRegistrations();
@@ -1886,6 +1985,56 @@
         if(confirm("Delete this MP?")) { manpowerData.splice(idx, 1); saveDataToDB(); renderTable(); } 
     }
 
+    // Helper Warna Kotak Registrasi di Tab DISTRIBUTION MP berdasarkan H- RTS dari Tab PPC DASHBOARD
+    function getDistroCardRtsStyle(reg) {
+        const upReg = (reg || '').trim().toUpperCase();
+        const rtsDateStr = ppcAircraftRtsMap[upReg] || '';
+        const info = getPpcRtsInfo(rtsDateStr);
+
+        switch (info.colorCategory) {
+            case 'GREEN':
+                return {
+                    cardBg: '#ecfdf5',
+                    cardBorder: '#10b981',
+                    badgeBg: '#065f46',
+                    badgeColor: '#ffffff',
+                    rtsTag: info.dayText
+                };
+            case 'YELLOW':
+                return {
+                    cardBg: '#fffbeb',
+                    cardBorder: '#f59e0b',
+                    badgeBg: '#92400e',
+                    badgeColor: '#ffffff',
+                    rtsTag: info.dayText
+                };
+            case 'ORANGE':
+                return {
+                    cardBg: '#ffedd5',
+                    cardBorder: '#ea580c',
+                    badgeBg: '#9a3412',
+                    badgeColor: '#ffffff',
+                    rtsTag: info.dayText
+                };
+            case 'RED':
+                return {
+                    cardBg: '#ffe4e6',
+                    cardBorder: '#e11d48',
+                    badgeBg: '#881337',
+                    badgeColor: '#ffffff',
+                    rtsTag: info.dayText
+                };
+            default:
+                return {
+                    cardBg: '#ffffff',
+                    cardBorder: '#e2e8f0',
+                    badgeBg: 'var(--dark)',
+                    badgeColor: '#ffffff',
+                    rtsTag: ''
+                };
+        }
+    }
+
     function renderDistro() {
         const pool = document.getElementById('staffPool');
         const grid = document.getElementById('aircraftGrid');
@@ -1963,8 +2112,16 @@
                     lineOptions += `<option value="L${i}" ${aircraftLines[reg] === `L${i}` ? 'selected' : ''}>L${i}</option>`;
                 }
 
+                const rtsStyle = getDistroCardRtsStyle(reg);
+                const rtsMiniPill = rtsStyle.rtsTag
+                    ? `<span style="font-size:7px; font-weight:900; padding:1px 4px; border-radius:3px; background:${rtsStyle.badgeBg}; color:${rtsStyle.badgeColor}; letter-spacing:0.2px; white-space:nowrap;">${rtsStyle.rtsTag}</span>`
+                    : '';
+
                 const card = document.createElement('div');
                 card.className = 'aircraft-card';
+                card.style.backgroundColor = rtsStyle.cardBg;
+                card.style.borderColor = rtsStyle.cardBorder;
+                card.style.borderWidth = rtsStyle.rtsTag ? '2px' : '1px';
                 card.dataset.reg = reg;
                 card.addEventListener('dragover', handleAcDragOver);
                 card.addEventListener('dragleave', handleAcDragLeave);
@@ -1977,8 +2134,9 @@
                     </div>
                     <div class="ac-card-header">
                         <div class="ac-header-top">
-                            <span class="reg-badge cursor-grab" draggable="true" ondragstart="handleAcDragStart(event, '${reg}')" ondragend="handleAcDragEnd(event)">${reg} ↕</span>
+                            <span class="reg-badge cursor-grab" style="background:${rtsStyle.badgeBg}; color:${rtsStyle.badgeColor};" draggable="true" ondragstart="handleAcDragStart(event, '${reg}')" ondragend="handleAcDragEnd(event)">${reg} ↕</span>
                             <select class="line-mini-select mp-cud-input" onchange="directUpdateLine('${reg}', this.value)">${lineOptions}</select>
+                            ${rtsMiniPill}
                         </div>
                         <input type="text" class="phase-input mp-cud-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="Maint. Type">
                     </div>
@@ -2157,7 +2315,7 @@
     function addNewAcDistro() { if (!isMPAuthorized()) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
 
     // =========================================================================
-    // REVISED SCRIPTS FOR PPC DASHBOARD (LIST VIEW, LINE-1..15/PCB, RTS SORT, LIVE RELOAD)
+    // REVISED SCRIPTS FOR PPC DASHBOARD (CALLOUT ARROWS, RTS FILTER, LINE SORT)
     // =========================================================================
     let ppcAllAircraftList = [];
     let ppcAircraftRtsMap = {}; // { "PK-GFA": "2026-11-28" }
@@ -2165,6 +2323,7 @@
     let ppcSelectedReg = null;
     let ppcSelectedCategory = null;
     let ppcActiveDataItems = [];
+    let ppcSelectedRtsColorFilter = 'ALL'; // 'ALL' | 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'GRAY'
 
     let ppcChartInstanceStatus = null;
     let ppcChartInstanceMaterial = null;
@@ -2198,6 +2357,147 @@
         "#8b5cf6", "#ec4899", "#f97316", "#64748b", "#14b8a6",
         "#eab308", "#a855f7", "#059669"
     ];
+
+    // Custom Chart.js Plugin untuk Panah Keluar + Label & Jumlah Dokumen Otomatis per Slice
+    const ppcDoughnutCalloutPlugin = {
+        id: 'ppcDoughnutCalloutPlugin',
+        afterDatasetsDraw(chart) {
+            const { ctx, chartArea } = chart;
+            const meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data || meta.data.length === 0) return;
+
+            const dataset = chart.data.datasets[0];
+            const labels = chart.data.labels || [];
+            const dataArr = dataset.data || [];
+            const bgColors = dataset.backgroundColor || [];
+
+            const total = dataArr.reduce((sum, v) => sum + (Number(v) || 0), 0);
+            if (total === 0) return;
+
+            ctx.save();
+
+            // Kumpulkan kandidat label untuk slice dengan nilai > 0
+            const leftLabels = [];
+            const rightLabels = [];
+
+            meta.data.forEach((arc, index) => {
+                const val = Number(dataArr[index]) || 0;
+                if (val <= 0) return;
+                const rawLabel = labels[index] || '';
+                if (rawLabel === 'No Data') return;
+
+                const startAngle = arc.startAngle;
+                const endAngle = arc.endAngle;
+                const midAngle = (startAngle + endAngle) / 2;
+                const outerRadius = arc.outerRadius;
+                const cx = arc.x;
+                const cy = arc.y;
+
+                const cos = Math.cos(midAngle);
+                const sin = Math.sin(midAngle);
+
+                const xStart = cx + cos * outerRadius;
+                const yStart = cy + sin * outerRadius;
+
+                const elbowDist = outerRadius + 14;
+                const xElbow = cx + cos * elbowDist;
+                const yElbow = cy + sin * elbowDist;
+
+                const isRight = cos >= 0;
+                let shortText = rawLabel;
+                if (shortText.length > 20) shortText = shortText.substring(0, 18) + '..';
+
+                const itemObj = {
+                    index,
+                    val,
+                    text: `${shortText}: ${val}`,
+                    color: Array.isArray(bgColors) ? bgColors[index] : '#334155',
+                    xStart,
+                    yStart,
+                    xElbow,
+                    yElbow,
+                    yLabel: yElbow,
+                    isRight,
+                    cx,
+                    cy,
+                    outerRadius
+                };
+
+                if (isRight) rightLabels.push(itemObj);
+                else leftLabels.push(itemObj);
+            });
+
+            // Anti-collision vertical spacing untuk masing-masing sisi
+            const minGap = 13;
+            const adjustOverlap = (arr) => {
+                arr.sort((a, b) => a.yElbow - b.yElbow);
+                for (let i = 1; i < arr.length; i++) {
+                    if (arr[i].yLabel - arr[i - 1].yLabel < minGap) {
+                        arr[i].yLabel = arr[i - 1].yLabel + minGap;
+                    }
+                }
+                // Pastikan tidak keluar batas bawah chartArea
+                if (arr.length > 0 && chartArea) {
+                    const maxY = chartArea.bottom - 4;
+                    if (arr[arr.length - 1].yLabel > maxY) {
+                        const overflow = arr[arr.length - 1].yLabel - maxY;
+                        arr.forEach(it => it.yLabel -= overflow);
+                    }
+                    const minY = chartArea.top + 8;
+                    if (arr[0].yLabel < minY) {
+                        arr[0].yLabel = minY;
+                        for (let i = 1; i < arr.length; i++) {
+                            if (arr[i].yLabel - arr[i - 1].yLabel < minGap) {
+                                arr[i].yLabel = arr[i - 1].yLabel + minGap;
+                            }
+                        }
+                    }
+                }
+            };
+
+            adjustOverlap(rightLabels);
+            adjustOverlap(leftLabels);
+
+            const drawCallout = (item) => {
+                const tailLength = 12;
+                const xEnd = item.isRight
+                    ? Math.min((chartArea ? chartArea.right - 55 : item.xElbow + tailLength), item.xElbow + tailLength)
+                    : Math.max((chartArea ? chartArea.left + 55 : item.xElbow - tailLength), item.xElbow - tailLength);
+
+                // Garis keluar dari tepi slice ke siku lalu mendatar
+                ctx.beginPath();
+                ctx.moveTo(item.xStart, item.yStart);
+                ctx.lineTo(item.xElbow, item.yLabel);
+                ctx.lineTo(xEnd, item.yLabel);
+                ctx.strokeStyle = item.color;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Mata panah kecil di ujung garis horizontal
+                const arrowDir = item.isRight ? 1 : -1;
+                ctx.beginPath();
+                ctx.moveTo(xEnd, item.yLabel);
+                ctx.lineTo(xEnd - 4 * arrowDir, item.yLabel - 2.5);
+                ctx.lineTo(xEnd - 4 * arrowDir, item.yLabel + 2.5);
+                ctx.closePath();
+                ctx.fillStyle = item.color;
+                ctx.fill();
+
+                // Teks Label & Jumlah Dokumen
+                ctx.font = '800 9px Inter, sans-serif';
+                ctx.fillStyle = '#1e293b';
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = item.isRight ? 'left' : 'right';
+                const textX = item.isRight ? xEnd + 4 : xEnd - 4;
+                ctx.fillText(item.text, textX, item.yLabel);
+            };
+
+            rightLabels.forEach(drawCallout);
+            leftLabels.forEach(drawCallout);
+
+            ctx.restore();
+        }
+    };
 
     async function loadPpcRegistrations() {
         try {
@@ -2257,6 +2557,7 @@
     function getPpcRtsInfo(rtsDateStr) {
         if (!rtsDateStr) {
             return {
+                colorCategory: 'GRAY',
                 dateFormatted: 'BELUM DIATUR',
                 dayText: 'BELUM SET RTS',
                 sortKey: 999999,
@@ -2278,6 +2579,7 @@
         if (diffDays > 14) {
             // Hijau: melebihi range -14 hari (H-15 ke atas)
             return {
+                colorCategory: 'GREEN',
                 dateFormatted: formattedDate,
                 dayText: `H-${diffDays} DAYS`,
                 sortKey: diffDays,
@@ -2288,6 +2590,7 @@
         } else if (diffDays >= 4) {
             // Kuning: range H-14 s/d H-4 (-7 hari masuk di sini)
             return {
+                colorCategory: 'YELLOW',
                 dateFormatted: formattedDate,
                 dayText: `H-${diffDays} DAYS`,
                 sortKey: diffDays,
@@ -2298,6 +2601,7 @@
         } else if (diffDays >= 0) {
             // Orange: -3 hari sampai hari H (H-3, H-2, H-1, H-0)
             return {
+                colorCategory: 'ORANGE',
                 dateFormatted: formattedDate,
                 dayText: diffDays === 0 ? 'H-0 (TODAY)' : `H-${diffDays} DAYS`,
                 sortKey: diffDays,
@@ -2308,6 +2612,7 @@
         } else {
             // Merah: melewati tanggal RTS (paling mendesak / terdekat di urutan atas)
             return {
+                colorCategory: 'RED',
                 dateFormatted: formattedDate,
                 dayText: `OVERDUE (+${Math.abs(diffDays)}D)`,
                 sortKey: diffDays,
@@ -2318,13 +2623,52 @@
         }
     }
 
+    function ppcToggleRtsColorFilter(colorKey) {
+        if (colorKey === 'ALL' || ppcSelectedRtsColorFilter === colorKey) {
+            ppcSelectedRtsColorFilter = 'ALL';
+        } else {
+            ppcSelectedRtsColorFilter = colorKey;
+        }
+
+        const keys = ['GREEN', 'YELLOW', 'ORANGE', 'RED', 'GRAY'];
+        keys.forEach(k => {
+            const el = document.getElementById(`ppcRtsChip_${k}`);
+            if (!el) return;
+            if (ppcSelectedRtsColorFilter === 'ALL') {
+                el.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-900', 'opacity-40');
+            } else if (ppcSelectedRtsColorFilter === k) {
+                el.classList.add('ring-2', 'ring-offset-1', 'ring-gray-900');
+                el.classList.remove('opacity-40');
+            } else {
+                el.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-900');
+                el.classList.add('opacity-40');
+            }
+        });
+
+        const resetBtn = document.getElementById('ppcRtsChipReset');
+        if (resetBtn) {
+            resetBtn.style.display = ppcSelectedRtsColorFilter !== 'ALL' ? 'inline-block' : 'none';
+        }
+
+        renderPpcAircraftCards();
+    }
+
+    function getLineSortWeight(lineStr) {
+        if (!lineStr) return 999;
+        if (lineStr === 'PCB') return 100;
+        const m = lineStr.match(/^Line-(\d+)$/i);
+        if (m) return parseInt(m[1], 10);
+        return 500;
+    }
+
     function renderPpcAircraftCards() {
         const grid = document.getElementById('ppcAircraftCardGrid');
         if (!grid) return;
         const searchVal = (document.getElementById('ppcRegSearch')?.value || '').trim().toUpperCase();
+        const lineFilterVal = document.getElementById('ppcLineFilterSelect')?.value || 'ALL';
         const canEdit = isPPCAuthorized();
 
-        // Filter & Urutkan berdasarkan RTS paling dekat dari atas ke bawah
+        // Filter & Urutkan berdasarkan RTS atau Handle by Line
         const filteredAndSorted = ppcAllAircraftList
             .map(reg => {
                 const rtsVal = ppcAircraftRtsMap[reg] || '';
@@ -2333,10 +2677,25 @@
                 return { reg, rtsVal, rtsInfo, handleLine };
             })
             .filter(item => {
+                if (ppcSelectedRtsColorFilter !== 'ALL' && item.rtsInfo.colorCategory !== ppcSelectedRtsColorFilter) {
+                    return false;
+                }
+                if (lineFilterVal !== 'ALL' && lineFilterVal !== 'SORT_LINE') {
+                    if (lineFilterVal === 'UNSET') {
+                        if (item.handleLine !== '') return false;
+                    } else {
+                        if (item.handleLine !== lineFilterVal) return false;
+                    }
+                }
                 if (!searchVal) return true;
                 return item.reg.includes(searchVal) || item.handleLine.toUpperCase().includes(searchVal);
             })
             .sort((a, b) => {
+                if (lineFilterVal === 'SORT_LINE') {
+                    const wA = getLineSortWeight(a.handleLine);
+                    const wB = getLineSortWeight(b.handleLine);
+                    if (wA !== wB) return wA - wB;
+                }
                 if (a.rtsInfo.sortKey !== b.rtsInfo.sortKey) {
                     return a.rtsInfo.sortKey - b.rtsInfo.sortKey;
                 }
@@ -2344,7 +2703,7 @@
             });
 
         if (filteredAndSorted.length === 0) {
-            grid.innerHTML = `<div class="py-8 text-center text-xs text-gray-400">Tidak ada registrasi pesawat yang cocok.</div>`;
+            grid.innerHTML = `<div class="py-8 text-center text-xs text-gray-400">Tidak ada registrasi pesawat yang cocok dengan filter aktif.</div>`;
             return;
         }
 
@@ -2555,8 +2914,8 @@
 
         const filtered = ppcActiveDataItems.filter(item => {
             return !search || 
-                (item.itemNo && item.itemNo.toLowerCase().includes(search)) ||
-                (item.desc && item.desc.toLowerCase().includes(search)) ||
+                (item.itemNo && item.itemNo.toLowerCase().includes(search)) || 
+                (item.desc && item.desc.toLowerCase().includes(search)) || 
                 (item.remarks && item.remarks.toLowerCase().includes(search)) ||
                 (item.materialStatus && item.materialStatus.toLowerCase().includes(search));
         });
@@ -2850,12 +3209,15 @@
             else countMat["Status Not Defined Yet"] = (countMat["Status Not Defined Yet"] || 0) + 1;
         });
 
+        const commonLayoutPadding = { top: 22, bottom: 16, left: 72, right: 72 };
+
         const ctx1 = document.getElementById('ppcChartStatus')?.getContext('2d');
         if (ctx1) {
             if (ppcChartInstanceStatus) ppcChartInstanceStatus.destroy();
             const workCountsArr = [countWork['OPEN'], countWork['PROGRESS'], countWork['CLOSED'], countWork['INTERUPT']];
             ppcChartInstanceStatus = new Chart(ctx1, {
                 type: 'doughnut',
+                plugins: [ppcDoughnutCalloutPlugin],
                 data: {
                     labels: ['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'],
                     datasets: [{
@@ -2868,6 +3230,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: { padding: commonLayoutPadding },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: '700' } } }
                     },
@@ -2892,6 +3255,7 @@
 
             ppcChartInstanceMaterial = new Chart(ctx2, {
                 type: 'doughnut',
+                plugins: [ppcDoughnutCalloutPlugin],
                 data: {
                     labels: activeMatLabels.length > 0 ? activeMatLabels : ['No Data'],
                     datasets: [{
@@ -2904,6 +3268,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: { padding: commonLayoutPadding },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 8 } } }
                     },
@@ -2928,8 +3293,9 @@
 
             ppcChartInstanceSummary = new Chart(ctx3, {
                 type: 'doughnut',
+                plugins: [ppcDoughnutCalloutPlugin],
                 data: {
-                    labels: ['COMPLETED (CLOSED)', 'OUTSTANDING (OPEN/PROG/INT)'],
+                    labels: ['COMPLETED', 'OUTSTANDING'],
                     datasets: [{
                         data: summaryCountsArr,
                         backgroundColor: ['#10b981', '#3b82f6'],
@@ -2940,6 +3306,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: { padding: commonLayoutPadding },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: '700' } } }
                     },
@@ -3138,7 +3505,7 @@
     window.addEventListener('DOMContentLoaded', async () => {
         initActiveTab();
         try {
-            await Promise.all([loadData(), loadHomeData(), loadPpcRegistrations()]);
+            await Promise.all([loadPpcRegistrations(), loadData(), loadHomeData()]);
         } catch(err) { console.error("Init err:", err); } 
         finally { 
             const overlay = document.getElementById('loadingOverlay');

@@ -943,7 +943,7 @@
                                     <th style="width:125px;">Part Number</th>
                                     <th style="width:125px;">PO Number</th>
                                     <th style="width:130px;">Remark</th>
-                                    <th style="width:65px; text-align:right;" class="ppc-cud-control" style="display:none;">AKSI</th>
+                                    <th style="width:65px; text-align:right;" class="ppc-cud-control" style="display:none;"></th>
                                 </tr>
                             </thead>
                             <tbody id="ppcMasterTableBody"></tbody>
@@ -3076,7 +3076,7 @@
 
         const isMdr = category === 'MDR';
         const trackLabel = isMdr ? 'MDR Track' : 'Jobcard Track';
-        const fullCatLabel = isMdr ? 'MDR (MAINTENANCE DISCREPANCY)' : 'JOB CARD (JC)';
+        const fullCatLabel = isMdr ? 'MAINTENANCE DISCREPANCY AND RECTIFICATION (MDR)' : 'JOB CARD (JC)';
 
         document.getElementById('ppcMasterTrackHeader').innerText = trackLabel;
         document.getElementById('ppcDrilldownTrackHeader').innerText = trackLabel;

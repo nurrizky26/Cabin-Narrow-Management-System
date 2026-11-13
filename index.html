@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ManPower Pro & PPC Dashboard</title>
+    <title> Cabin Management Sytem H4 </title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -51,6 +51,7 @@
             background-color: var(--dark); padding: 0 20px;
             height: 48px; display: flex; align-items: center; justify-content: space-between;
             flex-shrink: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
         }
         .brand { color: white; font-weight: 800; font-size: 0.9rem; letter-spacing: -0.2px; }
         .brand span { color: var(--primary); }
@@ -61,14 +62,53 @@
         #clockDate { font-size: 9px; font-weight: 600; text-transform: uppercase; opacity: 0.8; }
         #clockTime { font-size: 14px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
 
-        .nav-tabs { display: flex; height: 100%; flex: 1; justify-content: flex-end; align-items: center; }
+        .nav-right-controls {
+            display: flex; height: 100%; flex: 1; justify-content: flex-end; align-items: center; gap: 8px;
+        }
+        .nav-tabs {
+            display: flex; height: 100%; align-items: center; overflow: hidden;
+            transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+            max-width: 750px; opacity: 1; white-space: nowrap;
+        }
+        .nav-tabs.minimized {
+            max-width: 0; opacity: 0; pointer-events: none;
+        }
         .nav-tab {
-            padding: 0 18px; color: #a2a3b7; border: none; background: none;
+            padding: 0 16px; color: #a2a3b7; border: none; background: none;
             cursor: pointer; font-weight: 600; font-size: 11px; transition: var(--transition);
-            border-bottom: 2px solid transparent; height: 100%;
+            border-bottom: 2px solid transparent; height: 100%; white-space: nowrap;
         }
         .nav-tab:hover { color: white; background: rgba(255,255,255,0.05); }
         .nav-tab.active { color: white; border-bottom-color: var(--primary); background: rgba(255,255,255,0.05); }
+
+        .btn-hamburger-menu {
+            background: rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            width: 34px;
+            height: 30px;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .btn-hamburger-menu:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-hamburger-menu span {
+            display: block;
+            width: 16px;
+            height: 2px;
+            background-color: #ffffff;
+            border-radius: 2px;
+            transition: var(--transition);
+        }
 
         .btn-fullscreen {
             background: rgba(255, 255, 255, 0.12);
@@ -79,7 +119,6 @@
             font-size: 10px;
             font-weight: 800;
             cursor: pointer;
-            margin-right: 10px;
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -293,8 +332,8 @@
         .line-mini-select { 
             font-size: 8px; height: 16px; border-radius: 3px; border: 1px solid #eee; 
             -webkit-appearance: none; -moz-appearance: none; appearance: none;
-            padding: 0 4px; width: 28px; text-align: center; background: #fff; cursor: pointer;
-            flex-shrink: 0;
+            padding: 0 4px; min-width: 34px; text-align: center; background: #fff; cursor: pointer;
+            flex-shrink: 0; font-weight: 800;
         }
         .line-mini-select:disabled { background: #f1f5f9; cursor: not-allowed; }
 
@@ -400,7 +439,7 @@
 
 <nav class="sidebar-nav">
     <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
-        <div class="brand">MANPOWER<span>Cabin Narrow</span></div>
+        <div class="brand">Cabin Narrow <span>Management Sytem</span></div>
 
         <div id="unitSelectorWrapper" style="display: none; align-items: center; gap: 8px;">
             <label style="color: #a2a3b7; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">UNIT</label>
@@ -424,12 +463,19 @@
 
     <div class="nav-clock"><div id="clockDate">LOADING...</div><div id="clockTime">00:00:00</div></div>
 
-    <div class="nav-tabs">
+    <div class="nav-right-controls">
         <button type="button" id="btnFullscreenToggle" class="btn-fullscreen" onclick="toggleFullScreen()" title="Toggle Fullscreen">⛶ FULLSCREEN</button>
-        <button class="nav-tab active" onclick="switchTab(event, 'home-dashboard')"> DASHBOARD CABIN</button>
-        <button class="nav-tab" onclick="switchTab(event, 'distribution')">AVAILABILITY</button>
-        <button class="nav-tab" onclick="switchTab(event, 'schedule')">DISTRIBUTION MP</button>
-        <button class="nav-tab" onclick="switchTab(event, 'ppc-dashboard')">PPC DASHBOARD</button>
+        <div class="nav-tabs" id="topNavTabs">
+            <button class="nav-tab active" onclick="switchTab(event, 'home-dashboard')">DASHBOARD CABIN</button>
+            <button class="nav-tab" onclick="switchTab(event, 'distribution')">AVAILABILITY</button>
+            <button class="nav-tab" onclick="switchTab(event, 'schedule')">DISTRIBUTION MP</button>
+            <button class="nav-tab" onclick="switchTab(event, 'ppc-dashboard')">PPC DASHBOARD</button>
+        </div>
+        <button type="button" id="btnHamburgerToggle" class="btn-hamburger-menu" onclick="toggleNavTabsMenu()" title="Tampilkan / Sembunyikan Menu Tab">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </div>
 </nav>
 
@@ -657,7 +703,7 @@
             <div class="flex items-center space-x-3">
                 <div>
                     <h1 class="text-sm font-black tracking-wider text-gray-800 m-0 uppercase">PPC CABIN MONITORING</h1>
-                    <p class="text-[10px] text-gray-500 m-0 font-medium">Job Card & Maintenance Discrepancy Rectification</p>
+                    <p class="text-[10px] text-gray-500 m-0 font-medium">Job Card & Maintenance Discrepancy and Rectification</p>
                 </div>
             </div>
 
@@ -666,7 +712,7 @@
                 <button id="ppcBackBtn" onclick="ppcNavigateBack()" style="display:none;" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md font-bold text-xs flex items-center gap-1 border border-gray-300 transition">
                     <span>◀</span> Kembali
                 </button>
-                <div class="text-[11px] font-mono bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1 rounded-md" id="ppcBreadcrumb">
+                <div class="text-[11px] font-mono bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1 rounded-md font-bold" id="ppcBreadcrumb">
                     PILIH REGISTRASI
                 </div>
             </div>
@@ -680,12 +726,12 @@
                         <div>
                             <h2 class="text-sm font-black uppercase text-gray-800 m-0 flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-                                DAFTAR PESAWAT AKTIF MAINTENANCE TJN
+                                DAFTAR PESAWAT AKTIF CABIN MAINTENANCE H4
                             </h2>
                             <p class="text-xs text-gray-500 m-0 mt-0.5">Diurutkan otomatis berdasarkan jadwal Plan RTS terdekat dari atas ke bawah</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <input type="text" id="ppcRegSearch" placeholder="CARI REGISTRASI / LINE..." onkeyup="renderPpcAircraftCards()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500">
+                            <input type="text" id="ppcRegSearch" placeholder="CARI REG/LINE/MAINT..." onkeyup="renderPpcAircraftCards()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500">
                             <button onclick="loadPpcRegistrations()" class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-md text-xs font-bold transition">🔄 Refresh</button>
                         </div>
                     </div>
@@ -739,7 +785,7 @@
             <!-- VIEW 2: PILIHAN TIPE DATA (JC ATAU MDR) -->
             <div id="ppcViewOptionSelection" style="display:none;" class="flex flex-col gap-4">
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-center">
-                    <div class="inline-block px-4 py-1.5 bg-blue-600 text-white font-mono font-bold text-sm rounded-md mb-2" id="ppcSelectedRegBadge">
+                    <div class="inline-block px-5 py-2 bg-blue-600 text-white font-mono font-black text-base rounded-lg mb-3 shadow-sm tracking-wider" id="ppcSelectedRegBadge">
                         REGISTRASI: PK-XXX
                     </div>
                     <h2 class="text-base font-black text-gray-800 uppercase mb-6">PILIH KATEGORI DATA UNTUK DITAMPILKAN</h2>
@@ -774,17 +820,21 @@
 
             <!-- VIEW 3: DATA LENGKAP & REKAPAN 3 DIAGRAM DONUT -->
             <div id="ppcViewDetails" style="display:none;" class="flex flex-col gap-5">
-                <!-- Toolbar Atas: Upload Excel & Tambah Data -->
+                <!-- Toolbar Atas: Aircraft Reg Header Besar + Upload Excel & Tambah Data -->
                 <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
-                    <div class="flex items-center gap-3">
-                        <span id="ppcActiveContextTag" class="px-3 py-1 bg-gray-900 text-white rounded font-mono font-black text-xs uppercase tracking-wide"></span>
-                        <span id="ppcDataCounterBadge" class="text-xs font-semibold text-gray-500">0 Data Item</span>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span id="ppcActiveContextTag" class="px-5 py-2.5 bg-gray-900 text-white rounded-lg font-mono font-black text-lg uppercase tracking-wider shadow-md border-2 border-blue-500"></span>
+                        <span id="ppcDataCounterBadge" class="px-3 py-1 bg-blue-50 text-blue-800 border border-blue-200 rounded-full text-xs font-extrabold">0 Data Item</span>
                     </div>
 
                     <div class="flex items-center gap-2 flex-wrap ppc-cud-control" style="display:none;">
+                        <!-- Download Sample Excel Template -->
+                        <button type="button" onclick="ppcDownloadSampleExcel()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-md flex items-center gap-1 shadow-sm transition">
+                            <span>📄</span> SAMPLE EXCEL
+                        </button>
                         <!-- Upload Excel Input -->
                         <label class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-md cursor-pointer flex items-center gap-1 shadow-sm transition">
-                            <span>📥</span> UPLOAD EXCEL / CSV (TIMPA)
+                            <span>📥</span> UPLOAD EXCEL (TIMPA DATA)
                             <input type="file" id="ppcExcelUploadInput" accept=".xlsx, .xls, .csv" onchange="ppcHandleExcelUpload(event)" class="hidden">
                         </label>
                         <button onclick="ppcOpenItemModal()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-md flex items-center gap-1 shadow-sm transition">
@@ -800,7 +850,7 @@
                 <div>
                     <div id="ppcChartsMainContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4 transition-all duration-300">
                         <!-- Donut 1: Status Pengerjaan (OPEN, PROGRESS, CLOSED, INTERUPT) -->
-                        <div id="ppcChartCardWork" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
+                        <div id="ppcChartCardWork" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 360px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">1. STATUS MAINTENANCE</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
@@ -816,7 +866,7 @@
                         </div>
 
                         <!-- Donut 2: Material & Logistic Status (13 Status Lengkap) -->
-                        <div id="ppcChartCardMaterial" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
+                        <div id="ppcChartCardMaterial" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 360px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">2. STATUS MATERIAL </h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
@@ -832,7 +882,7 @@
                         </div>
 
                         <!-- Donut 3: Rekapan Prioritas / Trade Area -->
-                        <div id="ppcChartCardSummary" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 335px;">
+                        <div id="ppcChartCardSummary" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between transition-all" style="min-height: 360px;">
                             <div class="flex justify-between items-center mb-2">
                                 <h3 class="text-xs font-black uppercase text-gray-700 m-0">3. Summary</h3>
                                 <span class="text-[10px] text-gray-400 font-mono">Klik warna</span>
@@ -861,11 +911,13 @@
                             <table>
                                 <thead>
                                     <tr>
-                                        <th style="width:110px;">Status</th>
-                                        <th style="width:130px;">Order No</th>
+                                        <th style="width:95px;">Status</th>
+                                        <th style="width:110px;">Order No</th>
                                         <th>Description</th>
-                                        <th style="width:180px;" id="ppcDrilldownTrackHeader">Jobcard Track</th>
-                                        <th style="width:130px;">Remark</th>
+                                        <th style="width:165px;" id="ppcDrilldownTrackHeader">Jobcard Track</th>
+                                        <th style="width:115px;">Part Number</th>
+                                        <th style="width:115px;">PO Number</th>
+                                        <th style="width:120px;">Remark</th>
                                     </tr>
                                 </thead>
                                 <tbody id="ppcDrilldownTableBody"></tbody>
@@ -877,19 +929,21 @@
                 <!-- Tabel Data Lengkap & Editable -->
                 <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-3">
                     <div class="flex flex-wrap justify-between items-center gap-3">
-                        <h3 class="text-xs font-black uppercase text-gray-800 m-0">TABEL DATA LENGKAP</h3>
-                        <input type="text" id="ppcTableSearch" placeholder="CARI ORDER NO / DESKRIPSI..." onkeyup="ppcRenderDataTable()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500 w-56">
+                        <h3 class="text-xs font-black uppercase text-gray-800 m-0" id="ppcMasterTableTitle">TABEL DATA LENGKAP</h3>
+                        <input type="text" id="ppcTableSearch" placeholder="CARI ORDER NO / PART / PO / DESKRIPSI..." onkeyup="ppcRenderDataTable()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-md uppercase font-mono outline-none focus:border-blue-500 w-72">
                     </div>
                     <div class="table-container" style="max-height: 380px;">
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="width:110px;">Status</th>
-                                    <th style="width:130px;">Order No</th>
+                                    <th style="width:95px;">Status</th>
+                                    <th style="width:110px;">Order No</th>
                                     <th>Description</th>
-                                    <th style="width:210px;" id="ppcMasterTrackHeader">Jobcard Track</th>
-                                    <th style="width:140px;">Remark</th>
-                                    <th style="width:70px; text-align:right;" class="ppc-cud-control" style="display:none;">AKSI</th>
+                                    <th style="width:185px;" id="ppcMasterTrackHeader">Jobcard Track</th>
+                                    <th style="width:125px;">Part Number</th>
+                                    <th style="width:125px;">PO Number</th>
+                                    <th style="width:130px;">Remark</th>
+                                    <th style="width:65px; text-align:right;" class="ppc-cud-control" style="display:none;">AKSI</th>
                                 </tr>
                             </thead>
                             <tbody id="ppcMasterTableBody"></tbody>
@@ -925,9 +979,9 @@
             </div>
         </div>
 
-        <!-- Modal Tambah/Edit Data Item PPC -->
+        <!-- Modal Tambah/Edit Data Item PPC (JC & MDR) -->
         <div id="ppcItemModal" class="modal-overlay">
-            <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-content" style="max-width: 560px;">
                 <div class="modal-header">
                     <h3 style="margin:0; font-size:14px; color:var(--primary);" id="ppcItemModalTitle">TAMBAH DATA ITEM</h3>
                     <button type="button" style="background:none; border:none; cursor:pointer; font-size:16px" onclick="ppcCloseItemModal()">✕</button>
@@ -945,7 +999,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>ORDER NO </label>
+                            <label>ORDER NO</label>
                             <input type="text" id="ppcInputItemNo" pattern="8[0-9]{8}" maxlength="9" placeholder="Contoh: 800123456" title="Harus terdiri dari 9 digit angka diawali angka 8" required class="wo-input uppercase font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                         <div class="form-group full">
@@ -969,6 +1023,14 @@
                                 <option value="Waiting Shipment From Vendor">Waiting Shipment From Vendor</option>
                                 <option value="Work Done">Work Done</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>PART NUMBER</label>
+                            <input type="text" id="ppcInputPartNumber" placeholder="Contoh: P/N 123-456" class="wo-input uppercase font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                        </div>
+                        <div class="form-group">
+                            <label>PO NUMBER</label>
+                            <input type="text" id="ppcInputPoNumber" placeholder="Contoh: 4500123456" class="wo-input uppercase font-mono" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                         </div>
                         <div class="form-group full">
                             <label>REMARK</label>
@@ -1078,6 +1140,15 @@
 </div>
 
 <script>
+    // ==========================================
+    // COLLAPSIBLE HAMBURGER MENU TOP RIGHT
+    // ==========================================
+    function toggleNavTabsMenu() {
+        const navTabs = document.getElementById('topNavTabs');
+        if (!navTabs) return;
+        navTabs.classList.toggle('minimized');
+    }
+
     // ==========================================
     // FULLSCREEN TOGGLE CONTROLLER
     // ==========================================
@@ -1393,6 +1464,82 @@
     }
 
     // ==========================================
+    // HELPER SINKRONISASI HANDLE BY LINE & MAINTENANCE TYPE
+    // ==========================================
+    function normalizeLineFormatForPPC(val) {
+        if (!val) return '';
+        const up = val.toString().trim().toUpperCase();
+        if (up === 'PCB') return 'PCB';
+        const num = up.replace(/[^0-9]/g, '');
+        if (num) return `Line-${num}`;
+        return '';
+    }
+
+    function normalizeLineFormatForDistro(val) {
+        if (!val) return '';
+        const up = val.toString().trim().toUpperCase();
+        if (up === 'PCB') return 'PCB';
+        const num = up.replace(/[^0-9]/g, '');
+        if (num) return `L${num}`;
+        return '';
+    }
+
+    async function syncSharedAircraftFieldAcrossAllUnits(reg, fieldType, newVal) {
+        const upReg = (reg || '').trim().toUpperCase();
+        if (!upReg) return;
+        const units = ['TJN-1', 'TJN-2', 'TJN-3', 'TJN-4', 'TJN-5', 'TJN-6'];
+
+        try {
+            if (fieldType === 'LINE') {
+                const ppcLineVal = normalizeLineFormatForPPC(newVal);
+                const distroLineVal = normalizeLineFormatForDistro(newVal);
+
+                if (ppcLineVal) ppcAircraftHandleLineMap[upReg] = ppcLineVal;
+                else delete ppcAircraftHandleLineMap[upReg];
+
+                if (distroLineVal) aircraftLines[upReg] = distroLineVal;
+                else delete aircraftLines[upReg];
+
+                const allLinesList = await Promise.all(units.map(u => getStore(`${u}_aircraft_lines`, {})));
+                const updates = [{ key: 'ppc_aircraft_handle_line_map', value: ppcAircraftHandleLineMap }];
+
+                units.forEach((u, idx) => {
+                    const obj = (allLinesList[idx] && typeof allLinesList[idx] === 'object') ? { ...allLinesList[idx] } : {};
+                    if (distroLineVal) obj[upReg] = distroLineVal;
+                    else delete obj[upReg];
+                    updates.push({ key: `${u}_aircraft_lines`, value: obj });
+                });
+
+                await _supabase.from('app_store').upsert(updates);
+            } else if (fieldType === 'MAINT_TYPE') {
+                const cleanType = (newVal || '').toString().toUpperCase();
+
+                if (cleanType) {
+                    ppcAircraftMaintTypeMap[upReg] = cleanType;
+                    aircraftPhases[upReg] = cleanType;
+                } else {
+                    delete ppcAircraftMaintTypeMap[upReg];
+                    delete aircraftPhases[upReg];
+                }
+
+                const allPhasesList = await Promise.all(units.map(u => getStore(`${u}_aircraft_phases`, {})));
+                const updates = [{ key: 'ppc_aircraft_maint_type_map', value: ppcAircraftMaintTypeMap }];
+
+                units.forEach((u, idx) => {
+                    const obj = (allPhasesList[idx] && typeof allPhasesList[idx] === 'object') ? { ...allPhasesList[idx] } : {};
+                    if (cleanType) obj[upReg] = cleanType;
+                    else delete obj[upReg];
+                    updates.push({ key: `${u}_aircraft_phases`, value: obj });
+                });
+
+                await _supabase.from('app_store').upsert(updates);
+            }
+        } catch (err) {
+            console.error(`Gagal sinkronisasi ${fieldType} untuk ${upReg}:`, err);
+        }
+    }
+
+    // ==========================================
     // SCRIPTS FOR MANPOWER PRO (MULTI-UNIT)
     // ==========================================
     let currentUnit = localStorage.getItem('active_unit') || 'TJN-4';
@@ -1583,7 +1730,7 @@
                 generalWorkload = { col1: "", col2: "", col3: "" };
                 nextWorkload = { col1: "", col2: "", col3: "" };
             } else {
-                const [mpRes, regsRes, assignRes, phasesRes, linesRes, gwRes, nwRes, shiftRes, savedRtsMap] = await Promise.all([
+                const [mpRes, regsRes, assignRes, phasesRes, linesRes, gwRes, nwRes, shiftRes, savedRtsMap, savedHandleLineMap, savedMaintTypeMap] = await Promise.all([
                     getStore(`${currentUnit}_manpower_data`, []),
                     getStore(`${currentUnit}_aircraft_regs`, ["PK-GFA", "PK-GFF"]),
                     getStore(`${currentUnit}_assignments`, {}),
@@ -1592,19 +1739,39 @@
                     getStore(`${currentUnit}_general_workload`, { col1: "", col2: "", col3: "" }),
                     getStore(`${currentUnit}_next_workload`, { col1: "", col2: "", col3: "" }),
                     getStore(`${currentUnit}_shift_status`, "MORNING SHIFT"),
-                    getStore('ppc_aircraft_rts_map', {})
+                    getStore('ppc_aircraft_rts_map', {}),
+                    getStore('ppc_aircraft_handle_line_map', {}),
+                    getStore('ppc_aircraft_maint_type_map', {})
                 ]);
 
                 manpowerData = mpRes;
                 aircraftRegs = regsRes;
                 assignments = assignRes;
-                aircraftPhases = phasesRes;
-                aircraftLines = linesRes;
+                aircraftPhases = phasesRes || {};
+                aircraftLines = linesRes || {};
                 generalWorkload = gwRes;
                 nextWorkload = nwRes;
                 unitShiftStatus = shiftRes;
+
                 if (savedRtsMap && typeof savedRtsMap === 'object') {
                     ppcAircraftRtsMap = savedRtsMap;
+                }
+                if (savedHandleLineMap && typeof savedHandleLineMap === 'object') {
+                    ppcAircraftHandleLineMap = savedHandleLineMap;
+                    Object.keys(ppcAircraftHandleLineMap).forEach(r => {
+                        const upR = r.toUpperCase();
+                        const dLine = normalizeLineFormatForDistro(ppcAircraftHandleLineMap[r]);
+                        if (dLine) aircraftLines[upR] = dLine;
+                    });
+                }
+                if (savedMaintTypeMap && typeof savedMaintTypeMap === 'object') {
+                    ppcAircraftMaintTypeMap = savedMaintTypeMap;
+                    Object.keys(ppcAircraftMaintTypeMap).forEach(r => {
+                        const upR = r.toUpperCase();
+                        if (ppcAircraftMaintTypeMap[r] !== undefined) {
+                            aircraftPhases[upR] = ppcAircraftMaintTypeMap[r];
+                        }
+                    });
                 }
 
                 const isDual = ['TJN-5', 'TJN-6'].includes(currentUnit);
@@ -1770,9 +1937,30 @@
         if (unitSel) unitSel.style.display = (id === 'ppc-dashboard' || id === 'home-dashboard') ? 'none' : 'flex';
 
         if(id === 'schedule') {
-            // Pastikan data RTS terbaru dari PPC Dashboard tersinkron untuk mewarnai kotak pesawat
-            const latestRts = await getStore('ppc_aircraft_rts_map', ppcAircraftRtsMap);
+            // Sinkronisasi RTS, Handle by Line, dan Maintenance Type terbaru dari database sebelum render DISTRIBUTION MP
+            const [latestRts, latestLinesMap, latestMaintMap] = await Promise.all([
+                getStore('ppc_aircraft_rts_map', ppcAircraftRtsMap),
+                getStore('ppc_aircraft_handle_line_map', ppcAircraftHandleLineMap),
+                getStore('ppc_aircraft_maint_type_map', ppcAircraftMaintTypeMap)
+            ]);
             if (latestRts && typeof latestRts === 'object') ppcAircraftRtsMap = latestRts;
+            if (latestLinesMap && typeof latestLinesMap === 'object') {
+                ppcAircraftHandleLineMap = latestLinesMap;
+                Object.keys(latestLinesMap).forEach(r => {
+                    const upR = r.toUpperCase();
+                    const dVal = normalizeLineFormatForDistro(latestLinesMap[r]);
+                    if (dVal) aircraftLines[upR] = dVal;
+                    else delete aircraftLines[upR];
+                });
+            }
+            if (latestMaintMap && typeof latestMaintMap === 'object') {
+                ppcAircraftMaintTypeMap = latestMaintMap;
+                Object.keys(latestMaintMap).forEach(r => {
+                    const upR = r.toUpperCase();
+                    if (latestMaintMap[r]) aircraftPhases[upR] = latestMaintMap[r];
+                    else delete aircraftPhases[upR];
+                });
+            }
             renderDistro();
         }
         if(id === 'distribution') renderTable();
@@ -2107,10 +2295,14 @@
         if (currentUnit !== 'ALL TJN') {
             grid.innerHTML = '';
             aircraftRegs.forEach((reg) => {
+                const currentDistroLine = normalizeLineFormatForDistro(aircraftLines[reg] || ppcAircraftHandleLineMap[reg] || '');
                 let lineOptions = '<option value="">L?</option>';
                 for(let i=1; i<=15; i++) {
-                    lineOptions += `<option value="L${i}" ${aircraftLines[reg] === `L${i}` ? 'selected' : ''}>L${i}</option>`;
+                    lineOptions += `<option value="L${i}" ${currentDistroLine === `L${i}` ? 'selected' : ''}>L${i}</option>`;
                 }
+                lineOptions += `<option value="PCB" ${currentDistroLine === 'PCB' ? 'selected' : ''}>PCB</option>`;
+
+                const currentMaintType = aircraftPhases[reg] !== undefined ? aircraftPhases[reg] : (ppcAircraftMaintTypeMap[reg] || '');
 
                 const rtsStyle = getDistroCardRtsStyle(reg);
                 const rtsMiniPill = rtsStyle.rtsTag
@@ -2138,7 +2330,7 @@
                             <select class="line-mini-select mp-cud-input" onchange="directUpdateLine('${reg}', this.value)">${lineOptions}</select>
                             ${rtsMiniPill}
                         </div>
-                        <input type="text" class="phase-input mp-cud-input" value="${aircraftPhases[reg] || ''}" oninput="directUpdatePhase('${reg}', this.value)" placeholder="Maint. Type">
+                        <input type="text" class="phase-input mp-cud-input" value="${currentMaintType}" onchange="directUpdatePhase('${reg}', this.value)" placeholder="Maint. Type">
                     </div>
                     <div class="assignment-slots" ondragover="allowDrop(event)" ondrop="handleMPDrop(event, '${reg}')">
                         ${(assignments[reg] || []).map(id => {
@@ -2310,16 +2502,29 @@
 
     function deleteAcDistro(reg) { if (!isMPAuthorized()) return; if(confirm(`Remove ${reg}?`)) { aircraftRegs = aircraftRegs.filter(r => r !== reg); delete assignments[reg]; delete aircraftPhases[reg]; delete aircraftLines[reg]; saveDataToDB(); renderDistro(); } }
     function toggleSidebar() { document.getElementById('poolSidebar').classList.toggle('collapsed'); }
-    function directUpdatePhase(reg, val) { if (!isMPAuthorized()) return; aircraftPhases[reg] = val.toUpperCase(); saveDataToDB(); }
-    function directUpdateLine(reg, val) { if (!isMPAuthorized()) return; aircraftLines[reg] = val; saveDataToDB(); }
+
+    async function directUpdatePhase(reg, val) {
+        if (!isMPAuthorized()) return;
+        const upVal = val.toUpperCase();
+        aircraftPhases[reg] = upVal;
+        await syncSharedAircraftFieldAcrossAllUnits(reg, 'MAINT_TYPE', upVal);
+    }
+
+    async function directUpdateLine(reg, val) {
+        if (!isMPAuthorized()) return;
+        aircraftLines[reg] = val;
+        await syncSharedAircraftFieldAcrossAllUnits(reg, 'LINE', val);
+    }
+
     function addNewAcDistro() { if (!isMPAuthorized()) return; const r = prompt("Enter A/C Reg:"); if(r) { const up = r.toUpperCase(); if(!aircraftRegs.includes(up)) { aircraftRegs.push(up); saveDataToDB(); renderDistro(); } } }
 
     // =========================================================================
-    // REVISED SCRIPTS FOR PPC DASHBOARD (CALLOUT ARROWS, RTS FILTER, LINE SORT)
+    // REVISED SCRIPTS FOR PPC DASHBOARD
     // =========================================================================
     let ppcAllAircraftList = [];
     let ppcAircraftRtsMap = {}; // { "PK-GFA": "2026-11-28" }
     let ppcAircraftHandleLineMap = {}; // { "PK-GFA": "Line-1" | "PCB" }
+    let ppcAircraftMaintTypeMap = {}; // { "PK-GFA": "C02-CHECK" }
     let ppcSelectedReg = null;
     let ppcSelectedCategory = null;
     let ppcActiveDataItems = [];
@@ -2358,11 +2563,11 @@
         "#eab308", "#a855f7", "#059669"
     ];
 
-    // Custom Chart.js Plugin untuk Panah Keluar + Label & Jumlah Dokumen Otomatis per Slice
+    // Custom Chart.js Plugin untuk Panah Keluar + Label & Jumlah Dokumen Otomatis per Slice (FULL TANPA TERPOTONG)
     const ppcDoughnutCalloutPlugin = {
         id: 'ppcDoughnutCalloutPlugin',
         afterDatasetsDraw(chart) {
-            const { ctx, chartArea } = chart;
+            const { ctx, chartArea, width } = chart;
             const meta = chart.getDatasetMeta(0);
             if (!meta || !meta.data || meta.data.length === 0) return;
 
@@ -2376,7 +2581,6 @@
 
             ctx.save();
 
-            // Kumpulkan kandidat label untuk slice dengan nilai > 0
             const leftLabels = [];
             const rightLabels = [];
 
@@ -2399,18 +2603,17 @@
                 const xStart = cx + cos * outerRadius;
                 const yStart = cy + sin * outerRadius;
 
-                const elbowDist = outerRadius + 14;
+                const elbowDist = outerRadius + 10;
                 const xElbow = cx + cos * elbowDist;
                 const yElbow = cy + sin * elbowDist;
 
                 const isRight = cos >= 0;
-                let shortText = rawLabel;
-                if (shortText.length > 20) shortText = shortText.substring(0, 18) + '..';
+                const fullText = `${rawLabel}: ${val}`;
 
                 const itemObj = {
                     index,
                     val,
-                    text: `${shortText}: ${val}`,
+                    text: fullText,
                     color: Array.isArray(bgColors) ? bgColors[index] : '#334155',
                     xStart,
                     yStart,
@@ -2427,8 +2630,7 @@
                 else leftLabels.push(itemObj);
             });
 
-            // Anti-collision vertical spacing untuk masing-masing sisi
-            const minGap = 13;
+            const minGap = 15;
             const adjustOverlap = (arr) => {
                 arr.sort((a, b) => a.yElbow - b.yElbow);
                 for (let i = 1; i < arr.length; i++) {
@@ -2436,7 +2638,6 @@
                         arr[i].yLabel = arr[i - 1].yLabel + minGap;
                     }
                 }
-                // Pastikan tidak keluar batas bawah chartArea
                 if (arr.length > 0 && chartArea) {
                     const maxY = chartArea.bottom - 4;
                     if (arr[arr.length - 1].yLabel > maxY) {
@@ -2459,10 +2660,19 @@
             adjustOverlap(leftLabels);
 
             const drawCallout = (item) => {
-                const tailLength = 12;
-                const xEnd = item.isRight
-                    ? Math.min((chartArea ? chartArea.right - 55 : item.xElbow + tailLength), item.xElbow + tailLength)
-                    : Math.max((chartArea ? chartArea.left + 55 : item.xElbow - tailLength), item.xElbow - tailLength);
+                ctx.font = '800 8.5px Inter, sans-serif';
+                const measuredWidth = ctx.measureText(item.text).width;
+                const canvasW = width || chart.width || 400;
+                const tailLength = 10;
+
+                let xEnd = item.isRight ? item.xElbow + tailLength : item.xElbow - tailLength;
+                if (item.isRight) {
+                    const maxAllowedEnd = canvasW - measuredWidth - 8;
+                    if (xEnd > maxAllowedEnd) xEnd = Math.max(item.xStart + 6, maxAllowedEnd);
+                } else {
+                    const minAllowedEnd = measuredWidth + 8;
+                    if (xEnd < minAllowedEnd) xEnd = Math.min(item.xStart - 6, minAllowedEnd);
+                }
 
                 // Garis keluar dari tepi slice ke siku lalu mendatar
                 ctx.beginPath();
@@ -2483,8 +2693,7 @@
                 ctx.fillStyle = item.color;
                 ctx.fill();
 
-                // Teks Label & Jumlah Dokumen
-                ctx.font = '800 9px Inter, sans-serif';
+                // Teks Label & Jumlah Dokumen (Full Text Tanpa Potong)
                 ctx.fillStyle = '#1e293b';
                 ctx.textBaseline = 'middle';
                 ctx.textAlign = item.isRight ? 'left' : 'right';
@@ -2504,24 +2713,40 @@
             const units = ['TJN-1', 'TJN-2', 'TJN-3', 'TJN-4', 'TJN-5', 'TJN-6'];
             const allRegsPromises = units.map(u => getStore(`${u}_aircraft_regs`, []));
             const allLinesPromises = units.map(u => getStore(`${u}_aircraft_lines`, {}));
-            const [allRegsResults, allLinesResults, savedRtsMap, savedHandleLineMap] = await Promise.all([
+            const allPhasesPromises = units.map(u => getStore(`${u}_aircraft_phases`, {}));
+
+            const [allRegsResults, allLinesResults, allPhasesResults, savedRtsMap, savedHandleLineMap, savedMaintTypeMap] = await Promise.all([
                 Promise.all(allRegsPromises),
                 Promise.all(allLinesPromises),
+                Promise.all(allPhasesPromises),
                 getStore('ppc_aircraft_rts_map', {}),
-                getStore('ppc_aircraft_handle_line_map', {})
+                getStore('ppc_aircraft_handle_line_map', {}),
+                getStore('ppc_aircraft_maint_type_map', {})
             ]);
 
             ppcAircraftRtsMap = (savedRtsMap && typeof savedRtsMap === 'object') ? savedRtsMap : {};
             ppcAircraftHandleLineMap = (savedHandleLineMap && typeof savedHandleLineMap === 'object') ? savedHandleLineMap : {};
+            ppcAircraftMaintTypeMap = (savedMaintTypeMap && typeof savedMaintTypeMap === 'object') ? savedMaintTypeMap : {};
 
-            // Tarik default line dari Distribution MP jika belum di-set manual di PPC
+            // Tarik default line & maintenance type dari Distribution MP jika belum ada di PPC
             const distroLineFallback = {};
             allLinesResults.forEach(lineObj => {
                 if (lineObj && typeof lineObj === 'object') {
                     Object.keys(lineObj).forEach(r => {
                         if (lineObj[r]) {
-                            const cleanNum = lineObj[r].replace(/[^0-9]/g, '');
-                            if (cleanNum) distroLineFallback[r.toUpperCase()] = `Line-${cleanNum}`;
+                            const formatted = normalizeLineFormatForPPC(lineObj[r]);
+                            if (formatted) distroLineFallback[r.toUpperCase()] = formatted;
+                        }
+                    });
+                }
+            });
+
+            const distroPhaseFallback = {};
+            allPhasesResults.forEach(phaseObj => {
+                if (phaseObj && typeof phaseObj === 'object') {
+                    Object.keys(phaseObj).forEach(r => {
+                        if (phaseObj[r]) {
+                            distroPhaseFallback[r.toUpperCase()] = phaseObj[r].toString().toUpperCase();
                         }
                     });
                 }
@@ -2536,6 +2761,9 @@
                             regSet.add(upReg);
                             if (!ppcAircraftHandleLineMap[upReg] && distroLineFallback[upReg]) {
                                 ppcAircraftHandleLineMap[upReg] = distroLineFallback[upReg];
+                            }
+                            if (ppcAircraftMaintTypeMap[upReg] === undefined && distroPhaseFallback[upReg]) {
+                                ppcAircraftMaintTypeMap[upReg] = distroPhaseFallback[upReg];
                             }
                         }
                     });
@@ -2577,7 +2805,6 @@
         const formattedDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rtsDateStr;
 
         if (diffDays > 14) {
-            // Hijau: melebihi range -14 hari (H-15 ke atas)
             return {
                 colorCategory: 'GREEN',
                 dateFormatted: formattedDate,
@@ -2588,7 +2815,6 @@
                 pillClass: 'bg-emerald-600 text-white'
             };
         } else if (diffDays >= 4) {
-            // Kuning: range H-14 s/d H-4 (-7 hari masuk di sini)
             return {
                 colorCategory: 'YELLOW',
                 dateFormatted: formattedDate,
@@ -2599,7 +2825,6 @@
                 pillClass: 'bg-amber-500 text-slate-950'
             };
         } else if (diffDays >= 0) {
-            // Orange: -3 hari sampai hari H (H-3, H-2, H-1, H-0)
             return {
                 colorCategory: 'ORANGE',
                 dateFormatted: formattedDate,
@@ -2610,7 +2835,6 @@
                 pillClass: 'bg-orange-600 text-white'
             };
         } else {
-            // Merah: melewati tanggal RTS (paling mendesak / terdekat di urutan atas)
             return {
                 colorCategory: 'RED',
                 dateFormatted: formattedDate,
@@ -2668,13 +2892,13 @@
         const lineFilterVal = document.getElementById('ppcLineFilterSelect')?.value || 'ALL';
         const canEdit = isPPCAuthorized();
 
-        // Filter & Urutkan berdasarkan RTS atau Handle by Line
         const filteredAndSorted = ppcAllAircraftList
             .map(reg => {
                 const rtsVal = ppcAircraftRtsMap[reg] || '';
                 const rtsInfo = getPpcRtsInfo(rtsVal);
                 const handleLine = ppcAircraftHandleLineMap[reg] || '';
-                return { reg, rtsVal, rtsInfo, handleLine };
+                const maintType = ppcAircraftMaintTypeMap[reg] || '';
+                return { reg, rtsVal, rtsInfo, handleLine, maintType };
             })
             .filter(item => {
                 if (ppcSelectedRtsColorFilter !== 'ALL' && item.rtsInfo.colorCategory !== ppcSelectedRtsColorFilter) {
@@ -2688,7 +2912,7 @@
                     }
                 }
                 if (!searchVal) return true;
-                return item.reg.includes(searchVal) || item.handleLine.toUpperCase().includes(searchVal);
+                return item.reg.includes(searchVal) || item.handleLine.toUpperCase().includes(searchVal) || item.maintType.toUpperCase().includes(searchVal);
             })
             .sort((a, b) => {
                 if (lineFilterVal === 'SORT_LINE') {
@@ -2711,7 +2935,7 @@
         for (let i = 1; i <= 15; i++) lineOptionsList.push(`Line-${i}`);
         lineOptionsList.push('PCB');
 
-        grid.innerHTML = filteredAndSorted.map(({ reg, rtsInfo, handleLine }) => {
+        grid.innerHTML = filteredAndSorted.map(({ reg, rtsInfo, handleLine, maintType }) => {
             const lineSelectHtml = canEdit
                 ? `<select onclick="event.stopPropagation()" onchange="ppcUpdateHandleLine(event, '${reg}', this.value)" class="px-2 py-1 text-[11px] font-black font-mono bg-white border border-gray-400 rounded-md text-gray-900 cursor-pointer shadow-xs outline-none focus:border-blue-600">
                         <option value="">-- PILIH LINE --</option>
@@ -2721,9 +2945,15 @@
                         ${handleLine || 'BELUM SET'}
                    </span>`;
 
+            const maintTypeInputHtml = canEdit
+                ? `<input type="text" value="${maintType}" placeholder="MAINT. TYPE" onclick="event.stopPropagation()" onchange="ppcUpdateMaintType(event, '${reg}', this.value)" class="px-2.5 py-1 text-[11px] font-black font-mono uppercase bg-white border border-gray-400 rounded-md text-blue-700 shadow-xs outline-none focus:border-blue-600 w-36">`
+                : `<span class="px-2.5 py-1 text-[11px] font-black font-mono uppercase bg-white/90 border border-black/15 rounded-md text-blue-700">
+                        ${maintType || '-'}
+                   </span>`;
+
             return `
                 <div onclick="ppcSelectRegistration('${reg}')" class="${rtsInfo.rowClass} border-2 rounded-xl px-4 py-2.5 cursor-pointer transition-all duration-150 shadow-xs hover:shadow-md flex flex-wrap items-center justify-between gap-3">
-                    <!-- Kiri: Badge Registrasi Kontras + Handle By Line -->
+                    <!-- Kiri: Badge Registrasi Kontras + Handle By Line + Maintenance Type -->
                     <div class="flex items-center gap-3 flex-wrap">
                         <span class="px-3.5 py-1.5 rounded-lg font-mono font-black text-sm tracking-wider shadow-sm ${rtsInfo.regBadgeClass}">
                             ${reg}
@@ -2732,6 +2962,11 @@
                         <div class="flex items-center gap-1.5 bg-white/80 px-2.5 py-1 rounded-lg border border-black/10">
                             <span class="text-[10px] font-extrabold uppercase opacity-75">Handle by:</span>
                             ${lineSelectHtml}
+                        </div>
+
+                        <div class="flex items-center gap-1.5 bg-white/80 px-2.5 py-1 rounded-lg border border-black/10">
+                            <span class="text-[10px] font-extrabold uppercase opacity-75">Maint Type:</span>
+                            ${maintTypeInputHtml}
                         </div>
                     </div>
 
@@ -2762,19 +2997,27 @@
         event.stopPropagation();
         if (!isPPCAuthorized()) return;
 
-        if (val) {
-            ppcAircraftHandleLineMap[reg] = val;
-        } else {
-            delete ppcAircraftHandleLineMap[reg];
-        }
-
         try {
-            await _supabase.from('app_store').upsert([{ key: 'ppc_aircraft_handle_line_map', value: ppcAircraftHandleLineMap }]);
+            await syncSharedAircraftFieldAcrossAllUnits(reg, 'LINE', val);
             showToastNotification();
             await loadPpcRegistrations();
         } catch(err) {
             console.error("Gagal simpan Handle by Line:", err);
             alert("Gagal menyimpan Handle by Line ke database.");
+        }
+    }
+
+    async function ppcUpdateMaintType(event, reg, val) {
+        event.stopPropagation();
+        if (!isPPCAuthorized()) return;
+
+        try {
+            await syncSharedAircraftFieldAcrossAllUnits(reg, 'MAINT_TYPE', val);
+            showToastNotification();
+            await loadPpcRegistrations();
+        } catch(err) {
+            console.error("Gagal simpan Maintenance Type:", err);
+            alert("Gagal menyimpan Maintenance Type ke database.");
         }
     }
 
@@ -2831,12 +3074,23 @@
         document.getElementById('ppcViewOptionSelection').style.display = 'none';
         document.getElementById('ppcViewDetails').style.display = 'flex';
 
-        const trackLabel = category === 'MDR' ? 'MDR Track' : 'Jobcard Track';
+        const isMdr = category === 'MDR';
+        const trackLabel = isMdr ? 'MDR Track' : 'Jobcard Track';
+        const fullCatLabel = isMdr ? 'MDR (MAINTENANCE DISCREPANCY)' : 'JOB CARD (JC)';
+
         document.getElementById('ppcMasterTrackHeader').innerText = trackLabel;
         document.getElementById('ppcDrilldownTrackHeader').innerText = trackLabel;
         document.getElementById('ppcModalTrackLabel').innerText = trackLabel.toUpperCase();
+        document.getElementById('ppcMasterTableTitle').innerText = `TABEL DATA LENGKAP - ${fullCatLabel}`;
 
-        document.getElementById('ppcActiveContextTag').innerText = `${ppcSelectedReg} - ${category}`;
+        const tagEl = document.getElementById('ppcActiveContextTag');
+        tagEl.innerText = `${ppcSelectedReg}  |  ${fullCatLabel}`;
+        if (isMdr) {
+            tagEl.className = 'px-5 py-2.5 bg-amber-600 text-white rounded-lg font-mono font-black text-lg uppercase tracking-wider shadow-md border-2 border-amber-300';
+        } else {
+            tagEl.className = 'px-5 py-2.5 bg-blue-700 text-white rounded-lg font-mono font-black text-lg uppercase tracking-wider shadow-md border-2 border-blue-300';
+        }
+
         document.getElementById('ppcBreadcrumb').innerText = `${ppcSelectedReg} > ${category}`;
 
         ppcResetChartOrder();
@@ -2864,11 +3118,11 @@
     async function ppcLoadCategoryData() {
         const storeKey = `ppc_data_${ppcSelectedReg}_${ppcSelectedCategory}`;
         const defaultSample = [
-            { itemNo: `800100001`, desc: "Inspection passenger seat covers row 1-12", workStatus: "OPEN", materialStatus: "Available at Hangar Local Store", remarks: "Routine Check" },
-            { itemNo: `800100002`, desc: "Replacement carpet forward galley area", workStatus: "PROGRESS", materialStatus: "Delivered to Production", remarks: "Urgent" },
-            { itemNo: `800100003`, desc: "Repair lavatory D flush valve assembly", workStatus: "CLOSED", materialStatus: "Work Done", remarks: "Rectified" },
-            { itemNo: `800100004`, desc: "Overhaul cabin attendant seat harness", workStatus: "INTERUPT", materialStatus: "Waiting Shipment From Vendor", remarks: "Awaiting Part" },
-            { itemNo: `800100005`, desc: "Refurbish overhead bin latch row 24", workStatus: "OPEN", materialStatus: "Available at GMF Central Store", remarks: "Normal" }
+            { itemNo: `800100001`, desc: "Inspection passenger seat covers row 1-12", workStatus: "OPEN", materialStatus: "Available at Hangar Local Store", partNumber: "PN-88412-01", poNumber: "4500112233", remarks: "Routine Check" },
+            { itemNo: `800100002`, desc: "Replacement carpet forward galley area", workStatus: "PROGRESS", materialStatus: "Delivered to Production", partNumber: "PN-99201-A", poNumber: "4500112234", remarks: "Urgent" },
+            { itemNo: `800100003`, desc: "Repair lavatory D flush valve assembly", workStatus: "CLOSED", materialStatus: "Work Done", partNumber: "PN-77310-B", poNumber: "4500112235", remarks: "Rectified" },
+            { itemNo: `800100004`, desc: "Overhaul cabin attendant seat harness", workStatus: "INTERUPT", materialStatus: "Waiting Shipment From Vendor", partNumber: "PN-66109-C", poNumber: "4500112236", remarks: "Awaiting Part" },
+            { itemNo: `800100005`, desc: "Refurbish overhead bin latch row 24", workStatus: "OPEN", materialStatus: "Available at GMF Central Store", partNumber: "PN-55210-D", poNumber: "4500112237", remarks: "Normal" }
         ];
 
         try {
@@ -2892,7 +3146,6 @@
             const { error } = await _supabase.from('app_store').upsert([{ key: storeKey, value: ppcActiveDataItems }]);
             if (error) throw error;
             showToastNotification();
-            // Live reload ulang data dari database setelah simpan agar sinkron langsung
             await ppcLoadCategoryData();
         } catch(err) {
             console.error("Gagal simpan data category PPC:", err);
@@ -2916,12 +3169,14 @@
             return !search || 
                 (item.itemNo && item.itemNo.toLowerCase().includes(search)) || 
                 (item.desc && item.desc.toLowerCase().includes(search)) || 
-                (item.remarks && item.remarks.toLowerCase().includes(search)) ||
+                (item.partNumber && item.partNumber.toLowerCase().includes(search)) || 
+                (item.poNumber && item.poNumber.toLowerCase().includes(search)) || 
+                (item.remarks && item.remarks.toLowerCase().includes(search)) || 
                 (item.materialStatus && item.materialStatus.toLowerCase().includes(search));
         });
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#94a3b8;">Belum ada data tersedia.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:15px; color:#94a3b8;">Belum ada data tersedia.</td></tr>`;
             return;
         }
 
@@ -2939,6 +3194,8 @@
                     <td class="font-mono font-bold text-blue-700">${item.itemNo || '-'}</td>
                     <td style="white-space:normal; line-height:1.3; font-weight:500;">${item.desc || '-'}</td>
                     <td style="white-space:normal; line-height:1.2; font-weight:600; color:#334155;">${item.materialStatus || 'Status Not Defined Yet'}</td>
+                    <td class="font-mono font-semibold text-gray-800">${item.partNumber || '-'}</td>
+                    <td class="font-mono font-semibold text-gray-800">${item.poNumber || '-'}</td>
                     <td style="white-space:normal; color:#64748b; font-size:9.5px;">${item.remarks || '-'}</td>
                     <td style="text-align:right; ${canEdit ? 'display:table-cell;' : 'display:none;'}" class="ppc-cud-control">
                         <button onclick="ppcEditItem(${origIdx})" title="Edit" style="border:none; background:none; color:var(--primary); cursor:pointer; font-size:12px; padding:0 3px;">✎</button>
@@ -2957,18 +3214,21 @@
         document.getElementById('ppcEditItemIndex').value = idx;
         const modal = document.getElementById('ppcItemModal');
         const titleEl = document.getElementById('ppcItemModalTitle');
-        document.getElementById('ppcModalTrackLabel').innerText = ppcSelectedCategory === 'MDR' ? 'MDR TRACK' : 'JOBCARD TRACK';
+        const isMdr = ppcSelectedCategory === 'MDR';
+        document.getElementById('ppcModalTrackLabel').innerText = isMdr ? 'MDR TRACK' : 'JOBCARD TRACK';
 
         if (idx > -1) {
             const itm = ppcActiveDataItems[idx];
-            titleEl.innerText = `EDIT DATA ${ppcSelectedCategory}`;
+            titleEl.innerText = isMdr ? 'EDIT DATA MDR' : 'EDIT DATA JOB CARD (JC)';
             document.getElementById('ppcInputWorkStatus').value = itm.workStatus || 'OPEN';
             document.getElementById('ppcInputItemNo').value = itm.itemNo || '';
             document.getElementById('ppcInputDesc').value = itm.desc || '';
             document.getElementById('ppcInputMaterialStatus').value = itm.materialStatus || 'Status Not Defined Yet';
+            document.getElementById('ppcInputPartNumber').value = itm.partNumber || '';
+            document.getElementById('ppcInputPoNumber').value = itm.poNumber || '';
             document.getElementById('ppcInputRemarks').value = itm.remarks || '';
         } else {
-            titleEl.innerText = `TAMBAH DATA ${ppcSelectedCategory} BARU`;
+            titleEl.innerText = isMdr ? 'TAMBAH DATA MDR BARU' : 'TAMBAH DATA JOB CARD (JC) BARU';
             document.getElementById('ppcItemForm').reset();
             document.getElementById('ppcInputItemNo').value = `8${String(ppcActiveDataItems.length + 1).padStart(8, '0')}`;
         }
@@ -2995,6 +3255,8 @@
             itemNo: orderNoVal,
             desc: document.getElementById('ppcInputDesc').value.trim(),
             materialStatus: document.getElementById('ppcInputMaterialStatus').value,
+            partNumber: document.getElementById('ppcInputPartNumber').value.trim().toUpperCase(),
+            poNumber: document.getElementById('ppcInputPoNumber').value.trim().toUpperCase(),
             remarks: document.getElementById('ppcInputRemarks').value.trim()
         };
 
@@ -3023,6 +3285,107 @@
     }
 
     // ========================================================
+    // DOWNLOAD SAMPLE EXCEL TEMPLATE (DENGAN DATA VALIDATION DROPDOWN)
+    // ========================================================
+    function ppcDownloadSampleExcel() {
+        const isMdr = ppcSelectedCategory === 'MDR';
+        const trackColHeader = isMdr ? 'MDR Track' : 'Jobcard Track';
+
+        const sampleRows = [
+            {
+                "Status": "OPEN",
+                "Order No": "800100001",
+                "Description": isMdr ? "Seat cover row 14A torn and stained" : "Inspection passenger seat covers row 1-12",
+                [trackColHeader]: "Available at Hangar Local Store",
+                "Part Number": "PN-88412-01",
+                "PO Number": "4500112233",
+                "Remark": "Routine Check"
+            },
+            {
+                "Status": "PROGRESS",
+                "Order No": "800100002",
+                "Description": isMdr ? "Lavatory forward door latch broken" : "Replacement carpet forward galley area",
+                [trackColHeader]: "Delivered to Production",
+                "Part Number": "PN-99201-A",
+                "PO Number": "4500112234",
+                "Remark": "Urgent"
+            },
+            {
+                "Status": "INTERUPT",
+                "Order No": "800100003",
+                "Description": isMdr ? "PSU reading light seat 22F inoperative" : "Overhaul cabin attendant seat harness",
+                [trackColHeader]: "Waiting Shipment From Vendor",
+                "Part Number": "PN-66109-C",
+                "PO Number": "4500112236",
+                "Remark": "Awaiting Part"
+            },
+            {
+                "Status": "CLOSED",
+                "Order No": "800100004",
+                "Description": isMdr ? "Overhead bin hinge row 10 loose" : "Repair lavatory D flush valve assembly",
+                [trackColHeader]: "Work Done",
+                "Part Number": "PN-77310-B",
+                "PO Number": "4500112235",
+                "Remark": "Rectified"
+            }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        const wsMain = XLSX.utils.json_to_sheet(sampleRows);
+
+        wsMain['!cols'] = [
+            { wch: 14 }, // Status
+            { wch: 15 }, // Order No
+            { wch: 44 }, // Description
+            { wch: 36 }, // Jobcard Track / MDR Track
+            { wch: 18 }, // Part Number
+            { wch: 18 }, // PO Number
+            { wch: 24 }  // Remark
+        ];
+
+        // Sheet kedua berisi daftar pilihan resmi untuk dropdown validation di Excel
+        const refRows = [
+            { "Status Options": "OPEN", "Track Options": "Waiting Payment" },
+            { "Status Options": "PROGRESS", "Track Options": "Available at GMF Central Store" },
+            { "Status Options": "CLOSED", "Track Options": "Available at Hangar Local Store" },
+            { "Status Options": "INTERUPT", "Track Options": "Delivered to Production" },
+            { "Status Options": "", "Track Options": "No Source" },
+            { "Status Options": "", "Track Options": "Progress Inspect in Recceiving Area" },
+            { "Status Options": "", "Track Options": "Progress Repair in Shop" },
+            { "Status Options": "", "Track Options": "Shipment / Customs Process" },
+            { "Status Options": "", "Track Options": "Status Not Defined Yet" },
+            { "Status Options": "", "Track Options": "Waiting for Distribution" },
+            { "Status Options": "", "Track Options": "Waiting Purchase Order" },
+            { "Status Options": "", "Track Options": "Waiting Shipment From Vendor" },
+            { "Status Options": "", "Track Options": "Work Done" }
+        ];
+        const wsRef = XLSX.utils.json_to_sheet(refRows);
+        wsRef['!cols'] = [{ wch: 18 }, { wch: 38 }];
+
+        // Tambahkan Data Validation dropdown pada Kolom A (Status) & Kolom D (Jobcard Track / MDR Track)
+        wsMain['!dataValidation'] = [
+            {
+                sqref: "A2:A500",
+                type: "list",
+                allowBlank: true,
+                formula1: "Options!$A$2:$A$5"
+            },
+            {
+                sqref: "D2:D500",
+                type: "list",
+                allowBlank: true,
+                formula1: "Options!$B$2:$B$14"
+            }
+        ];
+
+        XLSX.utils.book_append_sheet(wb, wsMain, isMdr ? "MDR_Template" : "JC_Template");
+        XLSX.utils.book_append_sheet(wb, wsRef, "Options");
+
+        const fileName = isMdr ? "SAMPLE_UPLOAD_MDR.xlsx" : "SAMPLE_UPLOAD_JOBCARD.xlsx";
+        XLSX.writeFile(wb, fileName);
+    }
+
+    // ========================================================
     // SMART DATA NORMALIZER UNTUK HASIL UPLOAD EXCEL / CSV
     // ========================================================
     function smartNormalizeWorkStatus(rawVal) {
@@ -3041,6 +3404,9 @@
             if (v === null || v === undefined) continue;
             const strVal = v.toString().trim();
             if (!strVal) continue;
+            if (strVal.toLowerCase() === 'available at gmf' || strVal.toLowerCase() === 'central store') {
+                return 'Available at GMF Central Store';
+            }
             const exactMatch = PPC_MATERIAL_STATUS_LIST.find(
                 status => status.toLowerCase() === strVal.toLowerCase()
             );
@@ -3095,11 +3461,14 @@
         const rawStatus = findColVal(['status', 'workstatus', 'taskstatus', 'jcstatus', 'mdrstatus', 'state', 'kondisi'], [itemNo, materialStatus]);
         const workStatus = smartNormalizeWorkStatus(rawStatus);
 
-        let desc = findColVal(['description', 'taskdescription', 'desc', 'discrepancy', 'defect', 'subject', 'title', 'uraian', 'pekerjaan', 'detail'], [itemNo, materialStatus]);
+        const partNumber = findColVal(['partnumber', 'partno', 'pn', 'materialno', 'part'], [itemNo, materialStatus]);
+        const poNumber = findColVal(['ponumber', 'pono', 'purchaseorder', 'po'], [itemNo, materialStatus, partNumber]);
+
+        let desc = findColVal(['description', 'taskdescription', 'desc', 'discrepancy', 'defect', 'subject', 'title', 'uraian', 'pekerjaan', 'detail'], [itemNo, materialStatus, partNumber, poNumber]);
         if (!desc) {
             const textCandidates = Object.values(row)
                 .map(v => (v !== null && v !== undefined) ? v.toString().trim() : '')
-                .filter(v => v && v !== itemNo && v.toLowerCase() !== materialStatus.toLowerCase() && !['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'].includes(v.toUpperCase()));
+                .filter(v => v && v !== itemNo && v !== partNumber && v !== poNumber && v.toLowerCase() !== materialStatus.toLowerCase() && !['OPEN', 'PROGRESS', 'CLOSED', 'INTERUPT'].includes(v.toUpperCase()));
             if (textCandidates.length > 0) {
                 textCandidates.sort((a, b) => b.length - a.length);
                 desc = textCandidates[0];
@@ -3108,10 +3477,18 @@
             }
         }
 
-        const rawRemark = findColVal(['remark', 'remarks', 'note', 'notes', 'keterangan', 'ket', 'comment', 'hilite', 'info'], [itemNo, materialStatus, desc]);
+        const rawRemark = findColVal(['remark', 'remarks', 'note', 'notes', 'keterangan', 'ket', 'comment', 'hilite', 'info'], [itemNo, materialStatus, desc, partNumber, poNumber]);
         const remarks = rawRemark || '-';
 
-        return { workStatus, itemNo, desc, materialStatus, remarks };
+        return {
+            workStatus,
+            itemNo,
+            desc,
+            materialStatus,
+            partNumber: partNumber ? partNumber.toUpperCase() : '',
+            poNumber: poNumber ? poNumber.toUpperCase() : '',
+            remarks
+        };
     }
 
     function ppcHandleExcelUpload(event) {
@@ -3153,7 +3530,7 @@
                     .filter(item => item !== null);
 
                 if (newItems.length === 0) {
-                    alert('Tidak ditemukan data yang sesuai kriteria (Order No 9 digit awalan 8 atau status MDR Track yang valid).');
+                    alert('Tidak ditemukan data yang sesuai kriteria (Order No 9 digit awalan 8 atau status Track yang valid).');
                     return;
                 }
 
@@ -3184,6 +3561,8 @@
             "Order No": item.itemNo,
             "Description": item.desc,
             [trackColName]: item.materialStatus,
+            "Part Number": item.partNumber || '',
+            "PO Number": item.poNumber || '',
             "Remark": item.remarks
         }));
 
@@ -3209,7 +3588,7 @@
             else countMat["Status Not Defined Yet"] = (countMat["Status Not Defined Yet"] || 0) + 1;
         });
 
-        const commonLayoutPadding = { top: 22, bottom: 16, left: 72, right: 72 };
+        const commonLayoutPadding = { top: 24, bottom: 18, left: 105, right: 105 };
 
         const ctx1 = document.getElementById('ppcChartStatus')?.getContext('2d');
         if (ctx1) {
@@ -3359,12 +3738,10 @@
 
         if (!chartsContainer || !drilldownWrapper) return;
 
-        // Sembunyikan callout box sebelumnya
         if (b1) b1.style.display = 'none';
         if (b2) b2.style.display = 'none';
         if (b3) b3.style.display = 'none';
 
-        // Posisikan diagram yang diklik ke paling atas & tampilkan panah + jumlah status di dalam kotak diagram
         if (c1 && c2 && c3) {
             [c1, c2, c3].forEach(el => el.classList.remove('border-2', 'border-blue-500', 'ring-2', 'ring-blue-200'));
             let activeCard = c1;
@@ -3422,7 +3799,7 @@
         drilldownCount.innerText = `${filteredItems.length} Item`;
 
         if (filteredItems.length === 0) {
-            drilldownTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:#94a3b8;">Tidak ada data item pada status ini.</td></tr>`;
+            drilldownTbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:#94a3b8;">Tidak ada data item pada status ini.</td></tr>`;
         } else {
             drilldownTbody.innerHTML = filteredItems.map(itm => {
                 const wColor = PPC_WORK_STATUS_COLORS[itm.workStatus] || '#64748b';
@@ -3436,13 +3813,14 @@
                         <td class="font-mono font-bold text-blue-700">${itm.itemNo}</td>
                         <td style="white-space:normal; line-height:1.2;">${itm.desc}</td>
                         <td style="white-space:normal; line-height:1.2; font-size:9.5px;">${itm.materialStatus}</td>
+                        <td class="font-mono font-semibold text-gray-800">${itm.partNumber || '-'}</td>
+                        <td class="font-mono font-semibold text-gray-800">${itm.poNumber || '-'}</td>
                         <td style="white-space:normal; color:#475569;">${itm.remarks || '-'}</td>
                     </tr>
                 `;
             }).join('');
         }
 
-        // Otomatis scroll screen menuju paling atas page
         const ppcDash = document.getElementById('ppc-dashboard');
         const ppcScroll = document.getElementById('ppcScrollArea');
         if (ppcDash) ppcDash.scrollTo({ top: 0, behavior: 'smooth' });
